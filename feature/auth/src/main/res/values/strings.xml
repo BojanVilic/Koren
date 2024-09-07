@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TaskHub</string>
+    <string name="server_client_id">312203129156-tvhd71qr3ogir2epdidmmqhmpql65ihb.apps.googleusercontent.com</string>
+    <string name="google_sign_in_title">Continue with Google</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Password</string>
+    <string name="or_label">or</string>
+    <string name="already_have_account_question">Already have an account?</string>
+    <string name="no_account_question">Don\'t have an account?</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_up">Sign up</string>
+</resources>

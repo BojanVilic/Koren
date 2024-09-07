@@ -8,7 +8,7 @@ class HiltConventionPlugin : Plugin<Project> {
         with(target) {
             with(pluginManager) {
                 apply("org.jetbrains.kotlin.kapt")
-                apply("dagger.hilt.android.plugin")
+                apply("com.google.dagger.hilt.android")
             }
 
             dependencies {

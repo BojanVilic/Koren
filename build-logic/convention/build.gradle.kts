@@ -21,12 +21,12 @@ gradlePlugin {
 
         register("composeApplicationSetup") {
             id = "koren.compose.application"
-            implementationClass = "ComposeApplicationConventionPlugin"
+            implementationClass = "compose.ComposeApplicationConventionPlugin"
         }
 
         register("composeLibrarySetup") {
             id = "koren.compose.library"
-            implementationClass = "ComposeLibraryConventionPlugin"
+            implementationClass = "compose.ComposeLibraryConventionPlugin"
         }
 
         register("featureSetup") {

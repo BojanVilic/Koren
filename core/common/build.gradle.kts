@@ -1,11 +1,11 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.kotlin.android)
-    alias(libs.plugins.koren.feature)
+    alias(libs.plugins.koren.hilt)
 }
 
 android {
-    namespace = "com.koren.auth"
+    namespace = "com.koren.common"
     compileSdk = 34
 
     defaultConfig {
@@ -41,7 +41,4 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-
-    implementation(libs.firebase.auth)
-    implementation(libs.play.services.auth)
 }

@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.koren.compose.application)
+    alias(libs.plugins.koren.hilt)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -46,6 +48,7 @@ android {
 
 dependencies {
     implementation(project(":core:designsystem"))
+    implementation(project(":feature:auth"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
