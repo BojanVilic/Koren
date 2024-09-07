@@ -22,3 +22,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Koren"
 include(":app")
+include(":core:designsystem")
+include(":feature:auth")

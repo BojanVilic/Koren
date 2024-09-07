@@ -19,9 +19,14 @@ gradlePlugin {
             implementationClass = "HiltConventionPlugin"
         }
 
-        register("composeSetup") {
-            id = "koren.compose"
-            implementationClass = "ComposeConventionPlugin"
+        register("composeApplicationSetup") {
+            id = "koren.compose.application"
+            implementationClass = "ComposeApplicationConventionPlugin"
+        }
+
+        register("composeLibrarySetup") {
+            id = "koren.compose.library"
+            implementationClass = "ComposeLibraryConventionPlugin"
         }
 
         register("featureSetup") {
