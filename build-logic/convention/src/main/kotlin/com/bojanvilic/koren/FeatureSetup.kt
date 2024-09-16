@@ -40,6 +40,10 @@ internal fun Project.configureKotlinAndroid(
 
             jvmTarget = JavaVersion.VERSION_17.toString()
         }
+
+        buildFeatures {
+            buildConfig = true
+        }
     }
 }
 

@@ -43,7 +43,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun SignInScreen(
     modifier: Modifier = Modifier,
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = hiltViewModel(),
+    onSignInSuccess: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
 
@@ -53,6 +54,7 @@ fun SignInScreen(
             if(result.resultCode == RESULT_OK) {
                 scope.launch {
                     authViewModel.signInWithIntent(result.data)
+                    onSignInSuccess()
                 }
             }
         }

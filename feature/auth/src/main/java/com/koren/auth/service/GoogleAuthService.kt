@@ -10,14 +10,14 @@ import com.google.firebase.auth.auth
 import com.koren.auth.R
 import com.koren.common.services.ResourceProvider
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
-class GoogleAuthService(
+class GoogleAuthService @Inject constructor(
     private val resourceProvider: ResourceProvider,
     private val oneTapClient: SignInClient
 ) {
     private val auth = Firebase.auth
-
 
     suspend fun signIn(): IntentSender? {
         val result = try {

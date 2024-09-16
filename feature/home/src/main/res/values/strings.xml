@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome_back_label">Welcome back %1s!</string>
+    <string name="latest_updates_label">Here are your the latest updates:</string>
+    <string name="create_family_label">Create a family</string>
+</resources>
