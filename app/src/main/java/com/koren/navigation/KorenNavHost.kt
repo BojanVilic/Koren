@@ -3,8 +3,8 @@ package com.koren.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
 import com.koren.auth.navigation.AuthScreenDestination
 import com.koren.auth.navigation.authScreen
 import com.koren.auth.service.GoogleAuthService
@@ -18,10 +18,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun KorenNavHost(
     modifier: Modifier = Modifier,
+    navController: NavHostController,
     googleAuthService: GoogleAuthService,
     userSession: UserSession
 ) {
-    val navController = rememberNavController()
     val coroutineScope = rememberCoroutineScope()
 
     val startDestination = if (userSession.isLoggedIn) HomeGraph else AuthScreenDestination
