@@ -8,24 +8,27 @@ import androidx.compose.animation.core.animateSizeAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +54,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.koren.common.util.Destination
+import com.koren.designsystem.components.dashedBorder
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.home.R
@@ -203,38 +207,83 @@ private fun AddImageStep(
             style = MaterialTheme.typography.titleMedium
         )
 
-        if (familyPortraitPath != null) {
-            AsyncImage(
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .fillMaxHeight(0.5f)
-                    .padding(top = 16.dp)
-                    .clip(RoundedCornerShape(10))
-                    .border(4.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(10))
-                    .clickable {
-                        imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        Card(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(top = 32.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (familyPortraitPath != null) {
+                    AsyncImage(
+                        modifier = Modifier
+                            .size(128.dp)
+                            .clip(CircleShape)
+                            .dashedBorder(
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = CircleShape,
+                                strokeWidth = 4.dp,
+                                gapLength = 8.dp
+                            ),
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .crossfade(true)
+                            .placeholder(R.drawable.ic_add_photo)
+                            .data(familyPortraitPath)
+                            .build(),
+                        contentDescription = null,
+                        placeholder = painterResource(id = R.drawable.ic_add_photo),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Image(
+                        modifier = Modifier
+                            .size(128.dp)
+                            .clip(CircleShape)
+                            .dashedBorder(
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = CircleShape,
+                                strokeWidth = 4.dp,
+                                gapLength = 8.dp
+                            )
+                            .clickable {
+                                imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            },
+                        painter = painterResource(R.drawable.ic_add_photo),
+                        contentDescription = null,
+                        contentScale = ContentScale.Inside,
+                        colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary)
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .height(IntrinsicSize.Max)
+                        .padding(horizontal = 12.dp),
+                ) {
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        }
+                    ) {
+                        Text("Add family portrait")
                     }
-                    .align(Alignment.CenterHorizontally),
-                model = ImageRequest.Builder(LocalContext.current).data(familyPortraitPath).build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-            )
-        } else {
-            Image(
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .fillMaxHeight(0.5f)
-                    .padding(top = 16.dp)
-                    .clip(RoundedCornerShape(10))
-                    .border(4.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(10))
-                    .clickable {
-                        imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            setFamilyPortraitPath(null)
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.background,
+                            contentColor = MaterialTheme.colorScheme.onBackground
+                        )
+                    ) {
+                        Text("Remove")
                     }
-                    .align(Alignment.CenterHorizontally),
-                painter = painterResource(id = R.drawable.family_parents_icon),
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
-            )
+                }
+            }
         }
     }
 }
