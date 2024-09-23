@@ -14,32 +14,34 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.twotone.ArrowForward
+import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,10 +49,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.koren.common.util.Destination
@@ -58,7 +63,6 @@ import com.koren.designsystem.components.dashedBorder
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.home.R
-import com.koren.home.ui.HomeViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
@@ -67,15 +71,26 @@ object CreateFamilyScreenDestination : Destination
 
 @Composable
 fun CreateFamilyScreen(
-    homeViewModel: HomeViewModel = hiltViewModel()
+    createFamilyViewModel: CreateFamilyViewModel = hiltViewModel()
 ) {
 
     val coroutineScope = rememberCoroutineScope()
+    val state by createFamilyViewModel.state.collectAsStateWithLifecycle()
 
     CreateFamilyContent(
-        createFamily = { familyName, familyPortraitPath ->
+        state = state,
+        setFamilyPortraitPath = {
+            createFamilyViewModel.setPhotoUri(it)
+        },
+        setFamilyName = {
+            createFamilyViewModel.setFamilyName(it)
+        },
+        onNextStep = {
+            createFamilyViewModel.nextStep()
+        },
+        createFamily = {
             coroutineScope.launch {
-                homeViewModel.createFamily(familyName, familyPortraitPath)
+                createFamilyViewModel.createFamily()
             }
         }
     )
@@ -83,96 +98,111 @@ fun CreateFamilyScreen(
 
 @Composable
 private fun CreateFamilyContent(
-    createFamily: (String, Uri?) -> Unit
+    state: CreateFamilyState,
+    setFamilyPortraitPath: (Uri?) -> Unit,
+    setFamilyName: (String) -> Unit,
+    onNextStep: () -> Unit,
+    createFamily: () -> Unit
 ) {
 
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { 3 })
-    var familyName by remember { mutableStateOf("") }
-    var familyPortraitPath by remember { mutableStateOf<Uri?>(null) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
-    Box {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize(),
-            userScrollEnabled = false
-        ) { page ->
-            Column {
-                when (page) {
-                    0 -> AddImageStep(
-                        setFamilyPortraitPath = {
-                            familyPortraitPath = it
+    Box(
+        modifier = Modifier.imePadding()
+    ) {
+        Column(
+            modifier = Modifier.align(Alignment.TopCenter)
+        ) {
+            Row(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                repeat(pagerState.pageCount) { iteration ->
+                    val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                    val width = if (pagerState.currentPage == iteration) 64.dp else 24.dp
+
+                    val size = animateSizeAsState(
+                        targetValue = if (pagerState.currentPage == iteration) {
+                            Size(width.value, 12.dp.value)
+                        } else {
+                            Size(24.dp.value, 12.dp.value)
                         },
-                        familyPortraitPath = familyPortraitPath
+                        animationSpec = tween(
+                            durationMillis = 300,
+                            delayMillis = 0
+                        ),
+                        label = ""
                     )
-                    1 -> AddNameStep(
-                        familyName = familyName,
-                        setFamilyName = {
-                            familyName = it
-                        }
+
+                    Box(
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(color)
+                            .size(size.value.width.dp, size.value.height.dp)
                     )
-                    2 -> CreateFamilyStep(
-                        createFamily = {
-                            createFamily(familyName, familyPortraitPath)
-                        }
-                    )
+                }
+            }
+
+            HorizontalPager(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 16.dp),
+                state = pagerState,
+                userScrollEnabled = false
+            ) { page ->
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    when (page) {
+                        0 -> AddImageStep(
+                            setFamilyPortraitPath = setFamilyPortraitPath,
+                            familyPortraitPath = state.photoUri
+                        )
+                        1 -> AddNameStep(
+                            familyName = state.familyName,
+                            setFamilyName = setFamilyName
+                        )
+                        2 -> CreateFamilyStep(
+                            createFamily = {
+                                createFamily()
+                            }
+                        )
+                    }
                 }
             }
         }
 
-        Row(
-            modifier = Modifier
-                .wrapContentHeight()
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            repeat(pagerState.pageCount) { iteration ->
-                val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.inversePrimary
-                val width = if (pagerState.currentPage == iteration) 64.dp else 24.dp
+        if (pagerState.currentPage < state.totalSteps - 1) {
+            Button(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 48.dp, vertical = 16.dp)
+                    .fillMaxWidth(),
+                onClick = {
+                    if (state.isStepValid) {
+                        coroutineScope.launch {
+                            pagerState.scrollToPage(pagerState.currentPage + 1)
+                            onNextStep()
+                            keyboardController?.hide()
+                        }
+                    }
+                },
+                enabled = state.isStepValid,
 
-                val size = animateSizeAsState(
-                    targetValue = if (pagerState.currentPage == iteration) {
-                        Size(width.value, 12.dp.value)
-                    } else {
-                        Size(24.dp.value, 12.dp.value)
-                    },
-                    animationSpec = tween(
-                        durationMillis = 300,
-                        delayMillis = 0
-                    ),
-                    label = ""
-                )
-
-                Box(
-                    modifier = Modifier
-                        .padding(2.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(color)
-                        .size(size.value.width.dp, size.value.height.dp)
+                ) {
+                Text(text = stringResource(R.string.continue_label))
+                Spacer(modifier = Modifier.width(8.dp))
+                Image(
+                    imageVector = Icons.AutoMirrored.TwoTone.ArrowForward,
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(color = if (state.isStepValid) ButtonDefaults.buttonColors().contentColor else ButtonDefaults.buttonColors().disabledContentColor)
                 )
             }
-        }
-
-        IconButton(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(8.dp),
-            onClick = {
-                coroutineScope.launch {
-                    pagerState.scrollToPage(pagerState.currentPage + 1)
-                }
-            },
-            colors = IconButtonDefaults.iconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Image(
-                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                contentDescription = null
-            )
         }
     }
 }
@@ -191,19 +221,17 @@ private fun AddImageStep(
     )
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.Start
     ) {
         Text(
             modifier = Modifier.padding(bottom = 16.dp),
-            text = stringResource(R.string.add_image_title),
+            text = stringResource(R.string.add_family_name_title),
             style = MaterialTheme.typography.displayLarge
         )
 
         Text(
-            text = stringResource(R.string.add_image_subtitle),
+            text = stringResource(R.string.add_family_name_subtitle),
             style = MaterialTheme.typography.titleMedium
         )
 
@@ -229,11 +257,9 @@ private fun AddImageStep(
                             ),
                         model = ImageRequest.Builder(LocalContext.current)
                             .crossfade(true)
-                            .placeholder(R.drawable.ic_add_photo)
                             .data(familyPortraitPath)
                             .build(),
                         contentDescription = null,
-                        placeholder = painterResource(id = R.drawable.ic_add_photo),
                         contentScale = ContentScale.Crop
                     )
                 } else {
@@ -267,7 +293,7 @@ private fun AddImageStep(
                             imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                         }
                     ) {
-                        Text("Add family portrait")
+                        Text(text = stringResource(R.string.add_image_button_label))
                     }
 
                     Button(
@@ -280,7 +306,7 @@ private fun AddImageStep(
                             contentColor = MaterialTheme.colorScheme.onBackground
                         )
                     ) {
-                        Text("Remove")
+                        Text(text = stringResource(R.string.remove_image_button_label))
                     }
                 }
             }
@@ -294,14 +320,47 @@ private fun AddNameStep(
     setFamilyName: (String) -> Unit
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.Start
     ) {
+        Text(
+            modifier = Modifier.padding(bottom = 16.dp),
+            text = stringResource(R.string.add_image_title),
+            style = MaterialTheme.typography.displayLarge
+        )
+
+        Text(
+            text = stringResource(R.string.add_image_subtitle),
+            style = MaterialTheme.typography.titleMedium
+        )
+
         OutlinedTextField(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 32.dp)
+                .fillMaxWidth()
+                .align(Alignment.CenterHorizontally),
             value = familyName,
             onValueChange = {
                 setFamilyName(it)
-            }
+            },
+            label = {
+                Text(text = stringResource(R.string.family_name_label))
+            },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            trailingIcon = if (familyName.isNotBlank()) {
+                {
+                    IconButton(
+                        onClick = {
+                            setFamilyName("")
+                        },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Clear,
+                            contentDescription = null
+                        )
+                    }
+                }
+            } else null
         )
     }
 }
@@ -327,7 +386,11 @@ private fun CreateFamilyStep(
 fun CreateFamilyPreview() {
     KorenTheme {
         CreateFamilyContent(
-            createFamily = {_,_->}
+            state = CreateFamilyState(),
+            setFamilyPortraitPath = {},
+            setFamilyName = {},
+            onNextStep = {},
+            createFamily = {}
         )
     }
 }

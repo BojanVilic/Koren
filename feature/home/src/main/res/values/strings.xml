@@ -5,4 +5,10 @@
     <string name="create_family_label">Create a family</string>
     <string name="add_image_title">Family photo time!</string>"
     <string name="add_image_subtitle">Add a photo to personalize your family profile.</string>
+    <string name="add_image_button_label">Add family portrait</string>"
+    <string name="remove_image_button_label">Remove</string>
+    <string name="add_family_name_title">Give your family a name!</string>"
+    <string name="add_family_name_subtitle">Add a name to personalize your family profile.</string>
+    <string name="family_name_label">Family name</string>
+    <string name="continue_label">Continue</string>">
 </resources>
