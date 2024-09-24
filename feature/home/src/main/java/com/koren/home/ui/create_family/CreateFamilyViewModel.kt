@@ -2,11 +2,13 @@ package com.koren.home.ui.create_family
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.koren.home.usecases.CreateFamilyUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,7 +41,11 @@ class CreateFamilyViewModel @Inject constructor(
         }
     }
 
-    suspend fun createFamily() {
-        createFamilyUseCase(_state.value.familyName, _state.value.photoUri)
+    fun createFamily() {
+        viewModelScope.launch {
+            createFamilyUseCase(_state.value.familyName, _state.value.photoUri).collect {
+                _state.value = _state.value.copy(familyCreationStatus = it)
+            }
+        }
     }
 }

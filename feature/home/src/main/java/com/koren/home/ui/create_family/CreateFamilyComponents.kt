@@ -52,13 +52,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.koren.common.util.Destination
+import com.koren.common.util.Resource
 import com.koren.designsystem.components.dashedBorder
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
@@ -89,9 +95,7 @@ fun CreateFamilyScreen(
             createFamilyViewModel.nextStep()
         },
         createFamily = {
-            coroutineScope.launch {
-                createFamilyViewModel.createFamily()
-            }
+            createFamilyViewModel.createFamily()
         }
     )
 }
@@ -168,22 +172,20 @@ private fun CreateFamilyContent(
                             setFamilyName = setFamilyName
                         )
                         2 -> CreateFamilyStep(
-                            createFamily = {
-                                createFamily()
-                            }
+                            familyCreationStatus = state.familyCreationStatus
                         )
                     }
                 }
             }
         }
 
-        if (pagerState.currentPage < state.totalSteps - 1) {
-            Button(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 48.dp, vertical = 16.dp)
-                    .fillMaxWidth(),
-                onClick = {
+        Button(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 48.dp, vertical = 16.dp)
+                .fillMaxWidth(),
+            onClick = {
+                if (pagerState.currentPage < state.totalSteps - 1) {
                     if (state.isStepValid) {
                         coroutineScope.launch {
                             pagerState.scrollToPage(pagerState.currentPage + 1)
@@ -191,18 +193,19 @@ private fun CreateFamilyContent(
                             keyboardController?.hide()
                         }
                     }
-                },
-                enabled = state.isStepValid,
-
-                ) {
-                Text(text = stringResource(R.string.continue_label))
-                Spacer(modifier = Modifier.width(8.dp))
-                Image(
-                    imageVector = Icons.AutoMirrored.TwoTone.ArrowForward,
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(color = if (state.isStepValid) ButtonDefaults.buttonColors().contentColor else ButtonDefaults.buttonColors().disabledContentColor)
-                )
-            }
+                } else {
+                    createFamily()
+                }
+            },
+            enabled = state.isStepValid,
+        ) {
+            Text(text = if (pagerState.currentPage < state.totalSteps - 1) stringResource(R.string.continue_label) else stringResource(R.string.create_family_label))
+            Spacer(modifier = Modifier.width(8.dp))
+            Image(
+                imageVector = Icons.AutoMirrored.TwoTone.ArrowForward,
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(color = if (state.isStepValid) ButtonDefaults.buttonColors().contentColor else ButtonDefaults.buttonColors().disabledContentColor)
+            )
         }
     }
 }
@@ -367,18 +370,43 @@ private fun AddNameStep(
 
 @Composable
 private fun CreateFamilyStep(
-    createFamily: () -> Unit
+    familyCreationStatus: Resource<Unit>? = null
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        Button(
-            onClick = { createFamily() }
-        ) {
-            Text(text = stringResource(R.string.create_family_label))
+
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.congratulations_confetti))
+    val preloaderProgress by animateLottieCompositionAsState(
+        composition = composition,
+        isPlaying = familyCreationStatus is Resource.Success
+    )
+
+    Box {
+        LottieAnimation(
+            progress = { preloaderProgress },
+            composition = composition
+        )
+
+        if (familyCreationStatus is Resource.Success) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxSize()
+            ) {
+
+                Text(
+                    text = "Thank you!",
+                    style = MaterialTheme.typography.displayLarge,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "Your family has been created!",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
         }
     }
+
+
 }
 
 @ThemePreview
@@ -421,8 +449,6 @@ fun AddNameStepPreview() {
 @Composable
 fun CreateFamilyStepPreview() {
     KorenTheme {
-        CreateFamilyStep(
-            createFamily = {}
-        )
+        CreateFamilyStep()
     }
 }
