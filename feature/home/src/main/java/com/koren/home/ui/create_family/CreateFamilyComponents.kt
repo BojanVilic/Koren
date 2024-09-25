@@ -40,7 +40,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +56,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -80,7 +83,6 @@ fun CreateFamilyScreen(
     createFamilyViewModel: CreateFamilyViewModel = hiltViewModel()
 ) {
 
-    val coroutineScope = rememberCoroutineScope()
     val state by createFamilyViewModel.state.collectAsStateWithLifecycle()
 
     CreateFamilyContent(
@@ -111,6 +113,7 @@ private fun CreateFamilyContent(
 
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { 3 })
+    val currentPage by remember { derivedStateOf { pagerState.currentPage } }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     Box(
@@ -126,11 +129,11 @@ private fun CreateFamilyContent(
                 horizontalArrangement = Arrangement.Center
             ) {
                 repeat(pagerState.pageCount) { iteration ->
-                    val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
-                    val width = if (pagerState.currentPage == iteration) 64.dp else 24.dp
+                    val color = if (currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                    val width = if (currentPage == iteration) 64.dp else 24.dp
 
                     val size = animateSizeAsState(
-                        targetValue = if (pagerState.currentPage == iteration) {
+                        targetValue = if (currentPage == iteration) {
                             Size(width.value, 12.dp.value)
                         } else {
                             Size(24.dp.value, 12.dp.value)
@@ -185,10 +188,10 @@ private fun CreateFamilyContent(
                 .padding(horizontal = 48.dp, vertical = 16.dp)
                 .fillMaxWidth(),
             onClick = {
-                if (pagerState.currentPage < state.totalSteps - 1) {
+                if (currentPage < state.totalSteps - 1) {
                     if (state.isStepValid) {
                         coroutineScope.launch {
-                            pagerState.scrollToPage(pagerState.currentPage + 1)
+                            pagerState.scrollToPage(currentPage + 1)
                             onNextStep()
                             keyboardController?.hide()
                         }
@@ -199,7 +202,7 @@ private fun CreateFamilyContent(
             },
             enabled = state.isStepValid,
         ) {
-            Text(text = if (pagerState.currentPage < state.totalSteps - 1) stringResource(R.string.continue_label) else stringResource(R.string.create_family_label))
+            Text(text = if (currentPage < state.totalSteps - 1) stringResource(R.string.continue_label) else stringResource(R.string.create_family_label))
             Spacer(modifier = Modifier.width(8.dp))
             Image(
                 imageVector = Icons.AutoMirrored.TwoTone.ArrowForward,
@@ -379,31 +382,35 @@ private fun CreateFamilyStep(
         isPlaying = familyCreationStatus is Resource.Success
     )
 
-    Box {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
         LottieAnimation(
             progress = { preloaderProgress },
             composition = composition
         )
 
-        if (familyCreationStatus is Resource.Success) {
+//        if (familyCreationStatus is Resource.Success) {
             Column(
                 modifier = Modifier
-                    .align(Alignment.Center)
                     .fillMaxSize()
+                    .align(Alignment.Center)
             ) {
-
                 Text(
-                    text = "Thank you!",
+                    text = stringResource(R.string.thank_you_label),
                     style = MaterialTheme.typography.displayLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
 
                 Text(
-                    text = "Your family has been created!",
-                    style = MaterialTheme.typography.titleMedium
+                    text = stringResource(R.string.family_created_label),
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center
                 )
             }
-        }
+//        }
     }
 
 
@@ -449,6 +456,8 @@ fun AddNameStepPreview() {
 @Composable
 fun CreateFamilyStepPreview() {
     KorenTheme {
-        CreateFamilyStep()
+        CreateFamilyStep(
+            familyCreationStatus = Resource.Success(Unit)
+        )
     }
 }
