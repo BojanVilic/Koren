@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -128,30 +129,32 @@ private fun CreateFamilyContent(
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                repeat(pagerState.pageCount) { iteration ->
-                    val color = if (currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
-                    val width = if (currentPage == iteration) 64.dp else 24.dp
+                LazyRow {
+                    items(state.totalSteps) { iteration ->
+                        val color = if (currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                        val width = if (currentPage == iteration) 64.dp else 24.dp
 
-                    val size = animateSizeAsState(
-                        targetValue = if (currentPage == iteration) {
-                            Size(width.value, 12.dp.value)
-                        } else {
-                            Size(24.dp.value, 12.dp.value)
-                        },
-                        animationSpec = tween(
-                            durationMillis = 300,
-                            delayMillis = 0
-                        ),
-                        label = ""
-                    )
+                        val size = animateSizeAsState(
+                            targetValue = if (currentPage == iteration) {
+                                Size(width.value, 12.dp.value)
+                            } else {
+                                Size(24.dp.value, 12.dp.value)
+                            },
+                            animationSpec = tween(
+                                durationMillis = 300,
+                                delayMillis = 0
+                            ),
+                            label = ""
+                        )
 
-                    Box(
-                        modifier = Modifier
-                            .padding(2.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(color)
-                            .size(size.value.width.dp, size.value.height.dp)
-                    )
+                        Box(
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(color)
+                                .size(size.value.width.dp, size.value.height.dp)
+                        )
+                    }
                 }
             }
 
@@ -387,17 +390,19 @@ private fun CreateFamilyStep(
         contentAlignment = Alignment.Center
     ) {
         LottieAnimation(
+            modifier = Modifier.align(Alignment.Center),
             progress = { preloaderProgress },
             composition = composition
         )
 
-//        if (familyCreationStatus is Resource.Success) {
+        if (familyCreationStatus is Resource.Success) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
                     .align(Alignment.Center)
+                    .fillMaxWidth()
             ) {
                 Text(
+                    modifier = Modifier.fillMaxWidth(),
                     text = stringResource(R.string.thank_you_label),
                     style = MaterialTheme.typography.displayLarge,
                     fontWeight = FontWeight.Bold,
@@ -405,15 +410,14 @@ private fun CreateFamilyStep(
                 )
 
                 Text(
+                    modifier = Modifier.fillMaxWidth(),
                     text = stringResource(R.string.family_created_label),
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center
                 )
             }
-//        }
+        }
     }
-
-
 }
 
 @ThemePreview
