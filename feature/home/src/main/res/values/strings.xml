@@ -13,4 +13,15 @@
     <string name="continue_label">Continue</string>
     <string name="thank_you_label">Thank you!</string>
     <string name="family_created_label">Your family has been created!</string>
+
+    <string name="building_family_tree">Building your family tree…</string>
+    <string name="gathering_together">Gathering everyone together…</string>
+    <string name="tying_family_bonds">Tying family bonds…</string>
+    <string name="setting_up_home">Setting up your new home…</string>
+    <string name="adding_splash_of_love">Adding a splash of love…</string>
+    <string name="getting_photos_ready">Getting the family photos ready…</string>
+    <string name="making_space_for_memories">Making space for your memories…</string>
+    <string name="loading_fun_times">Loading family fun times…</string>
+    <string name="unlocking_family_secrets">Unlocking family secrets…</string>
+    <string name="planting_family_roots">Planting your family roots…</string>
 </resources>

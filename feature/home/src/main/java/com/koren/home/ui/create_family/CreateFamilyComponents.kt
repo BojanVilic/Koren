@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateSizeAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -35,16 +37,20 @@ import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,6 +79,7 @@ import com.koren.designsystem.components.dashedBorder
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.home.R
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
@@ -395,27 +402,98 @@ private fun CreateFamilyStep(
             composition = composition
         )
 
-        if (familyCreationStatus is Resource.Success) {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth()
-            ) {
+        when (familyCreationStatus) {
+            is Resource.Error -> Text(text = familyCreationStatus.throwable?.message?: "")
+            is Resource.Loading -> FamilyCreationLoadingScreen()
+            is Resource.Success -> {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth()
+                ) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(R.string.thank_you_label),
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(R.string.family_created_label),
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            null -> Unit
+        }
+    }
+}
+
+@Composable
+fun FamilyCreationLoadingScreen() {
+    val messageIds = listOf(
+        R.string.building_family_tree,
+        R.string.gathering_together,
+        R.string.tying_family_bonds,
+        R.string.setting_up_home,
+        R.string.adding_splash_of_love,
+        R.string.getting_photos_ready,
+        R.string.making_space_for_memories,
+        R.string.loading_fun_times,
+        R.string.unlocking_family_secrets,
+        R.string.planting_family_roots
+    )
+
+    var currentMessageId by remember { mutableIntStateOf(messageIds.random()) }
+
+    fun getNextMessageId(): Int {
+        var newMessageId: Int
+        do {
+            newMessageId = messageIds.random()
+        } while (newMessageId == currentMessageId)
+        return newMessageId
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(2000)
+            currentMessageId = getNextMessageId()
+        }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Crossfade(
+                targetState = currentMessageId,
+                label = "",
+                animationSpec = tween(
+                    durationMillis = 1000,
+                    delayMillis = 0,
+                    easing = LinearOutSlowInEasing
+                )
+            ) { messageId  ->
                 Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.thank_you_label),
-                    style = MaterialTheme.typography.displayLarge,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    text = stringResource(id = messageId),
+                    style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
-
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.family_created_label),
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center
-                )
             }
+            CircularProgressIndicator(
+                modifier = Modifier.size(50.dp)
+            )
         }
     }
 }
