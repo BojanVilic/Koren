@@ -16,10 +16,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.koren.auth.service.GoogleAuthService
 import com.koren.common.services.UserSession
 import com.koren.designsystem.theme.KorenTheme
+import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.navigation.KorenNavHost
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -41,15 +43,17 @@ class MainActivity : ComponentActivity() {
             KorenTheme {
 
                 val navController = rememberNavController()
+                val scaffoldState = LocalScaffoldStateProvider.current.getScaffoldState().collectAsStateWithLifecycle()
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
+                        if (scaffoldState.value.isTopBarVisible.not()) return@Scaffold
                         TopAppBar(
-                            title = { Text(stringResource(id = R.string.app_name)) },
+                            title = { Text(scaffoldState.value.title) },
                             navigationIcon = {
                                 IconButton(
-                                    onClick = { navController.popBackStack() }
+                                    onClick = { if (scaffoldState.value.customBackAction != null) scaffoldState.value.customBackAction?.invoke() else navController.popBackStack() }
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,

@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -77,6 +78,8 @@ import com.koren.common.util.Destination
 import com.koren.common.util.Resource
 import com.koren.designsystem.components.dashedBorder
 import com.koren.designsystem.theme.KorenTheme
+import com.koren.designsystem.theme.LocalScaffoldStateProvider
+import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.home.R
 import kotlinx.coroutines.delay
@@ -91,10 +94,27 @@ fun CreateFamilyScreen(
     createFamilyViewModel: CreateFamilyViewModel = hiltViewModel()
 ) {
 
+    val coroutineScope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(pageCount = { 3 })
     val state by createFamilyViewModel.state.collectAsStateWithLifecycle()
+
+    LocalScaffoldStateProvider.current.setScaffoldState(
+        state = ScaffoldState(
+            title = "",
+            customBackAction = if (pagerState.currentPage > 0) {
+                {
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                        createFamilyViewModel.previousStep()
+                    }
+                }
+            } else null
+        )
+    )
 
     CreateFamilyContent(
         state = state,
+        pagerState = pagerState,
         setFamilyPortraitPath = {
             createFamilyViewModel.setPhotoUri(it)
         },
@@ -113,6 +133,7 @@ fun CreateFamilyScreen(
 @Composable
 private fun CreateFamilyContent(
     state: CreateFamilyState,
+    pagerState: PagerState,
     setFamilyPortraitPath: (Uri?) -> Unit,
     setFamilyName: (String) -> Unit,
     onNextStep: () -> Unit,
@@ -120,7 +141,6 @@ private fun CreateFamilyContent(
 ) {
 
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(pageCount = { 3 })
     val currentPage by remember { derivedStateOf { pagerState.currentPage } }
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -192,33 +212,35 @@ private fun CreateFamilyContent(
             }
         }
 
-        Button(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 48.dp, vertical = 16.dp)
-                .fillMaxWidth(),
-            onClick = {
-                if (currentPage < state.totalSteps - 1) {
-                    if (state.isStepValid) {
-                        coroutineScope.launch {
-                            pagerState.scrollToPage(currentPage + 1)
-                            onNextStep()
-                            keyboardController?.hide()
+        if (state.familyCreationStatus !is Resource.Loading) {
+            Button(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 48.dp, vertical = 16.dp)
+                    .fillMaxWidth(),
+                onClick = {
+                    if (currentPage < state.totalSteps - 1) {
+                        if (state.isStepValid) {
+                            coroutineScope.launch {
+                                pagerState.scrollToPage(currentPage + 1)
+                                onNextStep()
+                                keyboardController?.hide()
+                            }
                         }
+                    } else {
+                        createFamily()
                     }
-                } else {
-                    createFamily()
-                }
-            },
-            enabled = state.isStepValid,
-        ) {
-            Text(text = if (currentPage < state.totalSteps - 1) stringResource(R.string.continue_label) else stringResource(R.string.create_family_label))
-            Spacer(modifier = Modifier.width(8.dp))
-            Image(
-                imageVector = Icons.AutoMirrored.TwoTone.ArrowForward,
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(color = if (state.isStepValid) ButtonDefaults.buttonColors().contentColor else ButtonDefaults.buttonColors().disabledContentColor)
-            )
+                },
+                enabled = state.isStepValid,
+            ) {
+                Text(text = if (currentPage < state.totalSteps - 1) stringResource(R.string.continue_label) else stringResource(R.string.create_family_label))
+                Spacer(modifier = Modifier.width(8.dp))
+                Image(
+                    imageVector = Icons.AutoMirrored.TwoTone.ArrowForward,
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(color = if (state.isStepValid) ButtonDefaults.buttonColors().contentColor else ButtonDefaults.buttonColors().disabledContentColor)
+                )
+            }
         }
     }
 }
@@ -427,7 +449,7 @@ private fun CreateFamilyStep(
                     )
                 }
             }
-            null -> Unit
+            else -> Unit
         }
     }
 }
@@ -504,6 +526,7 @@ fun CreateFamilyPreview() {
     KorenTheme {
         CreateFamilyContent(
             state = CreateFamilyState(),
+            pagerState = rememberPagerState(pageCount = { 3 }),
             setFamilyPortraitPath = {},
             setFamilyName = {},
             onNextStep = {},
