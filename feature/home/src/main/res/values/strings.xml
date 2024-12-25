@@ -11,7 +11,7 @@
     <string name="add_family_name_subtitle">Add a name to personalize your family profile.</string>
     <string name="family_name_label">Family name</string>
     <string name="continue_label">Continue</string>
-    <string name="thank_you_label">Thank you!</string>
+    <string name="congrats_label">Congratulations!</string>
     <string name="family_created_label">Your family has been created!</string>
 
     <string name="building_family_tree">Building your family tree…</string>

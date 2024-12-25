@@ -75,7 +75,6 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.koren.common.util.Destination
-import com.koren.common.util.Resource
 import com.koren.designsystem.components.dashedBorder
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
@@ -105,41 +104,47 @@ fun CreateFamilyScreen(
                 {
                     coroutineScope.launch {
                         pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                        createFamilyViewModel.previousStep()
+                        (state as? CreateFamilyUiState.Step)?.let {
+                            it.eventSink(CreateFamilyEvent.PreviousStep)
+                        }
                     }
                 }
             } else null
         )
     )
 
-    CreateFamilyContent(
-        state = state,
-        pagerState = pagerState,
-        setFamilyPortraitPath = {
-            createFamilyViewModel.setPhotoUri(it)
-        },
-        setFamilyName = {
-            createFamilyViewModel.setFamilyName(it)
-        },
-        onNextStep = {
-            createFamilyViewModel.nextStep()
-        },
-        createFamily = {
-            createFamilyViewModel.createFamily()
-        }
-    )
+    when (val currentState = state) {
+        is CreateFamilyUiState.Step -> CreateFamilyStepContent(
+            state = currentState,
+            pagerState = pagerState,
+            setFamilyPortraitPath = {
+                currentState.eventSink(CreateFamilyEvent.SetPhotoUri(it))
+            },
+            setFamilyName = {
+                currentState.eventSink(CreateFamilyEvent.SetFamilyName(it))
+            },
+            onNextStep = {
+                currentState.eventSink(CreateFamilyEvent.NextStep)
+            },
+            createFamily = {
+                currentState.eventSink(CreateFamilyEvent.CreateFamily)
+            }
+        )
+        is CreateFamilyUiState.Error -> Text(text = "An error occurred while trying to create the family. Please try again.")
+        is CreateFamilyUiState.CreatingFamily -> FamilyCreationLoadingScreen()
+        is CreateFamilyUiState.FamilyCreated -> FamilyCreated()
+    }
 }
 
 @Composable
-private fun CreateFamilyContent(
-    state: CreateFamilyState,
+private fun CreateFamilyStepContent(
+    state: CreateFamilyUiState.Step,
     pagerState: PagerState,
     setFamilyPortraitPath: (Uri?) -> Unit,
     setFamilyName: (String) -> Unit,
     onNextStep: () -> Unit,
     createFamily: () -> Unit
 ) {
-
     val coroutineScope = rememberCoroutineScope()
     val currentPage by remember { derivedStateOf { pagerState.currentPage } }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -204,45 +209,41 @@ private fun CreateFamilyContent(
                             familyName = state.familyName,
                             setFamilyName = setFamilyName
                         )
-                        2 -> CreateFamilyStep(
-                            familyCreationStatus = state.familyCreationStatus
-                        )
                     }
                 }
             }
         }
 
-        if (state.familyCreationStatus !is Resource.Loading) {
-            Button(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 48.dp, vertical = 16.dp)
-                    .fillMaxWidth(),
-                onClick = {
-                    if (currentPage < state.totalSteps - 1) {
-                        if (state.isStepValid) {
-                            coroutineScope.launch {
-                                pagerState.scrollToPage(currentPage + 1)
-                                onNextStep()
-                                keyboardController?.hide()
-                            }
+        Button(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 48.dp, vertical = 16.dp)
+                .fillMaxWidth(),
+            onClick = {
+                if (currentPage < state.totalSteps - 1) {
+                    if (state.isStepValid) {
+                        coroutineScope.launch {
+                            pagerState.scrollToPage(currentPage + 1)
+                            onNextStep()
+                            keyboardController?.hide()
                         }
-                    } else {
-                        createFamily()
                     }
-                },
-                enabled = state.isStepValid,
-            ) {
-                Text(text = if (currentPage < state.totalSteps - 1) stringResource(R.string.continue_label) else stringResource(R.string.create_family_label))
-                Spacer(modifier = Modifier.width(8.dp))
-                Image(
-                    imageVector = Icons.AutoMirrored.TwoTone.ArrowForward,
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(color = if (state.isStepValid) ButtonDefaults.buttonColors().contentColor else ButtonDefaults.buttonColors().disabledContentColor)
-                )
-            }
+                } else {
+                    createFamily()
+                }
+            },
+            enabled = state.isStepValid,
+        ) {
+            Text(text = if (currentPage < state.totalSteps - 1) stringResource(R.string.continue_label) else stringResource(R.string.create_family_label))
+            Spacer(modifier = Modifier.width(8.dp))
+            Image(
+                imageVector = Icons.AutoMirrored.TwoTone.ArrowForward,
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(color = if (state.isStepValid) ButtonDefaults.buttonColors().contentColor else ButtonDefaults.buttonColors().disabledContentColor)
+            )
         }
     }
+
 }
 
 @Composable
@@ -264,12 +265,12 @@ private fun AddImageStep(
     ) {
         Text(
             modifier = Modifier.padding(bottom = 16.dp),
-            text = stringResource(R.string.add_family_name_title),
+            text = stringResource(R.string.add_image_title),
             style = MaterialTheme.typography.displayLarge
         )
 
         Text(
-            text = stringResource(R.string.add_family_name_subtitle),
+            text = stringResource(R.string.add_image_subtitle),
             style = MaterialTheme.typography.titleMedium
         )
 
@@ -363,12 +364,12 @@ private fun AddNameStep(
     ) {
         Text(
             modifier = Modifier.padding(bottom = 16.dp),
-            text = stringResource(R.string.add_image_title),
+            text = stringResource(R.string.add_family_name_title),
             style = MaterialTheme.typography.displayLarge
         )
 
         Text(
-            text = stringResource(R.string.add_image_subtitle),
+            text = stringResource(R.string.add_family_name_subtitle),
             style = MaterialTheme.typography.titleMedium
         )
 
@@ -404,14 +405,11 @@ private fun AddNameStep(
 }
 
 @Composable
-private fun CreateFamilyStep(
-    familyCreationStatus: Resource<Unit>? = null
-) {
-
+private fun FamilyCreated() {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.congratulations_confetti))
     val preloaderProgress by animateLottieCompositionAsState(
         composition = composition,
-        isPlaying = familyCreationStatus is Resource.Success
+        isPlaying = true
     )
 
     Box(
@@ -424,32 +422,25 @@ private fun CreateFamilyStep(
             composition = composition
         )
 
-        when (familyCreationStatus) {
-            is Resource.Error -> Text(text = familyCreationStatus.throwable?.message?: "")
-            is Resource.Loading -> FamilyCreationLoadingScreen()
-            is Resource.Success -> {
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxWidth()
-                ) {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = stringResource(R.string.thank_you_label),
-                        style = MaterialTheme.typography.displayLarge,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
+        Column(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth()
+        ) {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = stringResource(R.string.congrats_label),
+                style = MaterialTheme.typography.displayLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
 
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = stringResource(R.string.family_created_label),
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-            else -> Unit
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = stringResource(R.string.family_created_label),
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -524,8 +515,8 @@ fun FamilyCreationLoadingScreen() {
 @Composable
 fun CreateFamilyPreview() {
     KorenTheme {
-        CreateFamilyContent(
-            state = CreateFamilyState(),
+        CreateFamilyStepContent(
+            state = CreateFamilyUiState.Step(eventSink = {}),
             pagerState = rememberPagerState(pageCount = { 3 }),
             setFamilyPortraitPath = {},
             setFamilyName = {},
@@ -561,8 +552,6 @@ fun AddNameStepPreview() {
 @Composable
 fun CreateFamilyStepPreview() {
     KorenTheme {
-        CreateFamilyStep(
-            familyCreationStatus = Resource.Success(Unit)
-        )
+        FamilyCreated()
     }
 }

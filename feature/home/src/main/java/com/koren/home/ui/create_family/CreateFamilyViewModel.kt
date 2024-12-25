@@ -1,6 +1,5 @@
 package com.koren.home.ui.create_family
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.koren.home.usecases.CreateFamilyUseCase
@@ -17,44 +16,53 @@ class CreateFamilyViewModel @Inject constructor(
     private val createFamilyUseCase: CreateFamilyUseCase
 ): ViewModel() {
 
-    private val _state = MutableStateFlow(CreateFamilyState())
-    val state: StateFlow<CreateFamilyState> = _state.asStateFlow()
+    private val _state = MutableStateFlow<CreateFamilyUiState>(CreateFamilyUiState.Step(eventSink = ::handleEvent))
+    val state: StateFlow<CreateFamilyUiState> = _state.asStateFlow()
 
-    fun setPhotoUri(uri: Uri?) {
-        _state.update { currentState ->
-            currentState.copy(photoUri = uri)
-        }
-    }
-
-    fun setFamilyName(name: String) {
-        _state.update { currentState ->
-            currentState.copy(familyName = name)
-        }
-    }
-
-    fun nextStep() {
-        val current = _state.value.currentStep
-        if (current < _state.value.totalSteps - 1) {
-            _state.update { currentState ->
-                currentState.copy(currentStep = current + 1)
+    private fun handleEvent(event: CreateFamilyEvent) {
+        withStepState { currentState ->
+            when (event) {
+                is CreateFamilyEvent.SetFamilyName -> _state.update { currentState.copy(familyName = event.name) }
+                is CreateFamilyEvent.SetPhotoUri -> _state.update { currentState.copy(photoUri = event.uri) }
+                is CreateFamilyEvent.NextStep -> nextStep(currentState)
+                is CreateFamilyEvent.PreviousStep -> previousStep(currentState)
+                is CreateFamilyEvent.CreateFamily -> createFamily(currentState)
             }
         }
     }
 
-    fun previousStep() {
-        val current = _state.value.currentStep
-        if (current > 0) {
-            _state.update { currentState -> currentState.copy(currentStep = current - 1) }
+    private fun nextStep(currentState: CreateFamilyUiState.Step) {
+        if (currentState.currentStep < currentState.totalSteps - 1) {
+            _state.update {
+                currentState.copy(currentStep = currentState.currentStep + 1)
+            }
         }
     }
 
-    fun createFamily() {
+    private fun previousStep(currentState: CreateFamilyUiState.Step) {
+        if (currentState.currentStep > 0) {
+            _state.update {
+                currentState.copy(currentStep = currentState.currentStep - 1)
+            }
+        }
+    }
+
+    private fun createFamily(currentState: CreateFamilyUiState.Step) {
         viewModelScope.launch {
-            createFamilyUseCase(_state.value.familyName, _state.value.photoUri).collect { status ->
-                _state.update { currentState ->
-                    currentState.copy(familyCreationStatus = status)
-                }
+            _state.update { CreateFamilyUiState.CreatingFamily }
+            try {
+                createFamilyUseCase(currentState.familyName, currentState.photoUri)
+                _state.update { CreateFamilyUiState.FamilyCreated }
+            } catch (e: Exception) {
+                _state.update { CreateFamilyUiState.Error(e) }
             }
+        }
+    }
+
+    private inline fun withStepState(action: (CreateFamilyUiState.Step) -> Unit) {
+        val currentState = _state.value
+        if (currentState is CreateFamilyUiState.Step) {
+            action(currentState)
         }
     }
 }
