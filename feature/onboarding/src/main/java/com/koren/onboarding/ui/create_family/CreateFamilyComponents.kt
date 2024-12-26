@@ -1,4 +1,4 @@
-package com.koren.home.ui.create_family
+package com.koren.onboarding.ui.create_family
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -80,17 +80,18 @@ import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
-import com.koren.home.R
+import com.koren.onboarding.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 @Serializable
-object CreateFamilyScreenDestination : Destination
+object CreateFamilyDestination : Destination
 
 @Composable
 fun CreateFamilyScreen(
-    createFamilyViewModel: CreateFamilyViewModel = hiltViewModel()
+    createFamilyViewModel: CreateFamilyViewModel = hiltViewModel(),
+    onNavigateToHome: () -> Unit
 ) {
 
     val coroutineScope = rememberCoroutineScope()
@@ -132,7 +133,7 @@ fun CreateFamilyScreen(
         )
         is CreateFamilyUiState.Error -> Text(text = "An error occurred while trying to create the family. Please try again.")
         is CreateFamilyUiState.CreatingFamily -> FamilyCreationLoadingScreen()
-        is CreateFamilyUiState.FamilyCreated -> FamilyCreated()
+        is CreateFamilyUiState.FamilyCreated -> FamilyCreated(onNavigateToHome = onNavigateToHome)
     }
 }
 
@@ -405,12 +406,20 @@ private fun AddNameStep(
 }
 
 @Composable
-private fun FamilyCreated() {
+private fun FamilyCreated(
+    onNavigateToHome: () -> Unit
+) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.congratulations_confetti))
     val preloaderProgress by animateLottieCompositionAsState(
         composition = composition,
         isPlaying = true
     )
+
+    LaunchedEffect(preloaderProgress) {
+        if (preloaderProgress == 1f) {
+            onNavigateToHome()
+        }
+    }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -552,6 +561,6 @@ fun AddNameStepPreview() {
 @Composable
 fun CreateFamilyStepPreview() {
     KorenTheme {
-        FamilyCreated()
+        FamilyCreated(onNavigateToHome = {})
     }
 }

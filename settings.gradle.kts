@@ -20,9 +20,12 @@ dependencyResolutionManagement {
     }
 }
 
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 rootProject.name = "Koren"
 include(":app")
 include(":core:designsystem")
 include(":feature:auth")
 include(":core:common")
 include(":feature:home")
+include(":feature:onboarding")

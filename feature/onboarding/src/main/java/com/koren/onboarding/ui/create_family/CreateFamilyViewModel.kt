@@ -1,8 +1,8 @@
-package com.koren.home.ui.create_family
+package com.koren.onboarding.ui.create_family
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.koren.home.usecases.CreateFamilyUseCase
+import com.koren.onboarding.usecases.CreateFamilyUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

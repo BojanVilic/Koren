@@ -1,4 +1,4 @@
-package com.koren.home.ui.create_family
+package com.koren.onboarding.ui.create_family
 
 import android.net.Uri
 

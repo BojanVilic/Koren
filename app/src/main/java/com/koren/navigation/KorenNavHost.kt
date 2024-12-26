@@ -5,13 +5,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import com.koren.auth.navigation.AuthScreenDestination
+import com.koren.auth.navigation.AuthDestination
 import com.koren.auth.navigation.authScreen
 import com.koren.auth.service.GoogleAuthService
 import com.koren.common.services.UserSession
-import com.koren.home.navigation.HomeGraph
 import com.koren.home.navigation.homeScreen
-import com.koren.home.ui.home_screen.HomeScreenDestination
+import com.koren.home.ui.home_screen.HomeDestination
+import com.koren.onboarding.navigation.OnboardingGraph
+import com.koren.onboarding.navigation.onboardingScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -24,18 +25,14 @@ fun KorenNavHost(
 ) {
     val coroutineScope = rememberCoroutineScope()
 
-    val startDestination = if (userSession.isLoggedIn) HomeGraph else AuthScreenDestination
+    val startDestination = if (userSession.isLoggedIn) OnboardingGraph else AuthDestination
 
     NavHost(
         modifier = modifier,
         navController = navController,
         startDestination = startDestination
     ) {
-        authScreen(
-            onSignInSuccess = {
-                navController.navigate(HomeScreenDestination)
-            }
-        )
+        authScreen(onSignInSuccess = { navController.navigate(OnboardingGraph) })
         homeScreen(
             navController = navController,
             logOut = {
@@ -43,6 +40,10 @@ fun KorenNavHost(
                     googleAuthService.signOut()
                 }
             }
+        )
+        onboardingScreen(
+            navController = navController,
+            onNavigateToHome = { navController.navigate(HomeDestination) }
         )
     }
 }

@@ -1,4 +1,4 @@
-package com.koren.home.di
+package com.koren.onboarding.di
 
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.database

@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.koren.home"
+    namespace = "com.koren.onboarding"
 }
 
 dependencies {
@@ -23,5 +23,4 @@ dependencies {
     implementation(libs.firebase.storage)
 
     implementation(libs.lottie.compose)
-
 }

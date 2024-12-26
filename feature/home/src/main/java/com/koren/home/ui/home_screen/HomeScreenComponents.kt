@@ -18,7 +18,7 @@ import com.koren.home.ui.HomeViewModel
 import kotlinx.serialization.Serializable
 
 @Serializable
-object HomeScreenDestination : Destination
+object HomeDestination : Destination
 
 @Composable
 fun HomeScreen(

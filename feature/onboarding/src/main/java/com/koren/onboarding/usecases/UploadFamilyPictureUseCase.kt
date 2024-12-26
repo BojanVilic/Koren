@@ -1,4 +1,4 @@
-package com.koren.home.usecases
+package com.koren.onboarding.usecases
 
 import android.net.Uri
 import com.google.firebase.storage.FirebaseStorage

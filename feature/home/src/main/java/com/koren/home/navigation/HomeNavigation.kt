@@ -5,10 +5,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.koren.common.util.Destination
-import com.koren.home.ui.create_family.CreateFamilyScreen
-import com.koren.home.ui.create_family.CreateFamilyScreenDestination
+import com.koren.home.ui.home_screen.HomeDestination
 import com.koren.home.ui.home_screen.HomeScreen
-import com.koren.home.ui.home_screen.HomeScreenDestination
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -19,16 +17,13 @@ fun NavGraphBuilder.homeScreen(
     logOut: () -> Unit,
 ) {
     navigation<HomeGraph>(
-        startDestination = HomeScreenDestination
+        startDestination = HomeDestination
     ) {
-        composable<HomeScreenDestination> {
+        composable<HomeDestination> {
             HomeScreen(
                 logOut = logOut,
-                createFamily = { navController.navigate(CreateFamilyScreenDestination) }
+                createFamily = {  }
             )
-        }
-        composable<CreateFamilyScreenDestination> {
-            CreateFamilyScreen()
         }
     }
 }

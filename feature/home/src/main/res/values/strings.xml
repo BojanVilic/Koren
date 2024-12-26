@@ -2,26 +2,4 @@
 <resources>
     <string name="welcome_back_label">Welcome back %1s!</string>
     <string name="latest_updates_label">Here are your the latest updates:</string>
-    <string name="create_family_label">Create a family</string>
-    <string name="add_image_title">Family photo time!</string>
-    <string name="add_image_subtitle">Add a photo to personalize your family profile.</string>
-    <string name="add_image_button_label">Add family portrait</string>
-    <string name="remove_image_button_label">Remove</string>
-    <string name="add_family_name_title">Give your family a name!</string>
-    <string name="add_family_name_subtitle">Add a name to personalize your family profile.</string>
-    <string name="family_name_label">Family name</string>
-    <string name="continue_label">Continue</string>
-    <string name="congrats_label">Congratulations!</string>
-    <string name="family_created_label">Your family has been created!</string>
-
-    <string name="building_family_tree">Building your family tree…</string>
-    <string name="gathering_together">Gathering everyone together…</string>
-    <string name="tying_family_bonds">Tying family bonds…</string>
-    <string name="setting_up_home">Setting up your new home…</string>
-    <string name="adding_splash_of_love">Adding a splash of love…</string>
-    <string name="getting_photos_ready">Getting the family photos ready…</string>
-    <string name="making_space_for_memories">Making space for your memories…</string>
-    <string name="loading_fun_times">Loading family fun times…</string>
-    <string name="unlocking_family_secrets">Unlocking family secrets…</string>
-    <string name="planting_family_roots">Planting your family roots…</string>
 </resources>

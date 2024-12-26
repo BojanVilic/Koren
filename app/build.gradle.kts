@@ -51,10 +51,11 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:designsystem"))
-    implementation(project(":core:common"))
-    implementation(project(":feature:auth"))
-    implementation(project(":feature:home"))
+    implementation(projects.core.designsystem)
+    implementation(projects.core.common)
+    implementation(projects.feature.auth)
+    implementation(projects.feature.home)
+    implementation(projects.feature.onboarding)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

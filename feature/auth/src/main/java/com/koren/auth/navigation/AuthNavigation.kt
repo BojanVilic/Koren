@@ -7,12 +7,12 @@ import com.koren.common.util.Destination
 import kotlinx.serialization.Serializable
 
 @Serializable
-object AuthScreenDestination : Destination
+object AuthDestination : Destination
 
 fun NavGraphBuilder.authScreen(
     onSignInSuccess: () -> Unit
 ) {
-    composable<AuthScreenDestination> {
+    composable<AuthDestination> {
         SignInScreen(
             onSignInSuccess = onSignInSuccess
         )
