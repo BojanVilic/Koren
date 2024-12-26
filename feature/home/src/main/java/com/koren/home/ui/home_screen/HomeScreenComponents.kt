@@ -9,7 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.koren.common.models.UserInfo
+import com.koren.common.models.UserData
 import com.koren.common.util.Destination
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
@@ -40,7 +40,7 @@ fun HomeScreen(
 private fun HomeContent(
     logOut: () -> Unit,
     createFamily: () -> Unit,
-    currentUser: UserInfo?
+    currentUser: UserData?
 ) {
     Column {
         Text(
@@ -69,7 +69,7 @@ fun HomePreview() {
         HomeContent(
             logOut = {},
             createFamily = {},
-            currentUser = UserInfo(
+            currentUser = UserData(
                 id = "",
                 displayName = "John Doe",
                 email = ""

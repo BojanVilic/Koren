@@ -65,4 +65,5 @@ dependencies {
 
     implementation(libs.timber)
     implementation(libs.kotlin.serialization)
+    implementation(libs.androidx.core.splashscreen)
 }

@@ -1,9 +1,9 @@
 package com.koren.common.services
 
-import com.koren.common.models.UserInfo
+import com.koren.common.models.UserData
 import kotlinx.coroutines.flow.Flow
 
 interface UserSession {
     val isLoggedIn: Boolean
-    val currentUser: Flow<UserInfo?>
+    val currentUser: Flow<UserData>
 }
