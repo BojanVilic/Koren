@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Koren</string>
     <string name="back">Back</string>
+
+    <string name="home_label">Home</string>
+    <string name="map_label">Map</string>
+    <string name="activity_label">Activity</string>
+    <string name="account_label">Account</string>
 </resources>

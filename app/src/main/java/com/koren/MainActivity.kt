@@ -24,6 +24,7 @@ import com.koren.auth.service.GoogleAuthService
 import com.koren.common.services.UserSession
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
+import com.koren.navigation.BottomNavigationBar
 import com.koren.navigation.KorenNavHost
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -70,6 +71,9 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         )
+                    },
+                    bottomBar = {
+                        if (scaffoldState.value.isBottomBarVisible) BottomNavigationBar(navController)
                     }
                 ) { innerPadding ->
                     KorenNavHost(

@@ -14,6 +14,7 @@ import com.koren.auth.service.GoogleAuthService
 import com.koren.home.navigation.HomeGraph
 import com.koren.home.navigation.homeScreen
 import com.koren.home.ui.home_screen.HomeDestination
+import com.koren.map.ui.mapScreen
 import com.koren.onboarding.navigation.OnboardingGraph
 import com.koren.onboarding.navigation.onboardingScreen
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +54,9 @@ fun KorenNavHost(
             onboardingScreen(
                 navController = navController,
                 onNavigateToHome = { navController.navigate(HomeDestination) }
+            )
+            mapScreen(
+                navController = navController
             )
         }
     }
