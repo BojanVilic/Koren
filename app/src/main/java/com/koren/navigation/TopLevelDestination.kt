@@ -3,16 +3,10 @@ package com.koren.navigation
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.koren.R
+import com.koren.account.ui.AccountDestination
+import com.koren.activity.ui.ActivityDestination
 import com.koren.home.ui.home_screen.HomeDestination
 import com.koren.map.ui.MapDestination
-import kotlinx.serialization.Serializable
-
-
-@Serializable
-data object ActivityGraph
-
-@Serializable
-data object AccountGraph
 
 data class TopLevelRoute<T : Any>(
     val route: T,
@@ -35,13 +29,13 @@ val topLevelRoutes = listOf(
         titleTextId = R.string.map_label
     ),
     TopLevelRoute(
-        route = ActivityGraph,
+        route = ActivityDestination,
         selectedIcon = R.drawable.activity_selected,
         unselectedIcon = R.drawable.activity_unselected,
         titleTextId = R.string.activity_label
     ),
     TopLevelRoute(
-        route = AccountGraph,
+        route = AccountDestination,
         selectedIcon = R.drawable.account_selected,
         unselectedIcon = R.drawable.account_unselected,
         titleTextId = R.string.account_label

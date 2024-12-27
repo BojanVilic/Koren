@@ -57,6 +57,8 @@ dependencies {
     implementation(projects.feature.home)
     implementation(projects.feature.onboarding)
     implementation(projects.feature.map)
+    implementation(projects.feature.activity)
+    implementation(projects.feature.account)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
