@@ -15,6 +15,7 @@ object HomeGraph : Destination
 fun NavGraphBuilder.homeScreen(
     navController: NavHostController,
     logOut: () -> Unit,
+    inviteFamilyMember: () -> Unit
 ) {
     navigation<HomeGraph>(
         startDestination = HomeDestination
@@ -22,7 +23,8 @@ fun NavGraphBuilder.homeScreen(
         composable<HomeDestination> {
             HomeScreen(
                 logOut = logOut,
-                createFamily = {  }
+                createFamily = {  },
+                inviteFamilyMember = inviteFamilyMember
             )
         }
     }

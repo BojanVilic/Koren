@@ -21,6 +21,7 @@ composeNavigation = "2.8.0"
 firebaseAuth = "23.0.0"
 googleServices = "4.4.2"
 playServicesAuth = "21.2.0"
+qrcodeKotlin = "4.1.1"
 timber = "5.0.1"
 kotlinSerializationPlugin = "1.7.10"
 kotlinSerializationLibrary = "1.2.2"
@@ -37,6 +38,7 @@ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-co
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" }
 lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottieCompose" }
+qrcode-kotlin = { module = "io.github.g0dkar:qrcode-kotlin", version.ref = "qrcodeKotlin" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerializationLibrary" }
 
@@ -78,5 +80,6 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 koren-compose-application = { id = "koren.compose.application", version = "unspecified" }
 koren-compose-library = { id = "koren.compose.library", version = "unspecified" }
 koren-hilt = { id = "koren.hilt", version = "unspecified" }
+koren-core = { id = "koren.core", version = "unspecified" }
 koren-feature = { id = "koren.feature", version = "unspecified" }
 android-library = { id = "com.android.library", version.ref = "agp" }

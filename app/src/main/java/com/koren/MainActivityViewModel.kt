@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
-    userSession: UserSession
+    private val userSession: UserSession
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MainActivityUiState>(MainActivityUiState.Loading)
@@ -37,6 +37,12 @@ class MainActivityViewModel @Inject constructor(
                     }
                 }
             }
+        }
+    }
+
+    fun onLoginSuccess() {
+        viewModelScope.launch(Dispatchers.IO) {
+            userSession.updateUserDataOnLogin()
         }
     }
 }

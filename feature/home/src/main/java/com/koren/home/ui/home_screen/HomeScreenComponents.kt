@@ -24,7 +24,8 @@ object HomeDestination : Destination
 fun HomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
     logOut: () -> Unit,
-    createFamily: () -> Unit
+    createFamily: () -> Unit,
+    inviteFamilyMember: () -> Unit
 ) {
 
     val currentUser by homeViewModel.currentUser.collectAsStateWithLifecycle()
@@ -32,7 +33,8 @@ fun HomeScreen(
     HomeContent(
         logOut = logOut,
         createFamily = createFamily,
-        currentUser = currentUser
+        currentUser = currentUser,
+        inviteFamilyMember = inviteFamilyMember
     )
 }
 
@@ -40,7 +42,8 @@ fun HomeScreen(
 private fun HomeContent(
     logOut: () -> Unit,
     createFamily: () -> Unit,
-    currentUser: UserData?
+    currentUser: UserData?,
+    inviteFamilyMember: () -> Unit
 ) {
     Column {
         Text(
@@ -59,6 +62,12 @@ private fun HomeContent(
         ) {
             Text("Create a family")
         }
+
+        Button(
+            onClick = { inviteFamilyMember() }
+        ) {
+            Text("Invite a family member")
+        }
     }
 }
 
@@ -73,7 +82,8 @@ fun HomePreview() {
                 id = "",
                 displayName = "John Doe",
                 email = ""
-            )
+            ),
+            inviteFamilyMember = {}
         )
     }
 }

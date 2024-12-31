@@ -16,6 +16,8 @@ import com.koren.auth.service.GoogleAuthService
 import com.koren.home.navigation.HomeGraph
 import com.koren.home.navigation.homeScreen
 import com.koren.home.ui.home_screen.HomeDestination
+import com.koren.invitation.navigation.invitationScreen
+import com.koren.invitation.ui.InvitationDestination
 import com.koren.map.ui.mapScreen
 import com.koren.onboarding.navigation.OnboardingGraph
 import com.koren.onboarding.navigation.onboardingScreen
@@ -34,7 +36,7 @@ fun KorenNavHost(
 
     val startDestination = when {
         uiState.value is MainActivityUiState.LoggedOut -> AuthDestination
-        uiState.value is MainActivityUiState.Success && (uiState.value as MainActivityUiState.Success).userData.hasFamily -> HomeGraph
+        uiState.value is MainActivityUiState.Success && (uiState.value as MainActivityUiState.Success).userData.familyId.isNotEmpty() -> HomeGraph
         else -> OnboardingGraph
     }
 
@@ -44,13 +46,21 @@ fun KorenNavHost(
             navController = navController,
             startDestination = startDestination
         ) {
-            authScreen(onSignInSuccess = { navController.navigate(OnboardingGraph) })
+            authScreen(
+                onSignInSuccess = {
+                    mainActivityViewModel.onLoginSuccess()
+                    navController.navigate(OnboardingGraph)
+                },
+            )
             homeScreen(
                 navController = navController,
                 logOut = {
                     coroutineScope.launch(Dispatchers.IO) {
                         googleAuthService.signOut()
                     }
+                },
+                inviteFamilyMember = {
+                    navController.navigate(InvitationDestination)
                 }
             )
             onboardingScreen(
@@ -60,6 +70,7 @@ fun KorenNavHost(
             mapScreen(navController = navController)
             activityScreen(navController = navController)
             accountScreen(navController = navController)
+            invitationScreen(navController = navController)
         }
     }
 }

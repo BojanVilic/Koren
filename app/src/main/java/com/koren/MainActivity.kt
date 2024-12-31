@@ -1,6 +1,8 @@
 package com.koren
 
+import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -27,6 +29,8 @@ import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.navigation.BottomNavigationBar
 import com.koren.navigation.KorenNavHost
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
+import java.net.URLDecoder
 import javax.inject.Inject
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,12 +45,42 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainActivityViewModel by viewModels()
 
+
+    private fun handleInvitation(familyId: String, invitationCode: String) {
+        Timber.d("Family ID: $familyId, Invitation Code: $invitationCode")
+    }
+
+    private fun showError(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         splashScreen.setKeepOnScreenCondition { viewModel.uiState.value.shouldKeepSplashScreen() }
+
+        val data: Uri? = intent?.data
+        val encodedQuery = data?.query // Get the raw query string (encoded)
+
+// Decode the query string (if not null)
+        val decodedQuery = encodedQuery?.let { URLDecoder.decode(it, "UTF-8") }
+
+        if (decodedQuery != null) {
+            val familyId = Uri.parse("?$decodedQuery").getQueryParameter("familyId")
+            val invitationCode = Uri.parse("?$decodedQuery").getQueryParameter("invCode")
+
+            println("Family ID: $familyId")
+            println("Invitation Code: $invitationCode")
+
+            if (familyId != null && invitationCode != null) {
+                handleInvitation(familyId, invitationCode)
+            } else {
+                showError("Invalid invitation link")
+            }
+        }
+
 
         setContent {
             KorenTheme {

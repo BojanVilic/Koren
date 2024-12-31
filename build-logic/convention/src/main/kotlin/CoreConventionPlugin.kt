@@ -22,10 +22,8 @@ class CoreConventionPlugin : Plugin<Project> {
             }
 
             dependencies {
-                add("implementation", libs.findLibrary("androidx-ktx").get())
-                add("implementation", libs.findLibrary("androidx-lifecycle").get())
-                add("implementation", libs.findLibrary("kotlinx-coroutines-android").get())
-                add("implementation", libs.findLibrary("appcompat").get())
+                add("implementation", libs.findLibrary("androidx-core-ktx").get())
+                add("implementation", libs.findLibrary("androidx-lifecycle-runtime-ktx").get())
                 add("testImplementation", libs.findLibrary("junit").get())
                 add("androidTestImplementation", libs.findLibrary("androidx-junit").get())
                 add("androidTestImplementation", libs.findLibrary("androidx-espresso-core").get())
