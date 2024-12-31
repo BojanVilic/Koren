@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.koren.auth.R
 import com.koren.designsystem.theme.KorenTheme
+import com.koren.designsystem.theme.LocalScaffoldStateProvider
+import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import kotlinx.coroutines.launch
 
@@ -46,8 +48,15 @@ fun SignInScreen(
     authViewModel: AuthViewModel = hiltViewModel(),
     onSignInSuccess: () -> Unit
 ) {
-    val scope = rememberCoroutineScope()
 
+    LocalScaffoldStateProvider.current.setScaffoldState(
+        state = ScaffoldState(
+            isTopBarVisible = false,
+            isBottomBarVisible = false
+        )
+    )
+
+    val scope = rememberCoroutineScope()
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult(),
         onResult = { result ->
