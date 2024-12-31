@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_qr_code">Share QR code</string>
+    <string name="invite_via_email">Invite via email</string>
+    <string name="expiration_info_label">Invitations expire after 48 hours.</string>
+    <string name="invite_screen_title">Invite your family members</string>
+</resources>

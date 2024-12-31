@@ -4,18 +4,32 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
@@ -23,7 +37,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.common.util.Destination
 import com.koren.designsystem.theme.KorenTheme
+import com.koren.designsystem.theme.LocalScaffoldStateProvider
+import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
+import com.koren.invitation.R
 import kotlinx.serialization.Serializable
 import qrcode.QRCode
 import qrcode.color.Colors
@@ -35,6 +52,12 @@ object InvitationDestination : Destination
 fun InvitationScreen(
     invitationViewModel: InvitationViewModel = hiltViewModel(),
 ) {
+    LocalScaffoldStateProvider.current.setScaffoldState(
+        state = ScaffoldState(
+            title = stringResource(R.string.invite_screen_title),
+            isBottomBarVisible = false
+        )
+    )
 
     val invitationUiState by invitationViewModel.state.collectAsStateWithLifecycle()
 
@@ -59,10 +82,66 @@ private fun InvitationContent(
 private fun IdleState(
     invitationUiState: InvitationUiState.Idle
 ) {
-    Button(
-        onClick = { invitationUiState.eventSink(InvitationEvent.CreateInvitation) }
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Create Invitation")
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Button(
+                    modifier = Modifier
+                        .padding(vertical = 8.dp)
+                        .fillMaxWidth(0.7f),
+                    onClick = { invitationUiState.eventSink(InvitationEvent.CreateInvitation) }
+                ) {
+                    Icon(
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                        painter = painterResource(id = R.drawable.qr_code),
+                        contentDescription = stringResource(id = R.string.share_qr_code)
+                    )
+                    Text(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        text = stringResource(id = R.string.share_qr_code),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .padding(vertical = 8.dp)
+                        .fillMaxWidth(0.7f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(text = stringResource(id = R.string.invite_via_email))
+                    Icon(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = stringResource(id = R.string.invite_via_email)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Text(
+            modifier = Modifier.padding(bottom = 16.dp),
+            text = stringResource(id = R.string.expiration_info_label),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+        )
     }
 }
 
