@@ -85,7 +85,7 @@ private fun InvitationContent(
     invitationUiState: InvitationUiState
 ) {
     when (invitationUiState) {
-        is InvitationUiState.Error -> Text("There was an error creating the invitation.")
+        is InvitationUiState.Error -> Text(invitationUiState.message)
         is InvitationUiState.Idle -> IdleState(invitationUiState)
     }
 }
@@ -110,7 +110,7 @@ private fun IdleState(
                     invitationUiState.eventSink(InvitationEvent.CreateQRInvitation)
             },
             expandedContent = {
-                if (invitationUiState.loading) {
+                if (invitationUiState.qrInvitationLoading) {
                     LoadingSpinner()
                 } else {
                     invitationUiState.qrInvitation?.let { qrInvitation ->
@@ -132,28 +132,13 @@ private fun IdleState(
                 invitationUiState.eventSink(InvitationEvent.EmailInviteClick)
             },
             expandedContent = {
-                if (invitationUiState.loading) {
+                if (invitationUiState.emailInvitationLoading) {
                     LoadingSpinner()
                 } else {
                     EmailExpandedContent(invitationUiState = invitationUiState)
                 }
             }
         )
-
-        Row(
-            modifier = Modifier
-                .padding(vertical = 8.dp)
-                .fillMaxWidth(0.7f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(text = stringResource(id = R.string.invite_via_email))
-            Icon(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = stringResource(id = R.string.invite_via_email)
-            )
-        }
 
         Spacer(modifier = Modifier.weight(1f))
 

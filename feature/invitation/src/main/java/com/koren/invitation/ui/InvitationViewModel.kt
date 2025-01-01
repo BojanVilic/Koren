@@ -34,14 +34,14 @@ class InvitationViewModel @Inject constructor(
 
     private fun inviteViaEmail(currentState: InvitationUiState.Idle) {
         viewModelScope.launch {
-            _state.update { currentState.copy(loading = true) }
-//            invitationRepository.inviteViaEmail(currentState.emailInviteText)
-//                .onSuccess { result ->
-//                    _state.update { InvitationUiState.EmailInvitationCreated(result) }
-//                }
-//                .onFailure {
-//                    _state.update { InvitationUiState.Error }
-//                }
+            _state.update { currentState.copy(emailInvitationLoading = true) }
+            invitationRepository.createInvitationViaEmail(currentState.emailInviteText)
+                .onSuccess { result ->
+                    _state.update { currentState.copy(emailInvitation = result, emailInvitationLoading = false) }
+                }
+                .onFailure { error ->
+                    _state.update { InvitationUiState.Error(error.message?: "Unknown error") }
+                }
         }
     }
 
@@ -58,13 +58,13 @@ class InvitationViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            _state.update { currentState.copy(loading = true, isCreateQRInvitationExpanded = true) }
+            _state.update { currentState.copy(qrInvitationLoading = true, isCreateQRInvitationExpanded = true) }
             invitationRepository.createInvitation()
                 .onSuccess { result ->
-                    _state.update { currentState.copy(qrInvitation = result, isCreateQRInvitationExpanded = true, loading = false) }
+                    _state.update { currentState.copy(qrInvitation = result, isCreateQRInvitationExpanded = true, qrInvitationLoading = false) }
                 }
-                .onFailure {
-                    _state.update { InvitationUiState.Error }
+                .onFailure { error ->
+                    _state.update { InvitationUiState.Error(error.message?: "Unknown error") }
                 }
         }
     }
