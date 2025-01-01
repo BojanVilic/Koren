@@ -3,16 +3,23 @@ package com.koren.invitation.ui
 import com.koren.common.models.InvitationResult
 
 sealed interface InvitationUiState {
-    data class InvitationCreated(
-        val invitationResult: InvitationResult
-    ) : InvitationUiState
     data object Error : InvitationUiState
-    data object Loading : InvitationUiState
     data class Idle(
-        val eventSink: (InvitationEvent) -> Unit
+        val isCreateQRInvitationExpanded: Boolean = false,
+        val emailInviteText: String = "",
+        val isEmailInviteButtonEnabled: Boolean = false,
+        val isEmailInviteExpanded: Boolean = false,
+        val eventSink: (InvitationEvent) -> Unit,
+        val qrInvitation: InvitationResult? = null,
+        val emailInvitation: InvitationResult? = null,
+        val loading: Boolean = false
     ) : InvitationUiState
 }
 
 sealed interface InvitationEvent {
-    data object CreateInvitation : InvitationEvent
+    data object CreateQRInvitation : InvitationEvent
+    data object CollapseCreateQRInvitation : InvitationEvent
+    data object InviteViaEmailClick : InvitationEvent
+    data class EmailInviteTextChange(val email: String) : InvitationEvent
+    data object EmailInviteClick : InvitationEvent
 }

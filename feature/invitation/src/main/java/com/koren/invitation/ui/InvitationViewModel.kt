@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.koren.data.repository.InvitationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,10 +21,27 @@ class InvitationViewModel @Inject constructor(
     val state: StateFlow<InvitationUiState> = _state.asStateFlow()
 
     private fun handleEvent(event: InvitationEvent) {
-        withIdleStep {
+        withIdleStep { currentState ->
             when (event) {
-                is InvitationEvent.CreateInvitation -> createInvitation()
+                is InvitationEvent.CreateQRInvitation -> createInvitation(currentState)
+                is InvitationEvent.CollapseCreateQRInvitation -> _state.update { currentState.copy(isCreateQRInvitationExpanded = false) }
+                is InvitationEvent.EmailInviteClick -> _state.update { currentState.copy(isEmailInviteExpanded = !currentState.isEmailInviteExpanded) }
+                is InvitationEvent.EmailInviteTextChange -> _state.update { currentState.copy(emailInviteText = event.email) }
+                is InvitationEvent.InviteViaEmailClick -> inviteViaEmail(currentState)
             }
+        }
+    }
+
+    private fun inviteViaEmail(currentState: InvitationUiState.Idle) {
+        viewModelScope.launch {
+            _state.update { currentState.copy(loading = true) }
+//            invitationRepository.inviteViaEmail(currentState.emailInviteText)
+//                .onSuccess { result ->
+//                    _state.update { InvitationUiState.EmailInvitationCreated(result) }
+//                }
+//                .onFailure {
+//                    _state.update { InvitationUiState.Error }
+//                }
         }
     }
 
@@ -34,12 +52,16 @@ class InvitationViewModel @Inject constructor(
         }
     }
 
-    private fun createInvitation() {
+    private fun createInvitation(currentState: InvitationUiState.Idle) {
+        if (currentState.qrInvitation != null) {
+            _state.update { currentState.copy(isCreateQRInvitationExpanded = !currentState.isCreateQRInvitationExpanded) }
+            return
+        }
         viewModelScope.launch {
-            _state.value = InvitationUiState.Loading
+            _state.update { currentState.copy(loading = true, isCreateQRInvitationExpanded = true) }
             invitationRepository.createInvitation()
                 .onSuccess { result ->
-                    _state.update { InvitationUiState.InvitationCreated(result) }
+                    _state.update { currentState.copy(qrInvitation = result, isCreateQRInvitationExpanded = true, loading = false) }
                 }
                 .onFailure {
                     _state.update { InvitationUiState.Error }
