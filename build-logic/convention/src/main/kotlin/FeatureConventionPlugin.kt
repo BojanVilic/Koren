@@ -1,6 +1,6 @@
 
 import com.android.build.gradle.LibraryExtension
-import com.bojanvilic.koren.configureKotlinAndroid
+import com.bojanvilic.koren.configureFeatureModule
 import com.bojanvilic.koren.libs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -21,8 +21,9 @@ class FeatureConventionPlugin : Plugin<Project> {
             }
 
             extensions.configure<LibraryExtension> {
-                configureKotlinAndroid(this)
-                defaultConfig.targetSdk = 35
+                configureFeatureModule(this) { targetVersion ->
+                    defaultConfig.targetSdk = targetVersion
+                }
             }
 
             dependencies {
