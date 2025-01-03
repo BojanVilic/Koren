@@ -11,7 +11,9 @@
     <string name="invite_via_email_hint">Email address</string>
     <string name="invite_via_email_button">Invite</string>
     <string name="invite_via_email_title">Invite via email</string>
+    <string name="label_email_address">"Email Address"</string>
+    <string name="label_invite">Invite</string>
+    <string name="invitation_sent_to">Invitation sent to:</string>
+    <string name="invitation_code_instruction">When accepting the invitation on the other device, the user will be asked to enter the following code:</string>
 
-
-    <string name="multiple_placeholders">This %s has multiple %s placeholders</string>
 </resources>

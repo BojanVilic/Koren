@@ -1,21 +1,20 @@
 package com.koren.data.repository
 
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
 import com.google.firebase.database.ktx.database
+import com.google.firebase.database.values
 import com.google.firebase.ktx.Firebase
 import com.koren.common.models.Invitation
 import com.koren.common.models.InvitationResult
 import com.koren.common.models.InvitationStatus
 import com.koren.common.services.UserSession
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -92,28 +91,20 @@ class DefaultInvitationRepository @Inject constructor(
         TODO("Not yet implemented")
     }
 
-    override fun getPendingInvitations(): Flow<List<Invitation>> = callbackFlow {
-        val userId = userSession.currentUser.first().email
-        val query = database
+    override fun getPendingInvitations(): Flow<List<Invitation>> = flow {
+        val email = userSession.currentUser.first().email
+        val pendingInvitations = database
             .child("invitations")
             .orderByChild("recipientEmail")
-            .equalTo(userId)
-
-        val listener = query.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val invitations = snapshot.children.mapNotNull { dataSnapshot ->
-                    dataSnapshot.getValue<Invitation>()
-                }
-                trySend(invitations.filter { it.status == InvitationStatus.PENDING }).isSuccess
+            .equalTo(email)
+            .values<List<Invitation>>()
+            .mapNotNull { invitations ->
+                invitations?.filter { it.status == InvitationStatus.PENDING }
             }
+            .flowOn(Dispatchers.IO)
 
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        })
-
-        awaitClose { query.removeEventListener(listener) }
-    }.flowOn(Dispatchers.IO)
+        emitAll(pendingInvitations)
+    }
 
     override suspend fun createInvitationViaEmail(email: String): Result<InvitationResult> {
         val query = database
@@ -123,13 +114,15 @@ class DefaultInvitationRepository @Inject constructor(
             .get()
             .await()
 
+        val userData = userSession.currentUser.first()
+
         if (query.hasChildren().not()) return Result.failure(Exception("User with email $email does not exist."))
+        if (userData.email == email) return Result.failure(Exception("You cannot invite yourself, you silly goose!"))
 
         val invitationId = UUID.randomUUID().toString()
         val invitationCode = UUID.randomUUID().toString().substring(0, 6).uppercase()
         val creationDate = System.currentTimeMillis()
         val expirationDate = creationDate + 1.days.inWholeMilliseconds
-        val userData = userSession.currentUser.first()
 
         val invitation = Invitation(
             id = invitationId,

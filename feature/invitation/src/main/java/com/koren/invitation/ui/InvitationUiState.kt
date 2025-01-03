@@ -6,7 +6,6 @@ data class InvitationUiState(
     val familyName: String = "",
     val isCreateQRInvitationExpanded: Boolean = false,
     val emailInviteText: String = "",
-    val isEmailInviteButtonEnabled: Boolean = false,
     val isEmailInviteExpanded: Boolean = false,
     val qrInvitation: InvitationResult? = null,
     val emailInvitation: InvitationResult? = null,
@@ -14,7 +13,10 @@ data class InvitationUiState(
     val qrInvitationLoading: Boolean = false,
     val errorMessage: String = "",
     val eventSink: (InvitationEvent) -> Unit
-)
+) {
+    val isEmailInviteButtonEnabled: Boolean
+        get() = emailInviteText.isNotBlank()
+}
 
 sealed interface InvitationEvent {
     data object CreateQRInvitation : InvitationEvent

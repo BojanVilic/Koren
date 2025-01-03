@@ -8,6 +8,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
@@ -16,7 +17,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
@@ -88,7 +92,9 @@ private fun InvitationContent(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         InvitationChoiceCard(
@@ -125,10 +131,10 @@ private fun InvitationContent(
                 invitationUiState.eventSink(InvitationEvent.EmailInviteClick)
             },
             expandedContent = {
-                if (invitationUiState.emailInvitationLoading) {
-                    LoadingSpinner()
-                } else {
-                    EmailExpandedContent(invitationUiState = invitationUiState)
+                when {
+                    invitationUiState.emailInvitationLoading -> LoadingSpinner()
+                    invitationUiState.emailInvitation == null -> EmailExpandedContent(invitationUiState = invitationUiState)
+                    else -> EmailInviteSentContent(invitationUiState = invitationUiState)
                 }
             }
         )
@@ -164,6 +170,68 @@ private fun LoadingSpinner() {
 }
 
 @Composable
+fun EmailInviteSentContent(
+    invitationUiState: InvitationUiState
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.invitation_sent_to),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Text(
+                    modifier = Modifier
+                        .border(width = 1.dp, color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(4.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    text = invitationUiState.emailInviteText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            if (invitationUiState.emailInvitation != null) {
+                Text(
+                    modifier = Modifier.padding(top = 16.dp),
+                    text = stringResource(R.string.invitation_code_instruction),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                val invitationCode = invitationUiState.emailInvitation.invitationCode
+                val firstPart = invitationCode.substring(startIndex = 0, endIndex = invitationCode.length / 2)
+                val secondPart = invitationCode.substring(startIndex = invitationCode.length / 2)
+
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    text = "$firstPart $secondPart",
+                    style = MaterialTheme.typography.displayMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun EmailExpandedContent(
     invitationUiState: InvitationUiState
 ) {
@@ -186,7 +254,7 @@ private fun EmailExpandedContent(
                         .padding(horizontal = 16.dp),
                     value = invitationUiState.emailInviteText,
                     onValueChange = { invitationUiState.eventSink(InvitationEvent.EmailInviteTextChange(it)) },
-                    label = { Text(text = "Email Address") },
+                    label = { Text(text = stringResource(R.string.label_email_address)) },
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -196,9 +264,9 @@ private fun EmailExpandedContent(
                 Button(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     onClick = { invitationUiState.eventSink(InvitationEvent.InviteViaEmailClick) },
-                    enabled = true
+                    enabled = invitationUiState.isEmailInviteButtonEnabled
                 ) {
-                    Text(text = "Invite")
+                    Text(text = stringResource(R.string.label_invite))
                 }
             }
 
@@ -363,8 +431,12 @@ fun InvitationPreview() {
                 familyName = "Family Name",
                 isCreateQRInvitationExpanded = true,
                 isEmailInviteExpanded = true,
+                emailInviteText = "johndoe@gmail.com",
                 qrInvitation = InvitationResult(
                     invitationLink = "koren://join?familyId%3D8bcfed49-f9d2-42a5-95e1-aa20fb4cbb5e%26invCode%3D2F57D9"
+                ),
+                emailInvitation = InvitationResult(
+                    invitationCode = "2F57D9"
                 ),
                 eventSink = {}
             )
