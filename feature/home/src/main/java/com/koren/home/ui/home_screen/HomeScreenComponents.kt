@@ -19,7 +19,10 @@ import com.koren.common.models.Invitation
 import com.koren.common.models.UserData
 import com.koren.common.models.toHumanReadableDateTime
 import com.koren.common.util.Destination
+import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.theme.KorenTheme
+import com.koren.designsystem.theme.LocalScaffoldStateProvider
+import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.home.R
 import com.koren.home.ui.HomeViewModel
@@ -36,12 +39,15 @@ fun HomeScreen(
     inviteFamilyMember: () -> Unit
 ) {
 
-    val currentUser by homeViewModel.currentUser.collectAsStateWithLifecycle()
+    val scaffoldStateProvider = LocalScaffoldStateProvider.current
+
+    DisposableEffectWithLifecycle(
+        onStart = { scaffoldStateProvider.setScaffoldState(ScaffoldState(isTopBarVisible = false)) }
+    )
 
     HomeContent(
         logOut = logOut,
         createFamily = createFamily,
-        currentUser = currentUser,
         inviteFamilyMember = inviteFamilyMember,
         invitations = homeViewModel.invitations,
         acceptInvitation = homeViewModel::acceptInvitation,
@@ -53,18 +59,12 @@ fun HomeScreen(
 private fun HomeContent(
     logOut: () -> Unit,
     createFamily: () -> Unit,
-    currentUser: UserData?,
     inviteFamilyMember: () -> Unit,
     invitations: List<Invitation>,
     acceptInvitation: (Invitation) -> Unit,
     declineInvitation: (String) -> Unit
 ) {
     Column {
-        Text(
-            text = stringResource(R.string.welcome_back_label, currentUser?.displayName?: ""),
-            style = MaterialTheme.typography.labelLarge
-        )
-
         Button(
             onClick = logOut
         ) {
@@ -132,11 +132,6 @@ fun HomePreview() {
         HomeContent(
             logOut = {},
             createFamily = {},
-            currentUser = UserData(
-                id = "",
-                displayName = "John Doe",
-                email = ""
-            ),
             inviteFamilyMember = {},
             invitations = emptyList(),
             acceptInvitation = {},

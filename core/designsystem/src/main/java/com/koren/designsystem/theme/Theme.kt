@@ -4,10 +4,13 @@ import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
 
 
@@ -86,8 +89,11 @@ fun KorenTheme(
         else -> LightColors
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
     CompositionLocalProvider(
-        LocalScaffoldStateProvider provides ScaffoldStateProvider()
+        LocalScaffoldStateProvider provides ScaffoldStateProvider(),
+        LocalSnackbarHostState provides snackbarHostState
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
@@ -95,6 +101,10 @@ fun KorenTheme(
             content = content
         )
     }
+}
+
+val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState> {
+    error("No SnackbarHostState provided")
 }
 
 @Preview(name = "Dark Mode", showBackground = true, backgroundColor = 0xFF1B1B1F, uiMode = UI_MODE_NIGHT_YES)

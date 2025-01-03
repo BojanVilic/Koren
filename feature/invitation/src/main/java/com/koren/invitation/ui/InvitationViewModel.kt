@@ -1,10 +1,10 @@
+
 package com.koren.invitation.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.koren.data.repository.InvitationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,7 +40,7 @@ class InvitationViewModel @Inject constructor(
                     _state.update { currentState.copy(emailInvitation = result, emailInvitationLoading = false) }
                 }
                 .onFailure { error ->
-                    _state.update { InvitationUiState.Error(error.message?: "Unknown error") }
+                    _state.update { currentState.copy(errorMessage = error.message?: "Unknown error") }
                 }
         }
     }
@@ -64,7 +64,7 @@ class InvitationViewModel @Inject constructor(
                     _state.update { currentState.copy(qrInvitation = result, isCreateQRInvitationExpanded = true, qrInvitationLoading = false) }
                 }
                 .onFailure { error ->
-                    _state.update { InvitationUiState.Error(error.message?: "Unknown error") }
+                    _state.update { currentState.copy(errorMessage = error.message ?: "Unknown error") }
                 }
         }
     }

@@ -3,7 +3,6 @@ package com.koren.invitation.ui
 import com.koren.common.models.InvitationResult
 
 sealed interface InvitationUiState {
-    data class Error(val message: String) : InvitationUiState
     data class Idle(
         val isCreateQRInvitationExpanded: Boolean = false,
         val emailInviteText: String = "",
@@ -13,6 +12,7 @@ sealed interface InvitationUiState {
         val emailInvitation: InvitationResult? = null,
         val emailInvitationLoading: Boolean = false,
         val qrInvitationLoading: Boolean = false,
+        val errorMessage: String = "",
         val eventSink: (InvitationEvent) -> Unit
     ) : InvitationUiState
 }

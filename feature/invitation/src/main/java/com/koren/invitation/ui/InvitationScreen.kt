@@ -1,6 +1,5 @@
 package com.koren.invitation.ui
 
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.annotation.DrawableRes
@@ -11,7 +10,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,17 +37,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.common.util.Destination
+import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -85,7 +82,6 @@ private fun InvitationContent(
     invitationUiState: InvitationUiState
 ) {
     when (invitationUiState) {
-        is InvitationUiState.Error -> Text(invitationUiState.message)
         is InvitationUiState.Idle -> IdleState(invitationUiState)
     }
 }
@@ -94,6 +90,11 @@ private fun InvitationContent(
 private fun IdleState(
     invitationUiState: InvitationUiState.Idle
 ) {
+
+    if (invitationUiState.errorMessage.isNotEmpty()) {
+        SimpleSnackbar(message = invitationUiState.errorMessage)
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally

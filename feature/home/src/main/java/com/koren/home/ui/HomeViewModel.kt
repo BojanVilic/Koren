@@ -29,8 +29,6 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            Timber.d("PROBAVANJE: ${userSession.currentUser.first().id}")
-
             invitationRepository.getPendingInvitations().collect {
                 invitations = it
             }
