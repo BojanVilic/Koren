@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface InvitationRepository {
     suspend fun createInvitation(): Result<InvitationResult>
-    suspend fun acceptInvitation(invitation: Invitation)
-    suspend fun declineInvitation(invitationCode: String)
-    fun getPendingInvitations(): Flow<List<Invitation>>
+    suspend fun acceptInvitation(invitation: Invitation, typedCode: String): Result<Unit>
+    suspend fun declineInvitation(id: String)
+    fun getAllInvitations(): Flow<List<Invitation>>
     suspend fun createInvitationViaEmail(email: String): Result<InvitationResult>
 }

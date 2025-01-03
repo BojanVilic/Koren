@@ -44,9 +44,6 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     @Inject
-    lateinit var googleAuthService: GoogleAuthService
-
-    @Inject
     lateinit var userSession: UserSession
 
     private val viewModel: MainActivityViewModel by viewModels()
@@ -128,7 +125,6 @@ class MainActivity : ComponentActivity() {
                     KorenNavHost(
                         modifier = Modifier.padding(innerPadding),
                         navController = navController,
-                        googleAuthService = googleAuthService,
                         mainActivityViewModel = viewModel
                     )
                 }

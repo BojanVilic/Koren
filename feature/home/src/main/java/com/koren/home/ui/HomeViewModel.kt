@@ -1,56 +1,84 @@
 package com.koren.home.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.koren.common.models.Invitation
-import com.koren.common.models.InvitationResult
-import com.koren.common.services.UserSession
+import com.koren.common.models.InvitationStatus
 import com.koren.data.repository.InvitationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    userSession: UserSession,
     private val invitationRepository: InvitationRepository
 ): ViewModel() {
 
-    var invitations by mutableStateOf(emptyList<Invitation>())
-        private set
+    private val _state = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
+    val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            invitationRepository.getPendingInvitations().collect {
-                invitations = it
+            invitationRepository.getAllInvitations().collect { invitations ->
+                val pendingInvitations = invitations.filter { it.status == InvitationStatus.PENDING }
+                val acceptedInvitations = invitations.filter { it.status == InvitationStatus.ACCEPTED }
+
+                _state.update { currentState ->
+
+                    if (currentState is HomeUiState.Shown)
+                        currentState.copy(
+                            pendingInvitations = pendingInvitations,
+                            acceptedInvitations = acceptedInvitations
+                        )
+                    else
+                        HomeUiState.Shown(
+                            pendingInvitations = pendingInvitations,
+                            acceptedInvitations = acceptedInvitations,
+                            eventSink = ::handleEvent
+                        )
+                }
             }
         }
     }
 
-    val currentUser = userSession.currentUser
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = null
-        )
-
-    fun acceptInvitation(invitation: Invitation) {
-        viewModelScope.launch(Dispatchers.IO) {
-            invitationRepository.acceptInvitation(invitation)
+    private fun handleEvent(event: HomeEvent) {
+        withShownState { current ->
+            when (event) {
+                is HomeEvent.AcceptInvitation -> acceptInvitation(event.invitation, event.typedCode, current)
+                is HomeEvent.DeclineInvitation -> declineInvitation(event.id)
+                is HomeEvent.InvitationCodeChanged -> _state.update { current.copy(invitationCodeText = event.code, invitationCodeError = "") }
+            }
         }
     }
 
-    fun declineInvitation(invitationCode: String) {
+    private fun acceptInvitation(
+        invitation: Invitation,
+        typedCode: String,
+        current: HomeUiState.Shown
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
-            invitationRepository.declineInvitation(invitationCode)
+            val result = invitationRepository.acceptInvitation(invitation, typedCode)
+            if (result.isFailure) {
+                _state.update { current.copy(invitationCodeError = result.exceptionOrNull()?.message ?: "") }
+            }
+        }
+    }
+
+    private fun declineInvitation(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            invitationRepository.declineInvitation(id)
+        }
+    }
+
+    private inline fun withShownState(action: (HomeUiState.Shown) -> Unit) {
+        val currentState = _state.value
+        if (currentState is HomeUiState.Shown) {
+            action(currentState)
         }
     }
 }

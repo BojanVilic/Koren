@@ -12,6 +12,8 @@ fun SimpleSnackbar(
     snackbarType: SnackbarType = SnackbarType.Message,
     duration: SnackbarDuration = SnackbarDuration.Short
 ) {
+    if (message.isEmpty()) return
+
     when (snackbarType) {
         is SnackbarType.Message -> Message(message, duration)
         is SnackbarType.MessageWithDismiss -> MessageWithDismiss(message, duration)

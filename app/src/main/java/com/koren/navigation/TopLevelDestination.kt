@@ -5,7 +5,7 @@ import androidx.annotation.StringRes
 import com.koren.R
 import com.koren.account.ui.AccountDestination
 import com.koren.activity.ui.ActivityDestination
-import com.koren.home.ui.home_screen.HomeDestination
+import com.koren.home.ui.HomeDestination
 import com.koren.map.ui.MapDestination
 
 data class TopLevelRoute<T : Any>(

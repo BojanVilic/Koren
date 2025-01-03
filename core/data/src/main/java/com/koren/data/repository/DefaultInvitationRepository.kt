@@ -1,20 +1,21 @@
 package com.koren.data.repository
 
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
 import com.google.firebase.database.ktx.database
-import com.google.firebase.database.values
 import com.google.firebase.ktx.Firebase
 import com.koren.common.models.Invitation
 import com.koren.common.models.InvitationResult
 import com.koren.common.models.InvitationStatus
 import com.koren.common.services.UserSession
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -38,6 +39,8 @@ class DefaultInvitationRepository @Inject constructor(
         val invitationLink = withContext(Dispatchers.IO) {
             "koren://join?${URLEncoder.encode("familyId=${userData.familyId}&invCode=$invitationCode", "UTF-8")}"
         }
+        val familyName = database.child("families/${userData.familyId}/name").get().await().getValue<String>()
+
 
         val invitation = Invitation(
             id = invitationId,
@@ -47,7 +50,9 @@ class DefaultInvitationRepository @Inject constructor(
             invitationCode = invitationCode,
             status = InvitationStatus.PENDING,
             expirationDate = expirationDate,
-            createdAt = creationDate
+            createdAt = creationDate,
+            familyName = familyName?: "",
+            senderName = userData.displayName
         )
 
         try {
@@ -70,41 +75,56 @@ class DefaultInvitationRepository @Inject constructor(
         }
     }
 
-    override suspend fun acceptInvitation(invitation: Invitation) {
-        val members = database.child("families/${invitation.familyId}")
-            .child("members")
-            .get()
-            .await()
-            .getValue<List<String>>()
+    override suspend fun acceptInvitation(invitation: Invitation, typedCode: String): Result<Unit> {
+        try {
+            if (invitation.invitationCode != typedCode) return Result.failure(Exception("Invalid invitation code"))
 
-        val userId = userSession.currentUser.first().id
+            val members = database.child("families/${invitation.familyId}")
+                .child("members")
+                .get()
+                .await()
+                .getValue<List<String>>()
 
-        database.child("families/${invitation.familyId}/members")
-            .setValue(members?.plus(userId))
-            .await()
-        database.child("users/$userId").child("familyId").setValue(invitation.familyId).await()
+            val userId = userSession.currentUser.first().id
 
-        database.child("invitations/${invitation.id}/status").setValue(InvitationStatus.ACCEPTED).await()
+            database.child("families/${invitation.familyId}/members")
+                .setValue(members?.plus(userId))
+                .await()
+            database.child("users/$userId").child("familyId").setValue(invitation.familyId).await()
+            database.child("invitations/${invitation.id}/status").setValue(InvitationStatus.ACCEPTED).await()
+            return Result.success(Unit)
+        } catch (e: Exception) {
+            Timber.e("Failed to accept invitation: ${e.message}")
+            return Result.failure(e)
+        }
     }
 
-    override suspend fun declineInvitation(invitationCode: String) {
-        TODO("Not yet implemented")
+    override suspend fun declineInvitation(id: String) {
+        database.child("invitations/$id/status").setValue(InvitationStatus.DECLINED).await()
     }
 
-    override fun getPendingInvitations(): Flow<List<Invitation>> = flow {
+    override fun getAllInvitations(): Flow<List<Invitation>> = callbackFlow {
         val email = userSession.currentUser.first().email
-        val pendingInvitations = database
+        val query = database
             .child("invitations")
             .orderByChild("recipientEmail")
             .equalTo(email)
-            .values<List<Invitation>>()
-            .mapNotNull { invitations ->
-                invitations?.filter { it.status == InvitationStatus.PENDING }
-            }
-            .flowOn(Dispatchers.IO)
 
-        emitAll(pendingInvitations)
-    }
+        val listener = query.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val invitations = snapshot.children.mapNotNull { dataSnapshot ->
+                    dataSnapshot.getValue<Invitation>()
+                }
+                trySend(invitations).isSuccess
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        })
+
+        awaitClose { query.removeEventListener(listener) }
+    }.flowOn(Dispatchers.IO)
 
     override suspend fun createInvitationViaEmail(email: String): Result<InvitationResult> {
         val query = database
@@ -123,6 +143,7 @@ class DefaultInvitationRepository @Inject constructor(
         val invitationCode = UUID.randomUUID().toString().substring(0, 6).uppercase()
         val creationDate = System.currentTimeMillis()
         val expirationDate = creationDate + 1.days.inWholeMilliseconds
+        val familyName = database.child("families/${userData.familyId}/name").get().await().getValue<String>()
 
         val invitation = Invitation(
             id = invitationId,
@@ -132,7 +153,9 @@ class DefaultInvitationRepository @Inject constructor(
             status = InvitationStatus.PENDING,
             expirationDate = expirationDate,
             createdAt = creationDate,
-            recipientEmail = email
+            recipientEmail = email,
+            familyName = familyName?: "",
+            senderName = userData.displayName
         )
 
         try {

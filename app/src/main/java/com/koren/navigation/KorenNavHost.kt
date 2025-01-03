@@ -15,7 +15,7 @@ import com.koren.auth.navigation.authScreen
 import com.koren.auth.service.GoogleAuthService
 import com.koren.home.navigation.HomeGraph
 import com.koren.home.navigation.homeScreen
-import com.koren.home.ui.home_screen.HomeDestination
+import com.koren.home.ui.HomeDestination
 import com.koren.invitation.navigation.invitationScreen
 import com.koren.invitation.ui.InvitationDestination
 import com.koren.map.ui.mapScreen
@@ -28,10 +28,8 @@ import kotlinx.coroutines.launch
 fun KorenNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    googleAuthService: GoogleAuthService,
     mainActivityViewModel: MainActivityViewModel
 ) {
-    val coroutineScope = rememberCoroutineScope()
     val uiState = mainActivityViewModel.uiState.collectAsStateWithLifecycle()
 
     val startDestination = when {
@@ -54,11 +52,6 @@ fun KorenNavHost(
             )
             homeScreen(
                 navController = navController,
-                logOut = {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        googleAuthService.signOut()
-                    }
-                },
                 inviteFamilyMember = {
                     navController.navigate(InvitationDestination)
                 }
