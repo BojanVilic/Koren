@@ -11,4 +11,7 @@
     <string name="invite_via_email_hint">Email address</string>
     <string name="invite_via_email_button">Invite</string>
     <string name="invite_via_email_title">Invite via email</string>
+
+
+    <string name="multiple_placeholders">This %s has multiple %s placeholders</string>
 </resources>

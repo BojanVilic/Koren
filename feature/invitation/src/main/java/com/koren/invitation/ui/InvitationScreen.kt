@@ -39,14 +39,16 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.koren.common.models.InvitationResult
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.SimpleSnackbar
+import com.koren.designsystem.components.StyledStringResource
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -81,16 +83,6 @@ fun InvitationScreen(
 private fun InvitationContent(
     invitationUiState: InvitationUiState
 ) {
-    when (invitationUiState) {
-        is InvitationUiState.Idle -> IdleState(invitationUiState)
-    }
-}
-
-@Composable
-private fun IdleState(
-    invitationUiState: InvitationUiState.Idle
-) {
-
     if (invitationUiState.errorMessage.isNotEmpty()) {
         SimpleSnackbar(message = invitationUiState.errorMessage)
     }
@@ -117,7 +109,7 @@ private fun IdleState(
                     invitationUiState.qrInvitation?.let { qrInvitation ->
                         QRExpandedContent(
                             invitationLink = qrInvitation.invitationLink,
-                            familyName = "Family Name"
+                            familyName = invitationUiState.familyName
                         )
                     }
                 }
@@ -173,7 +165,7 @@ private fun LoadingSpinner() {
 
 @Composable
 private fun EmailExpandedContent(
-    invitationUiState: InvitationUiState.Idle
+    invitationUiState: InvitationUiState
 ) {
     Surface(
         modifier = Modifier
@@ -219,42 +211,6 @@ private fun EmailExpandedContent(
     }
 }
 
-//@Composable
-//private fun InvitationCreated(
-//    invitationUiState: InvitationUiState.QRInvitationCreated
-//) {
-//    val message = """
-//        Join my family on Koren!
-//        Tap this link (or copy and paste it into your browser if tapping doesn't work):
-//        ${invitationUiState.invitationResult.invitationLink}
-//    """.trimIndent()
-//
-//    val sendIntent = Intent(Intent.ACTION_SEND).apply {
-//        putExtra(Intent.EXTRA_SUBJECT, "Join my family on Koren")
-//        putExtra(Intent.EXTRA_TEXT, message)
-//        type = "text/plain"
-//    }
-//
-//    val shareIntent = Intent.createChooser(sendIntent, "Share Invitation")
-//    val context = LocalContext.current
-//
-//    startActivity(context, shareIntent, null)
-//
-//    Column {
-//        Text(text = "Invitation created!")
-//        Text(
-//            text = "Invitation code: ${invitationUiState.invitationResult.invitationCode}",
-//            style = MaterialTheme.typography.displayLarge
-//        )
-//
-//        QRCodeImage(
-//            modifier = Modifier.size(200.dp),
-//            data = invitationUiState.invitationResult.invitationLink
-//        )
-//    }
-//}
-
-
 @Composable
 private fun QRExpandedContent(
     invitationLink: String,
@@ -277,9 +233,10 @@ private fun QRExpandedContent(
                     .size(200.dp),
                 data = invitationLink
             )
-            Text(
+            StyledStringResource(
                 modifier = Modifier.padding(top = 8.dp, start = 32.dp, end = 32.dp),
-                text = stringResource(id = R.string.scan_qr_code_subtitle, familyName),
+                stringRes = R.string.scan_qr_code_subtitle,
+                formatArgs = listOf(familyName to SpanStyle(color = MaterialTheme.colorScheme.primary)),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -397,21 +354,18 @@ private fun generateQrCodeBitmap(data: String, color: Int, backgroundColor: Int)
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun QRCodePreview() {
-    QRCodeImage(
-        modifier = Modifier.size(200.dp),
-        data = "koren://join?familyId%3D8bcfed49-f9d2-42a5-95e1-aa20fb4cbb5e%26invCode%3D2F57D9"
-    )
-}
-
 @ThemePreview
 @Composable
 fun InvitationPreview() {
     KorenTheme {
         InvitationContent(
-            invitationUiState = InvitationUiState.Idle(
+            invitationUiState = InvitationUiState(
+                familyName = "Family Name",
+                isCreateQRInvitationExpanded = true,
+                isEmailInviteExpanded = true,
+                qrInvitation = InvitationResult(
+                    invitationLink = "koren://join?familyId%3D8bcfed49-f9d2-42a5-95e1-aa20fb4cbb5e%26invCode%3D2F57D9"
+                ),
                 eventSink = {}
             )
         )

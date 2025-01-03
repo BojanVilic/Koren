@@ -6,11 +6,9 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
-import com.koren.common.models.Family
 import com.koren.common.models.Invitation
 import com.koren.common.models.InvitationResult
 import com.koren.common.models.InvitationStatus
-import com.koren.common.models.UserData
 import com.koren.common.services.UserSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
