@@ -5,8 +5,8 @@ import com.koren.common.models.Invitation
 sealed interface HomeUiState {
     data object Loading : HomeUiState
     data class Shown(
-        val pendingInvitations: List<Invitation> = emptyList(),
-        val acceptedInvitations: List<Invitation> = emptyList(),
+        val receivedInvitations: List<Invitation> = emptyList(),
+        val sentInvitations: List<Invitation> = emptyList(),
         val invitationCodeText: String = "",
         val invitationCodeError: String = "",
         val eventSink: (HomeEvent) -> Unit

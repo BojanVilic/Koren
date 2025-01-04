@@ -34,7 +34,7 @@ class DefaultInvitationRepository @Inject constructor(
         val invitationId = UUID.randomUUID().toString()
         val invitationCode = UUID.randomUUID().toString().substring(0, 6).uppercase()
         val creationDate = System.currentTimeMillis()
-        val expirationDate = creationDate + 1.days.inWholeMilliseconds
+        val expirationDate = creationDate + 2.days.inWholeMilliseconds
         val userData = userSession.currentUser.first()
         val invitationLink = withContext(Dispatchers.IO) {
             "koren://join?${URLEncoder.encode("familyId=${userData.familyId}&invCode=$invitationCode", "UTF-8")}"
@@ -103,12 +103,35 @@ class DefaultInvitationRepository @Inject constructor(
         database.child("invitations/$id/status").setValue(InvitationStatus.DECLINED).await()
     }
 
-    override fun getAllInvitations(): Flow<List<Invitation>> = callbackFlow {
+    override fun getReceivedInvitations(): Flow<List<Invitation>> = callbackFlow {
         val email = userSession.currentUser.first().email
         val query = database
             .child("invitations")
             .orderByChild("recipientEmail")
             .equalTo(email)
+
+        val listener = query.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val invitations = snapshot.children.mapNotNull { dataSnapshot ->
+                    dataSnapshot.getValue<Invitation>()
+                }
+                trySend(invitations).isSuccess
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        })
+
+        awaitClose { query.removeEventListener(listener) }
+    }.flowOn(Dispatchers.IO)
+
+    override fun getSentInvitations(): Flow<List<Invitation>> = callbackFlow {
+        val id = userSession.currentUser.first().id
+        val query = database
+            .child("invitations")
+            .orderByChild("senderId")
+            .equalTo(id)
 
         val listener = query.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {

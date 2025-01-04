@@ -9,20 +9,32 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,26 +42,30 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImagePainter.State.Empty.painter
 import com.koren.common.models.Invitation
 import com.koren.common.models.InvitationStatus
+import com.koren.common.models.getExpiryText
 import com.koren.common.models.toHumanReadableDateTime
 import com.koren.common.models.toRelativeTime
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
-import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
+import com.koren.home.R
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -86,15 +102,48 @@ private fun HomeContent(
 @Composable
 private fun ShownContent(
     state: HomeUiState.Shown,
-    inviteFamilyMember: () -> Unit
+    inviteFamilyMember: () -> Unit,
+    removeFamilyMember: () -> Unit = {},
+    scheduleEvent: () -> Unit = {},
+    reminder: () -> Unit = {},
+    chat: () -> Unit = {}
 ) {
+
+    val actions = listOf(
+        ActionItem(
+            icon = IconResource.Vector(Icons.Default.Email),
+            text = "Chat",
+            onClick = chat
+        ),
+        ActionItem(
+            icon = IconResource.Vector(Icons.Default.DateRange),
+            text = "Schedule",
+            onClick = scheduleEvent
+        ),
+        ActionItem(
+            icon = IconResource.Vector(Icons.Default.Notifications),
+            text = "Reminder",
+            onClick = reminder
+        ),
+        ActionItem(
+            icon = IconResource.Vector(Icons.Default.Add),
+            text = "Invite",
+            onClick = inviteFamilyMember
+        ),
+        ActionItem(
+            icon = IconResource.Drawable(R.drawable.remove_person),
+            text = "Remove",
+            onClick = removeFamilyMember
+        )
+    )
+
     Column(
         modifier = Modifier.padding(16.dp)
     ) {
-        if (state.pendingInvitations.isNotEmpty()) {
+        if (state.receivedInvitations.isNotEmpty()) {
             LazyColumn {
-                items(state.pendingInvitations) { invitation ->
-                    InvitationCard(
+                items(state.receivedInvitations) { invitation ->
+                    ReceivedInvitationCard(
                         invitation = invitation,
                         invitationCodeText = state.invitationCodeText,
                         acceptInvitation = { code -> state.eventSink(HomeEvent.AcceptInvitation(invitation, code)) },
@@ -106,18 +155,95 @@ private fun ShownContent(
             }
         }
 
-
-        Button(
-            onClick = { inviteFamilyMember() }
-        ) {
-            Text("Invite a family member")
+        if (state.sentInvitations.isNotEmpty()) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(state.sentInvitations) { invitation ->
+                    SentInvitationCard(invitation = invitation)
+                }
+            }
         }
 
+        Text(
+            modifier = Modifier.padding(vertical = 16.dp),
+            text = "Actions"
+        )
+        Card {
+            LazyRow(
+                modifier = Modifier.padding(8.dp)
+            ) {
+                items(actions) { actionItem ->
+                    ActionButton(actionItem)
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun InvitationCard(
+private fun ActionButton(
+    actionItem: ActionItem
+) {
+    OutlinedButton(
+        onClick = actionItem.onClick,
+        border = null
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            actionItem.IconComposable()
+            Text(
+                modifier = Modifier.padding(top = 4.dp),
+                text = actionItem.text
+            )
+        }
+    }
+}
+
+@Composable
+private fun SentInvitationCard(
+    invitation: Invitation
+) {
+    Card {
+        Row {
+            Text(
+                modifier = Modifier
+                    .padding(6.dp)
+                    .border(1.dp, MaterialTheme.colorScheme.onPrimary, RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+                    .padding(8.dp),
+                text = invitation.status.name,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                modifier = Modifier.padding(12.dp),
+                text = invitation.getExpiryText(),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp),
+        ) {
+            Text(
+                modifier = Modifier
+                    .padding(vertical = 16.dp)
+                    .fillMaxWidth(),
+                text = invitation.recipientEmail,
+                style = MaterialTheme.typography.bodyLarge,
+                textDecoration = TextDecoration.Underline
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReceivedInvitationCard(
     invitation: Invitation,
     invitationCodeText: String,
     acceptInvitation: (String) -> Unit,
@@ -125,11 +251,10 @@ private fun InvitationCard(
     onInvitationCodeChanged: (String) -> Unit,
     invitationCodeError: String
 ) {
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(vertical = 8.dp)
     ) {
         Text(
             modifier = Modifier
@@ -189,7 +314,11 @@ private fun InvitationCard(
                 }
 
                 FilledIconButton(
-                    onClick = { declineInvitation() }
+                    onClick = { declineInvitation() },
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
@@ -199,11 +328,11 @@ private fun InvitationCard(
             }
 
             Row(
-                modifier = Modifier.padding(vertical = 16.dp),
+                modifier = Modifier.padding(bottom = 16.dp),
             ) {
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    "Expires at ${invitation.expirationDate.toHumanReadableDateTime()}",
+                    text = invitation.getExpiryText(),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -266,20 +395,33 @@ fun HomePreview() {
     KorenTheme {
         HomeContent(
             state = HomeUiState.Shown(
-                pendingInvitations = listOf(
+                receivedInvitations = listOf(
                     Invitation(
                         id = "1",
                         senderId = "sender1",
                         status = InvitationStatus.PENDING,
                         expirationDate = 1630000000000,
                         recipientEmail = ""
+                    )
+                ),
+                sentInvitations = listOf(
+                    Invitation(
+                        status = InvitationStatus.ACCEPTED,
+                        recipientEmail = "johndoe@email.com"
                     ),
                     Invitation(
-                        id = "2",
-                        senderId = "sender2",
+                        status = InvitationStatus.PENDING,
+                        createdAt = 1735958071,
+                        expirationDate = 1735958177,
+                        recipientEmail = "johndoe@email.com"
+                    ),
+                    Invitation(
                         status = InvitationStatus.DECLINED,
-                        expirationDate = 1630000000000,
-                        recipientEmail = ""
+                        recipientEmail = "johndoe@email.com"
+                    ),
+                    Invitation(
+                        status = InvitationStatus.EXPIRED,
+                        recipientEmail = "johndoe@email.com"
                     )
                 ),
                 eventSink = {}

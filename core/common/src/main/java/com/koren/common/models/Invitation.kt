@@ -1,5 +1,6 @@
 package com.koren.common.models
 
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -62,5 +63,24 @@ fun Long.toRelativeTime(
             }
             "$dayOfWeek at ${time.format(timeFormatter)}"
         }
+    }
+}
+
+fun Invitation.getExpiryText(): String {
+    if (status != InvitationStatus.PENDING || expirationDate == 0L) {
+        return ""
+    }
+
+    val now = Instant.now()
+    val expiration = Instant.ofEpochMilli(expirationDate)
+
+    val duration = Duration.between(now, expiration)
+    val hours = duration.toHours()
+
+    return if (hours <= 0) {
+        "Expired"
+    } else {
+        val formattedHours = hours.toInt().toString()
+        "Expires in $formattedHours hours"
     }
 }

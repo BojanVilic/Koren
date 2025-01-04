@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,21 +25,28 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            invitationRepository.getAllInvitations().collect { invitations ->
+            invitationRepository.getReceivedInvitations().collect { invitations ->
                 val pendingInvitations = invitations.filter { it.status == InvitationStatus.PENDING }
-                val acceptedInvitations = invitations.filter { it.status == InvitationStatus.ACCEPTED }
-
                 _state.update { currentState ->
-
                     if (currentState is HomeUiState.Shown)
-                        currentState.copy(
-                            pendingInvitations = pendingInvitations,
-                            acceptedInvitations = acceptedInvitations
-                        )
+                        currentState.copy(receivedInvitations = pendingInvitations)
                     else
                         HomeUiState.Shown(
-                            pendingInvitations = pendingInvitations,
-                            acceptedInvitations = acceptedInvitations,
+                            receivedInvitations = pendingInvitations,
+                            eventSink = ::handleEvent
+                        )
+                }
+            }
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            invitationRepository.getSentInvitations().collect { invitations ->
+                _state.update { currentState ->
+                    if (currentState is HomeUiState.Shown)
+                        currentState.copy(sentInvitations = invitations)
+                    else
+                        HomeUiState.Shown(
+                            sentInvitations = invitations,
                             eventSink = ::handleEvent
                         )
                 }

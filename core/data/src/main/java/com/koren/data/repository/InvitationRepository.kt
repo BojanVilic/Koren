@@ -8,6 +8,7 @@ interface InvitationRepository {
     suspend fun createInvitation(): Result<InvitationResult>
     suspend fun acceptInvitation(invitation: Invitation, typedCode: String): Result<Unit>
     suspend fun declineInvitation(id: String)
-    fun getAllInvitations(): Flow<List<Invitation>>
+    fun getReceivedInvitations(): Flow<List<Invitation>>
+    fun getSentInvitations(): Flow<List<Invitation>>
     suspend fun createInvitationViaEmail(email: String): Result<InvitationResult>
 }
