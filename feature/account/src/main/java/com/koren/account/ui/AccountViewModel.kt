@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.koren.common.services.UserSession
+import com.koren.data.services.AuthService
 import com.koren.domain.UploadProfilePictureUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class AccountViewModel @Inject constructor(
     private val uploadProfilePictureUseCase: UploadProfilePictureUseCase,
-    private val userSession: UserSession
+    private val userSession: UserSession,
+    private val authService: AuthService
 ): ViewModel() {
 
     private val _state = MutableStateFlow<AccountUiState>(AccountUiState.Loading)
@@ -35,7 +37,17 @@ class AccountViewModel @Inject constructor(
         withShownState { currentState ->
             when (event) {
                 is AccountUiEvent.UploadNewProfilePicture -> uploadProfilePicture(currentState, event.uri)
+                is AccountUiEvent.LogOut -> signOut(currentState)
             }
+        }
+    }
+
+    private fun signOut(currentState: AccountUiState.Shown) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val loggedOutResult = authService.signOut()
+            if (loggedOutResult.isSuccess) _state.update { AccountUiState.LoggedOut }
+            if (loggedOutResult.isFailure)
+                _state.update { currentState.copy(errorMessage = loggedOutResult.exceptionOrNull()?.message ?: "") }
         }
     }
 
@@ -44,7 +56,7 @@ class AccountViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val result = uploadProfilePictureUseCase(currentState.userData.id, pictureUri)
             if (result.isFailure) {
-                _state.update { currentState.copy(profilePictureUploadErrorMessage = result.exceptionOrNull()?.message?: "") }
+                _state.update { currentState.copy(errorMessage = result.exceptionOrNull()?.message?: "") }
             }
         }
     }

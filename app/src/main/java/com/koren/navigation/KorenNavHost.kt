@@ -47,7 +47,7 @@ fun KorenNavHost(
             authScreen(
                 onSignInSuccess = {
                     mainActivityViewModel.onLoginSuccess()
-                    navController.navigate(OnboardingGraph)
+                    navController.navigate(HomeGraph)
                 },
             )
             homeScreen(
@@ -62,7 +62,10 @@ fun KorenNavHost(
             )
             mapScreen(navController = navController)
             activityScreen(navController = navController)
-            accountScreen(navController = navController)
+            accountScreen(
+                navController = navController,
+                onLogOut = { navController.navigate(AuthDestination) }
+            )
             invitationScreen(navController = navController)
         }
     }

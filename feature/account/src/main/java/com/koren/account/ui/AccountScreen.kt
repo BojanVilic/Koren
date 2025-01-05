@@ -1,6 +1,5 @@
 package com.koren.account.ui
 
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,15 +12,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.koren.common.util.Destination
-import com.koren.designsystem.components.dashedBorder
+import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
 import kotlinx.serialization.Serializable
@@ -47,23 +49,28 @@ object AccountDestination : Destination
 
 @Composable
 fun AccountScreen(
-    viewModel: AccountViewModel = hiltViewModel()
+    viewModel: AccountViewModel = hiltViewModel(),
+    onLogOut: () -> Unit
 ) {
 
     val uiState by viewModel.state.collectAsStateWithLifecycle()
 
     AccountScreenContent(
-        uiState = uiState
+        uiState = uiState,
+        onLogOut = onLogOut
     )
 }
 
 @Composable
 private fun AccountScreenContent(
-    uiState: AccountUiState
+    uiState: AccountUiState,
+    onLogOut: () -> Unit
 ) {
+
     when (uiState) {
         is AccountUiState.Loading -> CircularProgressIndicator()
         is AccountUiState.Shown -> AccountScreenShownContent(uiState = uiState)
+        is AccountUiState.LoggedOut -> LaunchedEffect(Unit) { onLogOut() }
     }
 }
 
@@ -71,6 +78,8 @@ private fun AccountScreenContent(
 private fun AccountScreenShownContent(
     uiState: AccountUiState.Shown
 ) {
+    SimpleSnackbar(message = uiState.errorMessage)
+
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
@@ -138,6 +147,13 @@ private fun AccountScreenShownContent(
                 contentScale = ContentScale.Crop
             )
         }
+
+        Button(
+            modifier = Modifier.padding(top = 16.dp),
+            onClick = { uiState.eventSink(AccountUiEvent.LogOut) }
+        ) {
+            Text(text = "Log out")
+        }
     }
 }
 
@@ -147,8 +163,11 @@ fun AccountScreenPreview() {
     KorenTheme {
         AccountScreenContent(
             uiState = AccountUiState.Shown(
+                userData = null,
+                errorMessage = "",
                 eventSink = {}
-            )
+            ),
+            onLogOut = {}
         )
     }
 }

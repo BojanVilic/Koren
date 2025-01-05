@@ -11,13 +11,14 @@ import kotlinx.serialization.Serializable
 object AccountGraph : Destination
 
 fun NavGraphBuilder.accountScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    onLogOut: () -> Unit
 ) {
     navigation<AccountGraph>(
         startDestination = AccountDestination
     ) {
         composable<AccountDestination> {
-            AccountScreen()
+            AccountScreen(onLogOut = onLogOut)
         }
     }
 }

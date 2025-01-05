@@ -19,12 +19,14 @@ class DefaultAuthService @Inject constructor(
             SignInMethod.GOOGLE -> googleAuthService()
         }
     }
-    override suspend fun signOut() {
+    override suspend fun signOut(): Result<Unit> {
         try {
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
             auth.signOut()
+            return Result.success(Unit)
         } catch(e: Exception) {
             e.printStackTrace()
+            return Result.failure(e)
         }
     }
 }
