@@ -1,9 +1,5 @@
 package com.koren.auth.ui
 
-import android.app.Activity.RESULT_OK
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -41,6 +37,7 @@ import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @Composable
 fun SignInScreen(
@@ -57,26 +54,16 @@ fun SignInScreen(
     )
 
     val scope = rememberCoroutineScope()
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartIntentSenderForResult(),
-        onResult = { result ->
-            if(result.resultCode == RESULT_OK) {
-                scope.launch {
-                    authViewModel.signInWithIntent(result.data)
-                    onSignInSuccess()
-                }
-            }
-        }
-    )
 
     SignInContent(
         modifier = modifier,
         onGoogleSignInClicked = {
             scope.launch {
-                val signInIntentSender = authViewModel.getIntentSender()
-                launcher.launch(
-                    IntentSenderRequest.Builder(signInIntentSender ?: return@launch).build()
-                )
+                val result = authViewModel.signIn()
+                when {
+                    result.isSuccess -> onSignInSuccess()
+                    result.isFailure -> Timber.e("Sign in failed: ${result.exceptionOrNull()}")
+                }
             }
         }
     )
