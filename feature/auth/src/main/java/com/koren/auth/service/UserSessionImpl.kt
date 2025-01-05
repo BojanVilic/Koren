@@ -2,14 +2,19 @@ package com.koren.auth.service
 
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
 import com.google.firebase.database.getValue
 import com.koren.common.models.UserData
 import com.koren.common.services.UserNotLoggedInException
 import com.koren.common.services.UserSession
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 
@@ -30,16 +35,18 @@ class UserSessionImpl : UserSession {
 
             Firebase.database.getReference("users")
                 .child(auth.currentUser?.uid ?: "")
-                .get()
-                .addOnSuccessListener {
-                    trySend(it.getValue<UserData>()?: throw IllegalStateException("User data is null"))
-                }
-                .addOnFailureListener {
-                    Timber.e("Failed to get user data")
-                }
+                .addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        trySend(snapshot.getValue<UserData>()?: throw IllegalStateException("User data is null"))
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        Timber.e("Failed to get user data")
+                    }
+                })
 
             awaitClose()
-        }
+        }.flowOn(Dispatchers.Default)
 
     override suspend fun updateUserDataOnLogin() {
         val currentUserData = Firebase.database.getReference("users")
