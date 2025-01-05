@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.koren.common.models.Invitation
 import com.koren.common.models.InvitationStatus
 import com.koren.data.repository.InvitationRepository
+import com.koren.domain.GetAllFamilyMembersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val invitationRepository: InvitationRepository
+    private val invitationRepository: InvitationRepository,
+    private val getAllFamilyMembers: GetAllFamilyMembersUseCase
 ): ViewModel() {
 
     private val _state = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
@@ -50,6 +52,23 @@ class HomeViewModel @Inject constructor(
                             eventSink = ::handleEvent
                         )
                 }
+            }
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val familyMembers = getAllFamilyMembers()
+                _state.update { currentState ->
+                    if (currentState is HomeUiState.Shown)
+                        currentState.copy(familyMembers = familyMembers)
+                    else
+                        HomeUiState.Shown(
+                            familyMembers = familyMembers,
+                            eventSink = ::handleEvent
+                        )
+                }
+            } catch (e: Exception) {
+                Timber.e(e)
             }
         }
     }

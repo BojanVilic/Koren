@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -42,6 +44,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -53,7 +57,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter.State.Empty.painter
+import coil.request.ImageRequest
 import com.koren.common.models.Invitation
 import com.koren.common.models.InvitationStatus
 import com.koren.common.models.getExpiryText
@@ -140,6 +146,50 @@ private fun ShownContent(
     Column(
         modifier = Modifier.padding(16.dp)
     ) {
+        if (state.familyMembers.isNotEmpty()) {
+            Text(
+                modifier = Modifier.padding(vertical = 16.dp),
+                text = "Family members"
+            )
+            Card {
+                LazyRow(
+                    modifier = Modifier.padding(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(state.familyMembers) { member ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AsyncImage(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape),
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .crossfade(true)
+                                    .data(member.profilePictureUrl)
+                                    .build(),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop
+                            )
+                            Column(
+                                modifier = Modifier.padding(start = 8.dp)
+                            ) {
+                                Text(
+                                    text = member.displayName
+                                )
+                                Text(
+                                    text = member.email
+                                )
+                                Text(
+                                    text = member.id
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if (state.receivedInvitations.isNotEmpty()) {
             LazyColumn {
                 items(state.receivedInvitations) { invitation ->

@@ -12,7 +12,7 @@ import javax.inject.Inject
 class UploadProfilePictureUseCase @Inject constructor(
     private val firebaseStorage: FirebaseStorage,
     private val firebaseDatabase: FirebaseDatabase
-    ) {
+) {
     suspend operator fun invoke(userId: String, pictureUri: Uri): Result<String> {
         return try {
             val storageRef = firebaseStorage.getReference("user_profile_pictures").child("${userId}.jpg")

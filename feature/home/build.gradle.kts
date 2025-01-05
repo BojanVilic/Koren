@@ -10,6 +10,7 @@ android {
 
 dependencies {
     implementation(projects.core.data)
+    implementation(projects.core.domain)
 
     implementation(libs.firebase.database)
     implementation(libs.firebase.storage)

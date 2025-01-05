@@ -1,6 +1,7 @@
 package com.koren.home.ui
 
 import com.koren.common.models.Invitation
+import com.koren.common.models.UserData
 
 sealed interface HomeUiState {
     data object Loading : HomeUiState
@@ -9,6 +10,7 @@ sealed interface HomeUiState {
         val sentInvitations: List<Invitation> = emptyList(),
         val invitationCodeText: String = "",
         val invitationCodeError: String = "",
+        val familyMembers: List<UserData> = emptyList(),
         val eventSink: (HomeEvent) -> Unit
     ) : HomeUiState
 }
