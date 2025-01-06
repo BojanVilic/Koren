@@ -8,8 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavDestination
+import androidx.navigation.NavGraph
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
@@ -23,9 +23,7 @@ fun BottomNavigationBar(
         val currentDestination = navBackStackEntry?.destination
 
         topLevelRoutes.forEach { item ->
-            val selected = currentDestination?.hierarchy?.any {
-                it.hasRoute(route = item.route::class)
-            } == true
+            val selected = currentDestination?.getAllParentGraphs()?.any { it.startDestinationRoute == item.route::class.qualifiedName } == true
 
             NavigationBarItem(
                 icon = {
@@ -48,5 +46,15 @@ fun BottomNavigationBar(
             )
         }
     }
+}
+
+fun NavDestination.getAllParentGraphs(): Set<NavGraph> {
+    val parents = mutableSetOf<NavGraph>()
+    var currentParent = parent
+    while (currentParent != null) {
+        parents.add(currentParent)
+        currentParent = currentParent.parent
+    }
+    return parents
 }
 

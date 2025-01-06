@@ -17,9 +17,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.net.URLEncoder
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.days
@@ -36,11 +34,9 @@ class DefaultInvitationRepository @Inject constructor(
         val creationDate = System.currentTimeMillis()
         val expirationDate = creationDate + 2.days.inWholeMilliseconds
         val userData = userSession.currentUser.first()
-        val invitationLink = withContext(Dispatchers.IO) {
-            "koren://join?${URLEncoder.encode("familyId=${userData.familyId}&invCode=$invitationCode", "UTF-8")}"
-        }
-        val familyName = database.child("families/${userData.familyId}/name").get().await().getValue<String>()
+        val invitationLink = "koren://join/$invitationId/${userData.familyId}/$invitationCode"
 
+        val familyName = database.child("families/${userData.familyId}/name").get().await().getValue<String>()
 
         val invitation = Invitation(
             id = invitationId,
