@@ -69,14 +69,17 @@ private fun AccountScreenContent(
 
     when (uiState) {
         is AccountUiState.Loading -> CircularProgressIndicator()
-        is AccountUiState.Shown -> AccountScreenShownContent(uiState = uiState)
-        is AccountUiState.LoggedOut -> LaunchedEffect(Unit) { onLogOut() }
+        is AccountUiState.Shown -> AccountScreenShownContent(
+            uiState = uiState,
+            onLogOut = onLogOut
+        )
     }
 }
 
 @Composable
 private fun AccountScreenShownContent(
-    uiState: AccountUiState.Shown
+    uiState: AccountUiState.Shown,
+    onLogOut: () -> Unit
 ) {
     SimpleSnackbar(message = uiState.errorMessage)
 
@@ -150,7 +153,10 @@ private fun AccountScreenShownContent(
 
         Button(
             modifier = Modifier.padding(top = 16.dp),
-            onClick = { uiState.eventSink(AccountUiEvent.LogOut) }
+            onClick = {
+                onLogOut()
+                uiState.eventSink(AccountUiEvent.LogOut)
+            }
         ) {
             Text(text = "Log out")
         }

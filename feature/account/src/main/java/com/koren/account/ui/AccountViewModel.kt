@@ -37,17 +37,14 @@ class AccountViewModel @Inject constructor(
         withShownState { currentState ->
             when (event) {
                 is AccountUiEvent.UploadNewProfilePicture -> uploadProfilePicture(currentState, event.uri)
-                is AccountUiEvent.LogOut -> signOut(currentState)
+                is AccountUiEvent.LogOut -> signOut()
             }
         }
     }
 
-    private fun signOut(currentState: AccountUiState.Shown) {
+    private fun signOut() {
         viewModelScope.launch(Dispatchers.Default) {
-            val loggedOutResult = authService.signOut()
-            if (loggedOutResult.isSuccess) _state.update { AccountUiState.LoggedOut }
-            if (loggedOutResult.isFailure)
-                _state.update { currentState.copy(errorMessage = loggedOutResult.exceptionOrNull()?.message ?: "") }
+            authService.signOut()
         }
     }
 

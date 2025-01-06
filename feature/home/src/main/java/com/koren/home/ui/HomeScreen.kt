@@ -84,7 +84,10 @@ fun HomeScreen(
 ) {
 
     val scaffoldStateProvider = LocalScaffoldStateProvider.current
-    DisposableEffectWithLifecycle(onStart = { scaffoldStateProvider.setScaffoldState(ScaffoldState(isTopBarVisible = false)) })
+    DisposableEffectWithLifecycle(
+        onStart = { scaffoldStateProvider.setScaffoldState(ScaffoldState(isTopBarVisible = false, isBottomBarVisible = true)) },
+        onResume = { scaffoldStateProvider.setScaffoldState(ScaffoldState(isTopBarVisible = false, isBottomBarVisible = true)) }
+    )
 
     val state by homeViewModel.state.collectAsStateWithLifecycle()
 

@@ -4,7 +4,6 @@ import android.net.Uri
 import com.koren.common.models.UserData
 
 sealed interface AccountUiState {
-    data object LoggedOut : AccountUiState
     data object Loading : AccountUiState
     data class Shown(
         val userData: UserData? = null,
