@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -80,7 +81,8 @@ object HomeDestination : Destination
 @Composable
 fun HomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
-    inviteFamilyMember: () -> Unit
+    inviteFamilyMember: () -> Unit,
+    createFamily: () -> Unit
 ) {
 
     val scaffoldStateProvider = LocalScaffoldStateProvider.current
@@ -93,18 +95,24 @@ fun HomeScreen(
 
     HomeContent(
         state = state,
-        inviteFamilyMember = inviteFamilyMember
+        inviteFamilyMember = inviteFamilyMember,
+        createFamily = createFamily
     )
 }
 
 @Composable
 private fun HomeContent(
     state: HomeUiState,
-    inviteFamilyMember: () -> Unit
+    inviteFamilyMember: () -> Unit,
+    createFamily: () -> Unit
 ) {
     when (state) {
         is HomeUiState.Loading -> Text("Loading...")
-        is HomeUiState.Shown -> ShownContent(state = state, inviteFamilyMember = inviteFamilyMember)
+        is HomeUiState.Shown -> ShownContent(
+            state = state,
+            inviteFamilyMember = inviteFamilyMember,
+            createFamily = createFamily
+        )
     }
 }
 
@@ -115,10 +123,21 @@ private fun ShownContent(
     removeFamilyMember: () -> Unit = {},
     scheduleEvent: () -> Unit = {},
     reminder: () -> Unit = {},
-    chat: () -> Unit = {}
+    chat: () -> Unit = {},
+    createFamily: () -> Unit
 ) {
 
     val actions = listOf(
+        ActionItem(
+            icon = IconResource.Drawable(R.drawable.create_family),
+            text = "Create family",
+            onClick = createFamily
+        ),
+        ActionItem(
+            icon = IconResource.Vector(Icons.Default.Add),
+            text = "Invite",
+            onClick = inviteFamilyMember
+        ),
         ActionItem(
             icon = IconResource.Vector(Icons.Default.Email),
             text = "Chat",
@@ -135,15 +154,10 @@ private fun ShownContent(
             onClick = reminder
         ),
         ActionItem(
-            icon = IconResource.Vector(Icons.Default.Add),
-            text = "Invite",
-            onClick = inviteFamilyMember
-        ),
-        ActionItem(
             icon = IconResource.Drawable(R.drawable.remove_person),
             text = "Remove",
             onClick = removeFamilyMember
-        )
+        ),
     )
 
     Column(
@@ -479,7 +493,8 @@ fun HomePreview() {
                 ),
                 eventSink = {}
             ),
-            inviteFamilyMember = {}
+            inviteFamilyMember = {},
+            createFamily = {}
         )
     }
 }

@@ -19,18 +19,17 @@ fun NavGraphBuilder.onboardingScreen(
     onNavigateToHome: () -> Unit
 ) {
     navigation<OnboardingGraph>(
-        startDestination = OnboardingDestination
+        startDestination = CreateFamilyDestination
     ) {
+        composable<CreateFamilyDestination> {
+            CreateFamilyScreen(
+                onNavigateToHome = onNavigateToHome
+            )
+        }
         composable<OnboardingDestination> {
             OnboardingScreen(
                 joinFamily = {},
                 createFamily = { navController.navigate(CreateFamilyDestination) }
-            )
-        }
-
-        composable<CreateFamilyDestination> {
-            CreateFamilyScreen(
-                onNavigateToHome = onNavigateToHome
             )
         }
     }

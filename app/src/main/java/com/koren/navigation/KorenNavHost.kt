@@ -36,8 +36,7 @@ fun KorenNavHost(
 
     val startDestination = when {
         uiState.value is MainActivityUiState.LoggedOut -> AuthDestination
-        uiState.value is MainActivityUiState.Success && (uiState.value as MainActivityUiState.Success).userData.familyId.isNotEmpty() -> HomeGraph
-        else -> OnboardingGraph
+        else -> HomeGraph
     }
 
     if (uiState.value !is MainActivityUiState.Loading) {
@@ -57,6 +56,7 @@ fun KorenNavHost(
                 inviteFamilyMember = {
                     navController.navigate(InvitationDestination)
                 },
+                createFamily = { navController.navigate(OnboardingGraph) },
                 onShowSnackbar = onShowSnackbar
             )
             onboardingScreen(

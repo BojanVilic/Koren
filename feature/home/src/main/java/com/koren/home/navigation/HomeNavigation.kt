@@ -19,6 +19,7 @@ object HomeGraph : Destination
 fun NavGraphBuilder.homeScreen(
     navController: NavHostController,
     inviteFamilyMember: () -> Unit,
+    createFamily: () -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit
 ) {
     navigation<HomeGraph>(
@@ -26,7 +27,8 @@ fun NavGraphBuilder.homeScreen(
     ) {
         composable<HomeDestination> {
             HomeScreen(
-                inviteFamilyMember = inviteFamilyMember
+                inviteFamilyMember = inviteFamilyMember,
+                createFamily = createFamily
             )
         }
 
