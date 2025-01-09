@@ -110,7 +110,8 @@ fun CreateFamilyScreen(
                         }
                     }
                 }
-            } else null
+            } else null,
+            isBottomBarVisible = false
         )
     )
 

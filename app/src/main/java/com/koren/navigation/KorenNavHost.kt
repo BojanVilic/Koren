@@ -1,10 +1,6 @@
 package com.koren.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -15,7 +11,6 @@ import com.koren.account.ui.accountScreen
 import com.koren.activity.ui.activityScreen
 import com.koren.auth.navigation.AuthDestination
 import com.koren.auth.navigation.authScreen
-import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.home.navigation.HomeGraph
 import com.koren.home.navigation.homeScreen
 import com.koren.home.ui.HomeDestination
