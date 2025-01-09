@@ -12,12 +12,13 @@ class GetFamilyUseCase @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase,
     private val userSession: UserSession
 ) {
-    suspend operator fun invoke(): Family {
+    suspend operator fun invoke(): Result<Family> {
         val familyId = userSession.currentUser.first().familyId
 
-        return firebaseDatabase.getReference("families/$familyId")
+        val family = firebaseDatabase.getReference("families/$familyId")
             .get()
             .await()
-            .getValue<Family>()?: throw Exception("Family not found")
+            .getValue<Family>()?: return Result.failure(Exception("Family not found. \uD83D\uDE22"))
+        return Result.success(family)
     }
 }

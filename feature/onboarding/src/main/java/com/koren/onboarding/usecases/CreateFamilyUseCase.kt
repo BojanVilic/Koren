@@ -14,7 +14,6 @@ class CreateFamilyUseCase @Inject constructor(
     private val uploadFamilyPictureUseCase: UploadFamilyPictureUseCase,
     private val userSession: UserSession
 ) {
-
     suspend operator fun invoke(familyName: String, familyPortraitPath: Uri? = null) {
         val familyId = UUID.randomUUID().toString()
         val familyPortraitUrl = familyPortraitPath?.let { uploadFamilyPictureUseCase(familyId, it) }

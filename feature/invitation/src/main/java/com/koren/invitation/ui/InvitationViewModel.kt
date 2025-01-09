@@ -19,27 +19,30 @@ class InvitationViewModel @Inject constructor(
     private val getFamilyUseCase: GetFamilyUseCase
 ): ViewModel() {
 
-    private val _state = MutableStateFlow(InvitationUiState(eventSink = ::handleEvent))
+    private val _state = MutableStateFlow<InvitationUiState>(InvitationUiState.Shown(eventSink = ::handleEvent))
     val state: StateFlow<InvitationUiState> = _state.asStateFlow()
 
     init {
         viewModelScope.launch {
-            val family = getFamilyUseCase()
-            _state.update { currentState -> currentState.copy(familyName = family.name) }
+            getFamilyUseCase()
+                .onSuccess { family -> withShownState { currentState -> _state.update { currentState.copy(familyName = family.name) } } }
+                .onFailure { error -> _state.update { InvitationUiState.Error(errorMessage = error.message ?: "Unknown error") } }
         }
     }
 
     private fun handleEvent(event: InvitationEvent) {
-        when (event) {
-            is InvitationEvent.CreateQRInvitation -> createInvitation(_state.value)
-            is InvitationEvent.CollapseCreateQRInvitation -> _state.update { currentState -> currentState.copy(isCreateQRInvitationExpanded = false) }
-            is InvitationEvent.EmailInviteClick -> _state.update { currentState -> currentState.copy(isEmailInviteExpanded = !currentState.isEmailInviteExpanded) }
-            is InvitationEvent.EmailInviteTextChange -> _state.update { currentState -> currentState.copy(emailInviteText = event.email) }
-            is InvitationEvent.InviteViaEmailClick -> inviteViaEmail(_state.value)
+        withShownState { currentState ->
+            when (event) {
+                is InvitationEvent.CreateQRInvitation -> createInvitation(currentState)
+                is InvitationEvent.CollapseCreateQRInvitation -> _state.update { currentState.copy(isCreateQRInvitationExpanded = false) }
+                is InvitationEvent.EmailInviteClick -> _state.update { currentState.copy(isEmailInviteExpanded = !currentState.isEmailInviteExpanded) }
+                is InvitationEvent.EmailInviteTextChange -> _state.update { currentState.copy(emailInviteText = event.email) }
+                is InvitationEvent.InviteViaEmailClick -> inviteViaEmail(currentState)
+            }
         }
     }
 
-    private fun inviteViaEmail(currentState: InvitationUiState) {
+    private fun inviteViaEmail(currentState: InvitationUiState.Shown) {
         viewModelScope.launch {
             _state.update { currentState.copy(emailInvitationLoading = true) }
             invitationRepository.createInvitationViaEmail(currentState.emailInviteText)
@@ -52,7 +55,7 @@ class InvitationViewModel @Inject constructor(
         }
     }
 
-    private fun createInvitation(currentState: InvitationUiState) {
+    private fun createInvitation(currentState: InvitationUiState.Shown) {
         if (currentState.qrInvitation != null) {
             _state.update { currentState.copy(isCreateQRInvitationExpanded = !currentState.isCreateQRInvitationExpanded) }
             return
@@ -66,6 +69,13 @@ class InvitationViewModel @Inject constructor(
                 .onFailure { error ->
                     _state.update { currentState.copy(errorMessage = error.message ?: "Unknown error") }
                 }
+        }
+    }
+
+    private inline fun withShownState(action: (InvitationUiState.Shown) -> Unit) {
+        val currentState = _state.value
+        if (currentState is InvitationUiState.Shown) {
+            action(currentState)
         }
     }
 }

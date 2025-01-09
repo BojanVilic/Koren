@@ -11,10 +11,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,6 +37,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -49,6 +53,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.koren.common.models.InvitationResult
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.SimpleSnackbar
@@ -86,6 +94,17 @@ fun InvitationScreen(
 @Composable
 private fun InvitationContent(
     invitationUiState: InvitationUiState
+) {
+
+    when (invitationUiState) {
+        is InvitationUiState.Error -> ErrorScreen(uiState = invitationUiState)
+        is InvitationUiState.Shown -> ShownContent(invitationUiState = invitationUiState)
+    }
+}
+
+@Composable
+private fun ShownContent(
+    invitationUiState: InvitationUiState.Shown
 ) {
     if (invitationUiState.errorMessage.isNotEmpty()) {
         SimpleSnackbar(message = invitationUiState.errorMessage)
@@ -171,7 +190,7 @@ private fun LoadingSpinner() {
 
 @Composable
 fun EmailInviteSentContent(
-    invitationUiState: InvitationUiState
+    invitationUiState: InvitationUiState.Shown
 ) {
     Surface(
         modifier = Modifier
@@ -233,7 +252,7 @@ fun EmailInviteSentContent(
 
 @Composable
 private fun EmailExpandedContent(
-    invitationUiState: InvitationUiState
+    invitationUiState: InvitationUiState.Shown
 ) {
     Surface(
         modifier = Modifier
@@ -422,12 +441,43 @@ private fun generateQrCodeBitmap(data: String, color: Int, backgroundColor: Int)
     }
 }
 
+@Composable
+private fun ErrorScreen(
+    uiState: InvitationUiState.Error
+) {
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.error_screen))
+    val preloaderProgress by animateLottieCompositionAsState(
+        composition = composition,
+        isPlaying = true
+    )
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        LottieAnimation(
+            modifier = Modifier.padding(top = 32.dp),
+            progress = { preloaderProgress },
+            composition = composition
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = uiState.errorMessage,
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 @ThemePreview
 @Composable
 fun InvitationPreview() {
     KorenTheme {
         InvitationContent(
-            invitationUiState = InvitationUiState(
+            invitationUiState = InvitationUiState.Shown(
                 familyName = "Family Name",
                 isCreateQRInvitationExpanded = true,
                 isEmailInviteExpanded = true,
@@ -439,6 +489,18 @@ fun InvitationPreview() {
                     invitationCode = "2F57D9"
                 ),
                 eventSink = {}
+            )
+        )
+    }
+}
+
+@ThemePreview
+@Composable
+fun InvitationErrorPreview() {
+    KorenTheme {
+        ErrorScreen(
+            uiState = InvitationUiState.Error(
+                errorMessage = "Family not found. \uD83D\uDE22"
             )
         )
     }

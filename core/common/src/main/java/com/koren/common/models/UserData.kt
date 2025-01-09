@@ -5,5 +5,6 @@ data class UserData(
     val familyId: String = "",
     val displayName: String = "",
     val email: String = "",
-    val profilePictureUrl: String = ""
+    val profilePictureUrl: String = "",
+    val familyRole: FamilyRole = FamilyRole.NONE
 )

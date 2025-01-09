@@ -5,5 +5,9 @@ enum class FamilyRole {
     CHILD,
     GUARDIAN,
     GUEST,
-    OTHER
+    OTHER,
+    NONE
 }
+
+val FamilyRole.isModerator: Boolean
+    get() = this == FamilyRole.PARENT || this == FamilyRole.GUARDIAN

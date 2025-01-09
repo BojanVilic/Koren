@@ -11,4 +11,6 @@ dependencies {
     implementation(projects.core.domain)
 
     implementation(libs.qrcode.kotlin)
+
+    implementation(libs.lottie.compose)
 }
