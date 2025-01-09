@@ -75,6 +75,8 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.koren.common.util.Destination
+import com.koren.designsystem.components.BrokenBranchErrorScreen
+import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.components.dashedBorder
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
@@ -132,9 +134,10 @@ fun CreateFamilyScreen(
                 currentState.eventSink(CreateFamilyEvent.CreateFamily)
             }
         )
-        is CreateFamilyUiState.Error -> Text(text = "An error occurred while trying to create the family. Please try again.")
+        is CreateFamilyUiState.Error -> BrokenBranchErrorScreen(errorMessage = currentState.errorMessage)
         is CreateFamilyUiState.CreatingFamily -> FamilyCreationLoadingScreen()
         is CreateFamilyUiState.FamilyCreated -> FamilyCreated(onNavigateToHome = onNavigateToHome)
+        is CreateFamilyUiState.Loading -> LoadingContent()
     }
 }
 

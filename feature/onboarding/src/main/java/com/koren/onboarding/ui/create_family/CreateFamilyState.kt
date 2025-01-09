@@ -3,8 +3,9 @@ package com.koren.onboarding.ui.create_family
 import android.net.Uri
 
 sealed interface CreateFamilyUiState {
+    data object Loading: CreateFamilyUiState
     data object CreatingFamily: CreateFamilyUiState
-    data class Error(val throwable: Throwable?): CreateFamilyUiState
+    data class Error(val errorMessage: String): CreateFamilyUiState
     data object FamilyCreated: CreateFamilyUiState
 
     data class Step(

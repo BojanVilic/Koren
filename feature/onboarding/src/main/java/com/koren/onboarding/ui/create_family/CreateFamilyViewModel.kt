@@ -2,6 +2,7 @@ package com.koren.onboarding.ui.create_family
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.koren.domain.GetFamilyUseCase
 import com.koren.onboarding.usecases.CreateFamilyUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,11 +14,20 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CreateFamilyViewModel @Inject constructor(
-    private val createFamilyUseCase: CreateFamilyUseCase
+    private val createFamilyUseCase: CreateFamilyUseCase,
+    private val getFamilyUseCase: GetFamilyUseCase
 ): ViewModel() {
 
-    private val _state = MutableStateFlow<CreateFamilyUiState>(CreateFamilyUiState.Step(eventSink = ::handleEvent))
+    private val _state = MutableStateFlow<CreateFamilyUiState>(CreateFamilyUiState.Loading)
     val state: StateFlow<CreateFamilyUiState> = _state.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            getFamilyUseCase()
+                .onSuccess { family -> _state.update { CreateFamilyUiState.Error(errorMessage = "You are already a member of the ${family.name} family.\n\nTo create a new family, please leave your current family from the account section in the app.") } }
+                .onFailure { _state.update { CreateFamilyUiState.Step(eventSink = ::handleEvent) } }
+        }
+    }
 
     private fun handleEvent(event: CreateFamilyEvent) {
         withStepState { currentState ->
@@ -54,7 +64,7 @@ class CreateFamilyViewModel @Inject constructor(
                 createFamilyUseCase(currentState.familyName, currentState.photoUri)
                 _state.update { CreateFamilyUiState.FamilyCreated }
             } catch (e: Exception) {
-                _state.update { CreateFamilyUiState.Error(e) }
+                _state.update { CreateFamilyUiState.Error(e.message?: "Unknown error.") }
             }
         }
     }

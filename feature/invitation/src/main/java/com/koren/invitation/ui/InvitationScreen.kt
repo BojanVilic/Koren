@@ -11,7 +11,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,7 +36,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -59,6 +57,7 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.koren.common.models.InvitationResult
 import com.koren.common.util.Destination
+import com.koren.designsystem.components.BrokenBranchErrorScreen
 import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.components.StyledStringResource
 import com.koren.designsystem.theme.KorenTheme
@@ -97,7 +96,7 @@ private fun InvitationContent(
 ) {
 
     when (invitationUiState) {
-        is InvitationUiState.Error -> ErrorScreen(uiState = invitationUiState)
+        is InvitationUiState.Error -> BrokenBranchErrorScreen(errorMessage = invitationUiState.errorMessage)
         is InvitationUiState.Shown -> ShownContent(invitationUiState = invitationUiState)
     }
 }
@@ -441,37 +440,6 @@ private fun generateQrCodeBitmap(data: String, color: Int, backgroundColor: Int)
     }
 }
 
-@Composable
-private fun ErrorScreen(
-    uiState: InvitationUiState.Error
-) {
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.error_screen))
-    val preloaderProgress by animateLottieCompositionAsState(
-        composition = composition,
-        isPlaying = true
-    )
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        LottieAnimation(
-            modifier = Modifier.padding(top = 32.dp),
-            progress = { preloaderProgress },
-            composition = composition
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Text(
-            modifier = Modifier.fillMaxWidth(),
-            text = uiState.errorMessage,
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
 @ThemePreview
 @Composable
 fun InvitationPreview() {
@@ -489,18 +457,6 @@ fun InvitationPreview() {
                     invitationCode = "2F57D9"
                 ),
                 eventSink = {}
-            )
-        )
-    }
-}
-
-@ThemePreview
-@Composable
-fun InvitationErrorPreview() {
-    KorenTheme {
-        ErrorScreen(
-            uiState = InvitationUiState.Error(
-                errorMessage = "Family not found. \uD83D\uDE22"
             )
         )
     }

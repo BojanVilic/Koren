@@ -35,6 +35,7 @@ import com.koren.common.models.Invitation
 import com.koren.common.models.getExpiryText
 import com.koren.common.models.toRelativeTime
 import com.koren.common.util.Destination
+import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
@@ -194,17 +195,6 @@ private fun ShownContent(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun LoadingContent() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        CircularProgressIndicator()
     }
 }
 
