@@ -1,4 +1,4 @@
-package com.koren.home.ui
+package com.koren.home.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

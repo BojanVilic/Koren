@@ -52,7 +52,7 @@ fun Long.toRelativeTime(
 
     return when {
         date.isEqual(now) -> {
-            time.format(timeFormatter)
+            "Today at ${time.format(timeFormatter)}"
         }
         date.isEqual(now.minusDays(1)) -> {
             "Yesterday at ${time.format(timeFormatter)}"

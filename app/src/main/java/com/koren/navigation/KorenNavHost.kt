@@ -13,7 +13,7 @@ import com.koren.auth.navigation.AuthDestination
 import com.koren.auth.navigation.authScreen
 import com.koren.home.navigation.HomeGraph
 import com.koren.home.navigation.homeScreen
-import com.koren.home.ui.HomeDestination
+import com.koren.home.ui.home.HomeDestination
 import com.koren.invitation.navigation.invitationScreen
 import com.koren.invitation.ui.InvitationDestination
 import com.koren.map.ui.mapScreen

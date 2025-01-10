@@ -1,22 +1,17 @@
 package com.koren.invitation.ui
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -51,13 +45,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.koren.common.models.InvitationResult
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.BrokenBranchErrorScreen
+import com.koren.designsystem.components.QRCodeImage
 import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.components.StyledStringResource
 import com.koren.designsystem.theme.KorenTheme
@@ -66,8 +57,6 @@ import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.invitation.R
 import kotlinx.serialization.Serializable
-import qrcode.QRCode
-import qrcode.color.Colors
 
 @Serializable
 object InvitationDestination : Destination
@@ -403,40 +392,6 @@ private fun InvitationChoiceCard(
         AnimatedVisibility(isExpanded) {
             expandedContent()
         }
-    }
-}
-
-@Composable
-fun QRCodeImage(
-    modifier: Modifier = Modifier,
-    data: String,
-    color: Int = Colors.BLACK,
-    backgroundColor: Int = Colors.WHITE
-) {
-    val qrCodeBitmap = remember(data) {
-        generateQrCodeBitmap(data, color, backgroundColor)
-    }
-
-    qrCodeBitmap?.let { bitmap ->
-        Image(
-            bitmap = bitmap.asImageBitmap(),
-            contentDescription = "QR Code",
-            modifier = modifier
-        )
-    }
-}
-
-private fun generateQrCodeBitmap(data: String, color: Int, backgroundColor: Int): Bitmap? {
-    return try {
-        val qrCode = QRCode.ofSquares()
-            .withColor(color)
-            .withBackgroundColor(backgroundColor)
-            .build(data)
-        val qrCodeImage = qrCode.render().getBytes()
-        BitmapFactory.decodeByteArray(qrCodeImage, 0, qrCodeImage.size)
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
     }
 }
 

@@ -1,4 +1,4 @@
-package com.koren.home.ui
+package com.koren.home.ui.home
 
 import com.koren.common.models.Invitation
 import com.koren.common.models.UserData
