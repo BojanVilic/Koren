@@ -9,5 +9,10 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.domain)
+
     implementation(libs.maps.compose)
+
+    implementation(libs.accompanist.permissions)
+    implementation(libs.play.services.location)
 }

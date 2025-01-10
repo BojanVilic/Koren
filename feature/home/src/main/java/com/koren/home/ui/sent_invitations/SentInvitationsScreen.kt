@@ -275,6 +275,7 @@ private fun QRInvitation(
 
 
         if (expanded) {
+            HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
             Spacer(modifier = Modifier.size(16.dp))
             QRCodeImage(
                 modifier = Modifier

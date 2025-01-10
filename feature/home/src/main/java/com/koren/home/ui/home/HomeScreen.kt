@@ -223,7 +223,7 @@ private fun ShownContent(
         AnimatedVisibility(state.sentInvitations.isNotEmpty()) {
             Card(
                 modifier = Modifier
-                    .padding(top = 16.dp)
+                    .padding(top = 8.dp)
                     .fillMaxWidth()
                     .clip(MaterialTheme.shapes.medium),
                 onClick = { sentInvitations() }
@@ -336,7 +336,7 @@ private fun ReceivedInvitationCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(top = 8.dp)
     ) {
         Text(
             modifier = Modifier
@@ -368,7 +368,7 @@ private fun ReceivedInvitationCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                    .padding(bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedTextField(

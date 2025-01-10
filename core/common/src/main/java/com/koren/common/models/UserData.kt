@@ -6,5 +6,6 @@ data class UserData(
     val displayName: String = "",
     val email: String = "",
     val profilePictureUrl: String = "",
-    val familyRole: FamilyRole = FamilyRole.NONE
+    val familyRole: FamilyRole = FamilyRole.NONE,
+    val lastLocation: LatLng? = null
 )

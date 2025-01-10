@@ -41,6 +41,6 @@ fun LoadingContent() {
 
 @ThemePreview
 @Composable
-fun LoadingContentPreview() {
+private fun LoadingContentPreview() {
     LoadingContent()
 }
