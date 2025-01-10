@@ -47,6 +47,7 @@ import com.koren.common.models.isQRInvitation
 import com.koren.common.models.toRelativeTime
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.BrokenBranchErrorScreen
+import com.koren.designsystem.components.EmptyContent
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.components.QRCodeImage
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
@@ -87,6 +88,7 @@ private fun SentInvitationsContent(
         is SentInvitationUiState.Loading -> LoadingContent()
         is SentInvitationUiState.Error -> BrokenBranchErrorScreen(uiState.message)
         is SentInvitationUiState.Shown -> ShownContent(uiState)
+        is SentInvitationUiState.Empty -> EmptyContent()
     }
 }
 

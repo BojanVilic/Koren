@@ -24,7 +24,9 @@ class SentInvitationViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             invitationRepository.getSentInvitations().collect { sentInvitations ->
                 val uiSentInvitations = sentInvitations.map { UiSentInvitation(invitation = it) }
-                _state.update {
+                if (uiSentInvitations.isEmpty())
+                    _state.update { SentInvitationUiState.Empty }
+                else _state.update {
                     SentInvitationUiState.Shown(
                         sentInvitations = uiSentInvitations,
                         eventSink = ::handleEvent

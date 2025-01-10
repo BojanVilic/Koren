@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -189,7 +190,7 @@ private fun ShownContent(
                         FamilyMember(member = member)
                     }
                     item {
-                        IconButton(
+                        FilledTonalIconButton(
                             onClick = { inviteFamilyMember() }
                         ) {
                             Icon(
