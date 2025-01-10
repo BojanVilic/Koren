@@ -84,3 +84,7 @@ fun Invitation.getExpiryText(): String {
         "Expires in $formattedHours hours"
     }
 }
+
+fun Invitation.isQRInvitation(): Boolean {
+    return recipientEmail.isBlank()
+}

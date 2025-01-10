@@ -1,5 +1,6 @@
 package com.koren.home.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -8,32 +9,30 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,27 +49,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter.State.Empty.painter
 import coil.request.ImageRequest
 import com.koren.common.models.Invitation
 import com.koren.common.models.InvitationStatus
+import com.koren.common.models.UserData
 import com.koren.common.models.getExpiryText
-import com.koren.common.models.toHumanReadableDateTime
 import com.koren.common.models.toRelativeTime
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
+import com.koren.designsystem.components.LoadingContent
+import com.koren.designsystem.components.StyledStringResource
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -85,7 +85,8 @@ object HomeDestination : Destination
 fun HomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
     inviteFamilyMember: () -> Unit,
-    createFamily: () -> Unit
+    createFamily: () -> Unit,
+    sentInvitations: () -> Unit
 ) {
 
     val scaffoldStateProvider = LocalScaffoldStateProvider.current
@@ -99,7 +100,8 @@ fun HomeScreen(
     HomeContent(
         state = state,
         inviteFamilyMember = inviteFamilyMember,
-        createFamily = createFamily
+        createFamily = createFamily,
+        sentInvitations = sentInvitations
     )
 }
 
@@ -107,14 +109,16 @@ fun HomeScreen(
 private fun HomeContent(
     state: HomeUiState,
     inviteFamilyMember: () -> Unit,
-    createFamily: () -> Unit
+    createFamily: () -> Unit,
+    sentInvitations: () -> Unit
 ) {
     when (state) {
-        is HomeUiState.Loading -> Text("Loading...")
+        is HomeUiState.Loading -> LoadingContent()
         is HomeUiState.Shown -> ShownContent(
             state = state,
             inviteFamilyMember = inviteFamilyMember,
-            createFamily = createFamily
+            createFamily = createFamily,
+            sentInvitations = sentInvitations
         )
     }
 }
@@ -127,7 +131,8 @@ private fun ShownContent(
     scheduleEvent: () -> Unit = {},
     reminder: () -> Unit = {},
     chat: () -> Unit = {},
-    createFamily: () -> Unit
+    createFamily: () -> Unit,
+    sentInvitations: () -> Unit
 ) {
 
     val actions = listOf(
@@ -164,46 +169,39 @@ private fun ShownContent(
     )
 
     Column(
-        modifier = Modifier.padding(16.dp)
+        modifier = Modifier
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+            .fillMaxSize()
     ) {
         if (state.familyMembers.isNotEmpty()) {
             Text(
                 modifier = Modifier.padding(vertical = 16.dp),
-                text = "Family members"
+                text = stringResource(R.string.family_members)
             )
-            Card {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.medium)
+            ) {
                 LazyRow(
                     modifier = Modifier.padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     items(state.familyMembers) { member ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
+                        FamilyMember(member = member)
+                    }
+                    item {
+                        IconButton(
+                            onClick = { inviteFamilyMember() }
                         ) {
-                            AsyncImage(
+                            Icon(
                                 modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(CircleShape),
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .crossfade(true)
-                                    .data(member.profilePictureUrl)
-                                    .build(),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop
+                                    .size(64.dp),
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add family member"
                             )
-                            Column(
-                                modifier = Modifier.padding(start = 8.dp)
-                            ) {
-                                Text(
-                                    text = member.displayName
-                                )
-                                Text(
-                                    text = member.email
-                                )
-                                Text(
-                                    text = member.id
-                                )
-                            }
                         }
                     }
                 }
@@ -211,8 +209,8 @@ private fun ShownContent(
         }
 
         if (state.receivedInvitations.isNotEmpty()) {
-            LazyColumn {
-                items(state.receivedInvitations) { invitation ->
+            Column {
+                state.receivedInvitations.forEach { invitation ->
                     ReceivedInvitationCard(
                         invitation = invitation,
                         invitationCodeText = state.invitationCodeText,
@@ -225,12 +223,36 @@ private fun ShownContent(
             }
         }
 
-        if (state.sentInvitations.isNotEmpty()) {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+        AnimatedVisibility(state.sentInvitations.isNotEmpty()) {
+            Card(
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.medium),
+                onClick = { sentInvitations() }
             ) {
-                items(state.sentInvitations) { invitation ->
-                    SentInvitationCard(invitation = invitation)
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val invitationNumberStyle = SpanStyle(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    StyledStringResource(
+                        stringRes = R.string.sent_invitations,
+                        formatArgs = listOf(
+                            "(${state.sentInvitations.size})" to invitationNumberStyle
+                        )
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null
+                    )
                 }
             }
         }
@@ -270,50 +292,38 @@ private fun ActionButton(
             actionItem.IconComposable()
             Text(
                 modifier = Modifier.padding(top = 4.dp),
-                text = actionItem.text
+                text = actionItem.text,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
 }
 
+
 @Composable
-private fun SentInvitationCard(
-    invitation: Invitation
-) {
-    Card {
-        Row {
-            Text(
-                modifier = Modifier
-                    .padding(6.dp)
-                    .border(1.dp, MaterialTheme.colorScheme.onPrimary, RoundedCornerShape(8.dp))
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .padding(8.dp),
-                text = invitation.status.name,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                modifier = Modifier.padding(12.dp),
-                text = invitation.getExpiryText(),
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp),
-        ) {
-            Text(
-                modifier = Modifier
-                    .padding(vertical = 16.dp)
-                    .fillMaxWidth(),
-                text = invitation.recipientEmail,
-                style = MaterialTheme.typography.bodyLarge,
-                textDecoration = TextDecoration.Underline
-            )
-        }
+private fun FamilyMember(member: UserData) {
+    Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AsyncImage(
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape),
+            model = ImageRequest.Builder(LocalContext.current)
+                .crossfade(true)
+                .data(member.profilePictureUrl)
+                .build(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop
+        )
+
+        Text(
+            modifier = Modifier.padding(top = 8.dp),
+            text = member.displayName,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
@@ -334,8 +344,8 @@ private fun ReceivedInvitationCard(
         Text(
             modifier = Modifier
                 .padding(6.dp)
-                .border(1.dp, MaterialTheme.colorScheme.onPrimary, RoundedCornerShape(8.dp))
-                .clip(RoundedCornerShape(8.dp))
+                .border(1.dp, MaterialTheme.colorScheme.onPrimary, MaterialTheme.shapes.medium)
+                .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.primary)
                 .padding(8.dp),
             text = invitation.status.name,
@@ -481,8 +491,7 @@ fun HomePreview() {
                 ),
                 sentInvitations = listOf(
                     Invitation(
-                        status = InvitationStatus.ACCEPTED,
-                        recipientEmail = "johndoe@email.com"
+                        status = InvitationStatus.ACCEPTED
                     ),
                     Invitation(
                         status = InvitationStatus.PENDING,
@@ -502,7 +511,8 @@ fun HomePreview() {
                 eventSink = {}
             ),
             inviteFamilyMember = {},
-            createFamily = {}
+            createFamily = {},
+            sentInvitations = {}
         )
     }
 }

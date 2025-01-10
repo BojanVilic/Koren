@@ -25,7 +25,7 @@ fun StyledStringResource(
     textAlign: TextAlign? = null
 ) {
     Text(
-        modifier = modifier.padding(top = 8.dp, start = 32.dp, end = 32.dp),
+        modifier = modifier,
         text = buildAnnotatedString {
             val fullString = stringResource(stringRes, *formatArgs.map { it.first }.toTypedArray())
             var currentIndex = 0

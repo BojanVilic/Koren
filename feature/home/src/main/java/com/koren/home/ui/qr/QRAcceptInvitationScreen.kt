@@ -127,8 +127,8 @@ private fun ShownContent(
             Text(
                 modifier = Modifier
                     .padding(6.dp)
-                    .border(1.dp, MaterialTheme.colorScheme.onPrimary, RoundedCornerShape(8.dp))
-                    .clip(RoundedCornerShape(8.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.onPrimary, MaterialTheme.shapes.medium)
+                    .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.primary)
                     .padding(8.dp),
                 text = invitation.status.name,

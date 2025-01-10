@@ -106,7 +106,7 @@ private fun MapScreenContent() {
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             ),
-            shape = RoundedCornerShape(8.dp)
+            shape = MaterialTheme.shapes.medium
         )
     }
 

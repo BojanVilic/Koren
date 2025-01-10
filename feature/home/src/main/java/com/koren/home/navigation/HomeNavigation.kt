@@ -11,6 +11,8 @@ import com.koren.home.ui.HomeDestination
 import com.koren.home.ui.HomeScreen
 import com.koren.home.ui.qr.QRAcceptInvitationDestination
 import com.koren.home.ui.qr.QRAcceptInvitationScreen
+import com.koren.home.ui.sent_invitations.SentInvitationsDestination
+import com.koren.home.ui.sent_invitations.SentInvitationsScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -28,7 +30,8 @@ fun NavGraphBuilder.homeScreen(
         composable<HomeDestination> {
             HomeScreen(
                 inviteFamilyMember = inviteFamilyMember,
-                createFamily = createFamily
+                createFamily = createFamily,
+                sentInvitations = { navController.navigate(SentInvitationsDestination) }
             )
         }
 
@@ -48,6 +51,10 @@ fun NavGraphBuilder.homeScreen(
                     navController.navigateUp()
                 }
             )
+        }
+
+        composable<SentInvitationsDestination> {
+            SentInvitationsScreen()
         }
     }
 }
