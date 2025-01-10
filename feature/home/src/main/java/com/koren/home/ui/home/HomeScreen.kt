@@ -300,7 +300,7 @@ private fun ActionButton(
 @Composable
 private fun FamilyMember(member: UserData) {
     Column(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier.padding(vertical = 16.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AsyncImage(

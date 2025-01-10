@@ -5,13 +5,17 @@ package com.koren.map.ui
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -20,11 +24,10 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
@@ -43,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -58,6 +62,7 @@ import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.koren.common.models.UserData
+import com.koren.common.models.UserLocation
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.theme.KorenTheme
@@ -81,12 +86,16 @@ fun MapScreen(
         )
     )
 
-    val scaffoldStateProvider = rememberBottomSheetScaffoldState(
+    val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
-            initialValue = SheetValue.Expanded
+            initialValue = SheetValue.Expanded,
+            confirmValueChange = {
+                it != SheetValue.Hidden
+            }
         )
     )
 
+    val coroutineScope = rememberCoroutineScope()
     val cameraPermissionState = rememberPermissionState(ACCESS_FINE_LOCATION)
 
     if (cameraPermissionState.status.isGranted) {
@@ -99,38 +108,50 @@ fun MapScreen(
 
     val uiState by mapViewModel.state.collectAsStateWithLifecycle()
 
-    BottomSheetScaffold(
-        scaffoldState = scaffoldStateProvider,
-        sheetContent = {
-            ActionBottomSheetContent()
+    LaunchedEffect(Unit) {
+        scaffoldState.bottomSheetState.expand()
+    }
+
+    LaunchedEffect((uiState as? MapUiState.Shown)?.cameraPosition?.isMoving) {
+        if ((uiState as? MapUiState.Shown)?.cameraPosition?.isMoving == true) {
+            if (scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded) {
+                coroutineScope.launch {
+                    scaffoldState.bottomSheetState.partialExpand()
+                }
+            }
         }
+    }
+
+    BottomSheetScaffold(
+        scaffoldState = scaffoldState,
+        sheetContent = {
+            (uiState as? MapUiState.Shown)?.let { ActionBottomSheetContent(it) }
+        },
+        sheetPeekHeight = 112.dp
     ) {
         MapScreenContent(uiState = uiState)
     }
 }
 
 @Composable
-private fun MapScreenContent(uiState: MapUiState) {
+private fun MapScreenContent(
+    uiState: MapUiState
+) {
     when (uiState) {
         is MapUiState.Loading -> LoadingContent()
         is MapUiState.LocationPermissionNotGranted -> Text("Location permission must be granted!")
-        is MapUiState.Shown -> ShownContent(uiState)
+        is MapUiState.Shown -> ShownContent(uiState = uiState)
     }
 }
 
 @Composable
-fun ShownContent(uiState: MapUiState.Shown) {
-
-    val firstMemberCameraPosition = uiState.familyMembers.firstNotNullOf { it.lastLocation }
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(firstMemberCameraPosition.latitude, firstMemberCameraPosition.longitude), 15f)
-    }
-    val coroutineScope = rememberCoroutineScope()
-
+fun ShownContent(
+    uiState: MapUiState.Shown
+) {
     Box {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
+            cameraPositionState = uiState.cameraPosition,
             uiSettings = MapUiSettings(zoomControlsEnabled = false)
         ) {
 
@@ -138,45 +159,20 @@ fun ShownContent(uiState: MapUiState.Shown) {
                 Pin(
                     imageUrl = member.profilePictureUrl,
                     displayName = member.displayName,
-                    location = member.lastLocation?: com.koren.common.models.LatLng(),
+                    location = member.lastLocation?: UserLocation(),
                     onClick = {
-                        val cameraUpdate = CameraUpdateFactory.newCameraPosition(
-                            CameraPosition.fromLatLngZoom(
-                                it,
-                                18f
-                            )
-                        )
-
-                        coroutineScope.launch {
-                            cameraPositionState.animate(
-                                update = cameraUpdate,
-                                durationMs = 1000
-                            )
-                        }
+                        uiState.eventSink(MapEvent.MapPinClicked(member))
                     }
                 )
             }
         }
-
-        OutlinedTextField(
-            modifier = Modifier
-                .padding(8.dp)
-                .align(Alignment.TopStart)
-                .fillMaxWidth(),
-            value = "",
-            onValueChange = { },
-            label = { Text("Search") },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            ),
-            shape = MaterialTheme.shapes.medium
-        )
     }
 }
 
 @Composable
-fun ActionBottomSheetContent() {
+fun ActionBottomSheetContent(
+    uiState: MapUiState.Shown
+) {
     val actions = listOf(
         Icons.Default.Add,
         Icons.Default.ThumbUp,
@@ -184,16 +180,53 @@ fun ActionBottomSheetContent() {
         Icons.Default.Create
     )
 
-    LazyRow(
-        modifier = Modifier.padding(8.dp)
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp)
     ) {
-        items(actions) { actionItem ->
-            IconButton(
-                onClick = { }
-            ) {
-                Icon(
-                    imageVector = actionItem,
-                    contentDescription = "Action"
+        LazyRow(
+            modifier = Modifier.padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(actions) { actionItem ->
+                IconButton(
+                    onClick = { }
+                ) {
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        imageVector = actionItem,
+                        contentDescription = "Action"
+                    )
+                }
+            }
+        }
+
+        HorizontalDivider()
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            text = "Look for family members",
+            style = MaterialTheme.typography.labelLarge
+        )
+
+        LazyRow(
+            modifier = Modifier.padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(uiState.familyMembers) { member ->
+                AsyncImage(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .clickable {
+                            uiState.eventSink(MapEvent.MapPinClicked(member))
+                        },
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .crossfade(true)
+                        .data(member.profilePictureUrl)
+                        .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop
                 )
             }
         }
@@ -204,8 +237,8 @@ fun ActionBottomSheetContent() {
 fun Pin(
     imageUrl: String?,
     displayName: String,
-    location: com.koren.common.models.LatLng,
-    onClick: (LatLng) -> Unit
+    location: UserLocation,
+    onClick: () -> Unit
 ) {
     val markerState = remember { MarkerState(position = LatLng(location.latitude, location.longitude)) }
     val painter = rememberAsyncImagePainter(
@@ -220,7 +253,7 @@ fun Pin(
         state = markerState,
         title = displayName,
         onClick = {
-            onClick(markerState.position)
+            onClick()
             true
         }
     ) {
@@ -295,7 +328,7 @@ fun MapScreenPreview() {
                     UserData(
                         id = "1",
                         displayName = "John Doe",
-                        lastLocation = com.koren.common.models.LatLng(37.7749, -122.4194)
+                        lastLocation = UserLocation(37.7749, -122.4194)
                     )
                 ),
                 eventSink = {}

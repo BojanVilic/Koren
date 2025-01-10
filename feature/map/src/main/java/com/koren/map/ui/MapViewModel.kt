@@ -2,9 +2,12 @@ package com.koren.map.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.CameraPositionState
+import com.koren.common.models.UserData
 import com.koren.common.services.LocationService
-import com.koren.common.services.UserSession
 import com.koren.domain.GetAllFamilyMembersUseCase
 import com.koren.domain.UpdateUserLocationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,8 +45,10 @@ class MapViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.Default) {
             getAllFamilyMembersUseCase().collect {
+                val firstMemberCameraPosition = it.firstNotNullOf { user -> user.lastLocation }
                 _state.value = MapUiState.Shown(
                     familyMembers = it,
+                    cameraPosition = CameraPositionState(position = CameraPosition.fromLatLngZoom(LatLng(firstMemberCameraPosition.latitude, firstMemberCameraPosition.longitude), 15f)),
                     eventSink = { event -> handleEvent(event) }
                 )
             }
@@ -53,8 +58,24 @@ class MapViewModel @Inject constructor(
     private fun handleEvent(event: MapEvent) {
         withShownState { current ->
             when (event) {
-                is MapEvent.MapPinClicked -> Unit
+                is MapEvent.MapPinClicked -> updateCameraPosition(current, event.userData)
             }
+        }
+    }
+
+    private fun updateCameraPosition(current: MapUiState.Shown, userData: UserData) {
+        val cameraUpdate = CameraUpdateFactory.newCameraPosition(
+            CameraPosition.fromLatLngZoom(
+                userData.lastLocation?.toLatLng()?: LatLng(0.0, 0.0),
+                18f
+            )
+        )
+
+        viewModelScope.launch {
+            current.cameraPosition.animate(
+                update = cameraUpdate,
+                durationMs = 1000
+            )
         }
     }
 
