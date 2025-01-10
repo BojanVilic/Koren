@@ -11,66 +11,36 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val invitationRepository: InvitationRepository,
-    private val getAllFamilyMembers: GetAllFamilyMembersUseCase
+    getAllFamilyMembers: GetAllFamilyMembersUseCase
 ): ViewModel() {
 
     private val _state = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            invitationRepository.getReceivedInvitations().collect { invitations ->
-                val pendingInvitations = invitations.filter { it.status == InvitationStatus.PENDING }
-                _state.update { currentState ->
-                    if (currentState is HomeUiState.Shown)
-                        currentState.copy(receivedInvitations = pendingInvitations)
-                    else
-                        HomeUiState.Shown(
-                            receivedInvitations = pendingInvitations,
-                            eventSink = ::handleEvent
-                        )
-                }
+        combine(
+            invitationRepository.getReceivedInvitations(),
+            invitationRepository.getSentInvitations(),
+            getAllFamilyMembers()
+        ) { receivedInvitations, sentInvitations, familyMembers ->
+            _state.update {
+                HomeUiState.Shown(
+                    receivedInvitations = receivedInvitations.filter { it.status == InvitationStatus.PENDING },
+                    sentInvitations = sentInvitations,
+                    familyMembers = familyMembers,
+                    eventSink = ::handleEvent
+                )
             }
-        }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            invitationRepository.getSentInvitations().collect { invitations ->
-                _state.update { currentState ->
-                    if (currentState is HomeUiState.Shown)
-                        currentState.copy(sentInvitations = invitations)
-                    else
-                        HomeUiState.Shown(
-                            sentInvitations = invitations,
-                            eventSink = ::handleEvent
-                        )
-                }
-            }
-        }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val familyMembers = getAllFamilyMembers()
-                _state.update { currentState ->
-                    if (currentState is HomeUiState.Shown)
-                        currentState.copy(familyMembers = familyMembers)
-                    else
-                        HomeUiState.Shown(
-                            familyMembers = familyMembers,
-                            eventSink = ::handleEvent
-                        )
-                }
-            } catch (e: Exception) {
-                Timber.e(e)
-            }
-        }
+        }.launchIn(viewModelScope)
     }
 
     private fun handleEvent(event: HomeEvent) {
