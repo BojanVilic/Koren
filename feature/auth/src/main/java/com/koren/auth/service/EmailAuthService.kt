@@ -2,6 +2,8 @@ package com.koren.auth.service
 
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.tasks.asDeferred
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class EmailAuthService @Inject constructor(
@@ -27,5 +29,15 @@ class EmailAuthService @Inject constructor(
             .addOnFailureListener { exception ->
                 result(Result.failure(exception))
             }
+    }
+
+    suspend fun signIn(email: String, password: String): Result<Unit> {
+        return try {
+            val result = auth.signInWithEmailAndPassword(email, password).await()
+            if (result.user != null) Result.success(Unit)
+            else Result.failure(Exception("User not found"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

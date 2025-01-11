@@ -1,5 +1,7 @@
 package com.koren.auth.ui.sign_in
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Button
@@ -27,14 +31,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.auth.R
+import com.koren.auth.ui.sign_up.SignUpEvent
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.theme.KorenTheme
@@ -93,6 +103,8 @@ private fun ShownContent(
 
     SimpleSnackbar(uiState.errorMessage)
 
+    val focusManager = LocalFocusManager.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -141,33 +153,75 @@ private fun ShownContent(
                     text = "Please, sign in to continue.",
                     style = MaterialTheme.typography.bodyLarge,
                 )
+
                 OutlinedTextField(
                     modifier = Modifier
                         .padding(top = 32.dp)
                         .fillMaxWidth(0.8f),
-                    value = "",
-                    onValueChange = {},
+                    value = uiState.email,
+                    onValueChange = {
+                        uiState.eventSink(SignInEvent.EmailChanged(it))
+                    },
                     label = { Text(text = stringResource(id = R.string.email_label)) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Email,
                             contentDescription = null
                         )
-                    }
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    )
                 )
 
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
-                        .padding(top = 16.dp),
-                    value = "",
-                    onValueChange = {},
+                        .padding(top = 8.dp),
+                    value = uiState.password,
+                    onValueChange = {
+                        uiState.eventSink(SignInEvent.PasswordChanged(it))
+                    },
                     label = { Text(text = stringResource(id = R.string.password_label)) },
                     leadingIcon = {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_password),
                             contentDescription = null
                         )
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                        }
+                    ),
+                    trailingIcon = {
+                        Icon(
+                            modifier = Modifier.clickable {
+                                uiState.eventSink(SignInEvent.ShowPasswordClicked)
+                            },
+                            painter = painterResource(
+                                id = if (uiState.showPassword) {
+                                    R.drawable.ic_pw_visible
+                                } else {
+                                    R.drawable.ic_pw_hidden
+                                }
+                            ),
+                            contentDescription = if (uiState.showPassword) {
+                                stringResource(id = R.string.show_password)
+                            } else {
+                                stringResource(id = R.string.hide_password)
+                            }
+                        )
+                    },
+                    visualTransformation = if (uiState.showPassword) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
                     }
                 )
 
@@ -175,7 +229,9 @@ private fun ShownContent(
                     modifier = Modifier
                         .padding(top = 32.dp)
                         .fillMaxWidth(0.8f),
-                    onClick = {}
+                    onClick = {
+                        uiState.eventSink(SignInEvent.SignInClicked)
+                    }
                 ) {
                     Text(text = stringResource(id = R.string.sign_in))
                 }

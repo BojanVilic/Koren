@@ -24,8 +24,21 @@ class SignInViewModel @Inject constructor(
     private fun handleEvent(event: SignInEvent) {
         withShownState { current ->
             when (event) {
-                SignInEvent.GoogleSignIn -> googleSignIn(current)
+                is SignInEvent.GoogleSignIn -> googleSignIn(current)
+                is SignInEvent.EmailChanged -> _state.update { current.copy(email = event.email) }
+                is SignInEvent.PasswordChanged -> _state.update { current.copy(password = event.password) }
+                is SignInEvent.ShowPasswordClicked -> _state.update { current.copy(showPassword = !current.showPassword) }
+                is SignInEvent.ClearErrorMessage -> _state.update { current.copy(errorMessage = "") }
+                is SignInEvent.SignInClicked -> signIn(current)
             }
+        }
+    }
+
+    private fun signIn(current: SignInUiState.Shown) {
+        viewModelScope.launch(Dispatchers.Default) {
+            authService.signIn(SignInMethod.Email(current.email, current.password))
+                .onSuccess { _state.update { SignInUiState.NavigateToHome } }
+                .onFailure { error -> _state.update { current.copy(errorMessage = error.message?: "Unknown error.") } }
         }
     }
 

@@ -16,7 +16,7 @@ class DefaultAuthService @Inject constructor(
 
     override suspend fun signIn(signInMethod: SignInMethod): Result<Unit> {
         return when (signInMethod) {
-            is SignInMethod.Email -> Result.failure(IllegalArgumentException("Email sign in not supported"))
+            is SignInMethod.Email -> emailAuthService.signIn(signInMethod.email, signInMethod.password)
             is SignInMethod.Google -> googleAuthService()
         }
     }
