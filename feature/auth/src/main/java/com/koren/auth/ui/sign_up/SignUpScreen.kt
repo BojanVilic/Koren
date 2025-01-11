@@ -16,15 +16,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.rounded.Add
@@ -34,7 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +54,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.koren.auth.R
+import com.koren.common.util.CollectSideEffects
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.theme.KorenTheme
@@ -73,7 +70,8 @@ data object SignUpScreen : Destination
 fun SignUpScreen(
     signUpViewModel: SignUpViewModel = hiltViewModel(),
     onSignUpSuccess: () -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onShowSnackbar: suspend (message: String) -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
@@ -84,26 +82,30 @@ fun SignUpScreen(
         )
     )
 
-    val uiState by signUpViewModel.state.collectAsStateWithLifecycle()
+    val uiState by signUpViewModel.uiState.collectAsStateWithLifecycle()
+
+    CollectSideEffects(
+        viewModel = signUpViewModel
+    ) { sideEffect ->
+        when (sideEffect) {
+            is SignUpSideEffect.NavigateBack -> onNavigateBack()
+            is SignUpSideEffect.NavigateToHome -> onSignUpSuccess()
+            is SignUpSideEffect.ShowGenericMessage -> onShowSnackbar(sideEffect.message)
+        }
+    }
 
     SignUpContent(
-        uiState = uiState,
-        onSignUpSuccess = onSignUpSuccess,
-        onNavigateBack = onNavigateBack
+        uiState = uiState
     )
 }
 
 @Composable
 private fun SignUpContent(
-    uiState: SignUpUiState,
-    onSignUpSuccess: () -> Unit,
-    onNavigateBack: () -> Unit
+    uiState: SignUpUiState
 ) {
 
     when (uiState) {
-        is SignUpUiState.NavigateToHome -> LaunchedEffect(Unit) { onSignUpSuccess() }
         is SignUpUiState.Shown -> ShownContent(uiState = uiState)
-        SignUpUiState.NavigateBack -> LaunchedEffect(Unit) { onNavigateBack() }
     }
 }
 
@@ -380,9 +382,7 @@ fun SignUpPreview() {
         SignUpContent(
             uiState = SignUpUiState.Shown(
                 eventSink = {}
-            ),
-            onSignUpSuccess = {},
-            onNavigateBack = {}
+            )
         )
     }
 }

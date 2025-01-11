@@ -70,9 +70,9 @@ fun SignInScreen(
 
     val uiState by signInViewModel.uiState.collectAsStateWithLifecycle()
 
-    CollectSideEffects(viewModel = signInViewModel) {
-        when (it) {
-            is SignInSideEffect.ShowError -> onShowSnackbar(it.message)
+    CollectSideEffects(viewModel = signInViewModel) { sideEffect ->
+        when (sideEffect) {
+            is SignInSideEffect.ShowError -> onShowSnackbar(sideEffect.message)
             is SignInSideEffect.NavigateToHome -> onSignInSuccess()
             is SignInSideEffect.NavigateToSignUp -> navigateToSignUp()
         }

@@ -1,10 +1,12 @@
 package com.koren.auth.ui.sign_up
 
 import android.net.Uri
+import com.koren.common.util.Event
+import com.koren.common.util.EventHandler
+import com.koren.common.util.SideEffect
+import com.koren.common.util.UiState
 
-sealed interface SignUpUiState {
-    data object NavigateToHome : SignUpUiState
-    data object NavigateBack : SignUpUiState
+sealed interface SignUpUiState : UiState {
     data class Shown(
         val firstName: String = "",
         val lastName: String = "",
@@ -15,8 +17,8 @@ sealed interface SignUpUiState {
         val passwordErrorMessage: String = "",
         val genericErrorMessage: String = "",
         val showPassword: Boolean = false,
-        val eventSink: (SignUpEvent) -> Unit
-    ): SignUpUiState {
+        override val eventSink: (SignUpEvent) -> Unit
+    ): SignUpUiState, EventHandler<SignUpEvent> {
         val isSignUpButtonEnabled: Boolean
             get() =
                 email.isNotEmpty() &&
@@ -29,7 +31,7 @@ sealed interface SignUpUiState {
     }
 }
 
-sealed interface SignUpEvent {
+sealed interface SignUpEvent : Event {
     data object SignUpButtonClicked : SignUpEvent
     data class FirstNameChanged(val firstName: String) : SignUpEvent
     data class LastNameChanged(val lastName: String) : SignUpEvent
@@ -38,4 +40,10 @@ sealed interface SignUpEvent {
     data class SetImageUri(val imageUri: Uri) : SignUpEvent
     data object ShowPasswordClicked : SignUpEvent
     data object SignInClicked : SignUpEvent
+}
+
+sealed interface SignUpSideEffect : SideEffect {
+    data object NavigateToHome : SignUpSideEffect
+    data object NavigateBack : SignUpSideEffect
+    data class ShowGenericMessage(val message: String) : SignUpSideEffect
 }
