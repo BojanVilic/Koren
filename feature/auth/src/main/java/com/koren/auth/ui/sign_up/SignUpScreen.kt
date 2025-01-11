@@ -5,7 +5,6 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,15 +16,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -38,9 +41,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -51,7 +60,6 @@ import coil.request.ImageRequest
 import com.koren.auth.R
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.SimpleSnackbar
-import com.koren.designsystem.components.dashedBorder
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -65,10 +73,12 @@ data object SignUpScreen : Destination
 fun SignUpScreen(
     signUpViewModel: SignUpViewModel = hiltViewModel(),
     onSignUpSuccess: () -> Unit,
+    onNavigateBack: () -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
         state = ScaffoldState(
+            title = stringResource(R.string.sign_up),
             isTopBarVisible = true,
             isBottomBarVisible = false
         )
@@ -78,19 +88,22 @@ fun SignUpScreen(
 
     SignUpContent(
         uiState = uiState,
-        onSignUpSuccess = onSignUpSuccess
+        onSignUpSuccess = onSignUpSuccess,
+        onNavigateBack = onNavigateBack
     )
 }
 
 @Composable
 private fun SignUpContent(
     uiState: SignUpUiState,
-    onSignUpSuccess: () -> Unit
+    onSignUpSuccess: () -> Unit,
+    onNavigateBack: () -> Unit
 ) {
 
     when (uiState) {
         is SignUpUiState.NavigateToHome -> LaunchedEffect(Unit) { onSignUpSuccess() }
         is SignUpUiState.Shown -> ShownContent(uiState = uiState)
+        SignUpUiState.NavigateBack -> LaunchedEffect(Unit) { onNavigateBack() }
     }
 }
 
@@ -101,34 +114,42 @@ private fun ShownContent(
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
-            uiState.eventSink(SignUpEvent.SetImageUri(uri))
+            uri?.let {
+                uiState.eventSink(SignUpEvent.SetImageUri(it))
+            }
         }
     )
 
     SimpleSnackbar(uiState.genericErrorMessage)
+
+    val focusManager = LocalFocusManager.current
 
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(16.dp))
-        if (uiState.imageUri != null) {
-            AsyncImage(
-                modifier = Modifier
-                    .size(128.dp)
-                    .clip(CircleShape),
-                model = ImageRequest.Builder(LocalContext.current)
-                    .crossfade(true)
-                    .data(uiState.imageUri)
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(128.dp)
-            ) {
+
+        Box(
+            modifier = Modifier
+                .size(128.dp)
+        ) {
+            if (uiState.imageUri != null) {
+                AsyncImage(
+                    modifier = Modifier
+                        .size(128.dp)
+                        .clip(CircleShape)
+                        .clickable {
+                            imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        },
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .crossfade(true)
+                        .data(uiState.imageUri)
+                        .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop
+                )
+            } else {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -147,7 +168,28 @@ private fun ShownContent(
                         fontWeight = FontWeight.SemiBold
                     )
                 }
+            }
 
+            if (uiState.imageUri != null) {
+                Icon(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .offset {
+                            IntOffset(-16, -16)
+                        }
+                        .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .align(Alignment.BottomEnd)
+                        .padding(2.dp)
+                        .clickable {
+                            imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        },
+                    painter = painterResource(R.drawable.ic_replace),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.background
+                )
+            } else {
                 Icon(
                     modifier = Modifier
                         .size(24.dp)
@@ -167,6 +209,7 @@ private fun ShownContent(
                 )
             }
         }
+
         OutlinedTextField(
             modifier = Modifier
                 .padding(top = 32.dp)
@@ -175,7 +218,12 @@ private fun ShownContent(
             onValueChange = {
                 uiState.eventSink(SignUpEvent.FirstNameChanged(it))
             },
-            label = { Text(text = stringResource(id = R.string.first_name_label)) }
+            label = { Text(text = stringResource(id = R.string.first_name_label)) },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next,
+                capitalization = KeyboardCapitalization.Words
+            )
         )
         OutlinedTextField(
             modifier = Modifier
@@ -185,7 +233,12 @@ private fun ShownContent(
             onValueChange = {
                 uiState.eventSink(SignUpEvent.LastNameChanged(it))
             },
-            label = { Text(text = stringResource(id = R.string.last_name_label)) }
+            label = { Text(text = stringResource(id = R.string.last_name_label)) },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next,
+                capitalization = KeyboardCapitalization.Words
+            )
         )
         OutlinedTextField(
             modifier = Modifier
@@ -214,7 +267,11 @@ private fun ShownContent(
                         )
                     }
                 }
-            } else null
+            } else null,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            )
         )
 
         OutlinedTextField(
@@ -244,7 +301,40 @@ private fun ShownContent(
                         )
                     }
                 }
-            } else null
+            } else null,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                }
+            ),
+            trailingIcon = {
+                Icon(
+                    modifier = Modifier.clickable {
+                        uiState.eventSink(SignUpEvent.ShowPasswordClicked)
+                    },
+                    painter = painterResource(
+                        id = if (uiState.showPassword) {
+                            R.drawable.ic_pw_visible
+                        } else {
+                            R.drawable.ic_pw_hidden
+                        }
+                    ),
+                    contentDescription = if (uiState.showPassword) {
+                        stringResource(id = R.string.show_password)
+                    } else {
+                        stringResource(id = R.string.hide_password)
+                    }
+                )
+            },
+            visualTransformation = if (uiState.showPassword) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            }
         )
 
         Button(
@@ -257,37 +347,6 @@ private fun ShownContent(
             }
         ) {
             Text(text = stringResource(id = R.string.sign_up))
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp, horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            HorizontalDivider(Modifier.weight(1f))
-            Text(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                text = stringResource(id = R.string.or_label),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            HorizontalDivider(Modifier.weight(1f))
-        }
-
-        Button(
-            modifier = Modifier.fillMaxWidth(0.8f),
-            onClick = {
-
-            }
-        ) {
-            Image(
-                modifier = Modifier
-                    .size(24.dp),
-                painter = painterResource(id = R.drawable.ic_google),
-                contentDescription = null
-            )
-            Spacer(modifier = Modifier.size(4.dp))
-            Text(text = stringResource(id = R.string.google_sign_in_title))
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -305,7 +364,7 @@ private fun ShownContent(
             Text(
                 modifier = Modifier
                     .clickable {
-
+                        uiState.eventSink(SignUpEvent.SignInClicked)
                     },
                 text = stringResource(id = R.string.sign_in),
                 color = MaterialTheme.colorScheme.primary
@@ -322,7 +381,8 @@ fun SignUpPreview() {
             uiState = SignUpUiState.Shown(
                 eventSink = {}
             ),
-            onSignUpSuccess = {}
+            onSignUpSuccess = {},
+            onNavigateBack = {}
         )
     }
 }

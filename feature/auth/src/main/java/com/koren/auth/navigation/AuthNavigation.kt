@@ -28,7 +28,8 @@ fun NavGraphBuilder.authScreen(
 
         composable<SignUpScreen> {
             SignUpScreen(
-                onSignUpSuccess = onSignInSuccess
+                onSignUpSuccess = onSignInSuccess,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

@@ -9,7 +9,7 @@ class EmailAuthService @Inject constructor(
 ) {
     companion object {
         fun FirebaseException.parsePasswordRequirements(): List<String> {
-            val regex = Regex("PASSWORD_DOES_NOT_MEET_REQUIREMENTS:Missing password requirements: \\[(.*)\\]")
+            val regex = Regex("PASSWORD_DOES_NOT_MEET_REQUIREMENTS:Missing password requirements: \\[(.*?)\\]")
             val match = regex.find(this.message ?: "")
             return if (match != null) {
                 match.groupValues[1].split(", ").map { it.trim() }

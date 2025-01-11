@@ -4,6 +4,7 @@ import android.net.Uri
 
 sealed interface SignUpUiState {
     data object NavigateToHome : SignUpUiState
+    data object NavigateBack : SignUpUiState
     data class Shown(
         val firstName: String = "",
         val lastName: String = "",
@@ -34,5 +35,7 @@ sealed interface SignUpEvent {
     data class LastNameChanged(val lastName: String) : SignUpEvent
     data class EmailChanged(val email: String) : SignUpEvent
     data class PasswordChanged(val password: String) : SignUpEvent
-    data class SetImageUri(val imageUri: Uri?) : SignUpEvent
+    data class SetImageUri(val imageUri: Uri) : SignUpEvent
+    data object ShowPasswordClicked : SignUpEvent
+    data object SignInClicked : SignUpEvent
 }

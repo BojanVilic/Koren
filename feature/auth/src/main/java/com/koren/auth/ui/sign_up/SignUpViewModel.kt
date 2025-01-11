@@ -1,6 +1,5 @@
 package com.koren.auth.ui.sign_up
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.FirebaseException
@@ -15,7 +14,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -36,6 +34,8 @@ class SignUpViewModel @Inject constructor(
                 is SignUpEvent.EmailChanged -> _state.update { current.copy(email = event.email) }
                 is SignUpEvent.PasswordChanged -> _state.update { current.copy(password = event.password) }
                 is SignUpEvent.SetImageUri -> _state.update { current.copy(imageUri = event.imageUri) }
+                is SignUpEvent.ShowPasswordClicked -> _state.update { current.copy(showPassword = !current.showPassword) }
+                is SignUpEvent.SignInClicked -> _state.update { SignUpUiState.NavigateBack }
             }
         }
     }
