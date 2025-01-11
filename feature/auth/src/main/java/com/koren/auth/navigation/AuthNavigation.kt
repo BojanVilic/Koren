@@ -14,7 +14,8 @@ object AuthGraph : Destination
 
 fun NavGraphBuilder.authScreen(
     navController: NavController,
-    onSignInSuccess: () -> Unit
+    onSignInSuccess: () -> Unit,
+    onShowSnackbar: suspend (message: String) -> Unit
 ) {
     navigation<AuthGraph>(
         startDestination = SignInScreen
@@ -22,7 +23,8 @@ fun NavGraphBuilder.authScreen(
         composable<SignInScreen> {
             SignInScreen(
                 onSignInSuccess = onSignInSuccess,
-                navigateToSignUp = { navController.navigate(SignUpScreen) }
+                navigateToSignUp = { navController.navigate(SignUpScreen) },
+                onShowSnackbar = onShowSnackbar
             )
         }
 

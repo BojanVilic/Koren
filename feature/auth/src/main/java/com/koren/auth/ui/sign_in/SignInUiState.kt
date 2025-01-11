@@ -23,3 +23,8 @@ sealed interface SignInEvent {
     data object GoogleSignIn : SignInEvent
     data object ClearErrorMessage : SignInEvent
 }
+
+sealed interface SignInSideEffect {
+    data class ShowError(val message: String) : SignInSideEffect
+    data object NavigateToHome : SignInSideEffect
+}

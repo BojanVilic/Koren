@@ -46,6 +46,7 @@ fun KorenNavHost(
                     mainActivityViewModel.onSignInSuccess()
                     navController.navigate(HomeGraph)
                 },
+                onShowSnackbar = onShowSnackbar
             )
             homeScreen(
                 navController = navController,

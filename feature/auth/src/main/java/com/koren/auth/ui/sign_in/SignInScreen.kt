@@ -1,7 +1,5 @@
 package com.koren.auth.ui.sign_in
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,7 +42,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.auth.R
-import com.koren.auth.ui.sign_up.SignUpEvent
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.theme.KorenTheme
@@ -60,7 +57,8 @@ data object SignInScreen : Destination
 fun SignInScreen(
     signInViewModel: SignInViewModel = hiltViewModel(),
     onSignInSuccess: () -> Unit,
-    navigateToSignUp: () -> Unit
+    navigateToSignUp: () -> Unit,
+    onShowSnackbar: suspend (message: String) -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
@@ -71,6 +69,17 @@ fun SignInScreen(
     )
 
     val uiState by signInViewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        signInViewModel.sideEffects.collect { event ->
+            when (event) {
+                is SignInSideEffect.NavigateToHome -> onSignInSuccess()
+                is SignInSideEffect.ShowError -> {
+                    onShowSnackbar(event.message)
+                }
+            }
+        }
+    }
 
     SignInContent(
         uiState = uiState,
@@ -229,6 +238,7 @@ private fun ShownContent(
                     modifier = Modifier
                         .padding(top = 32.dp)
                         .fillMaxWidth(0.8f),
+                    enabled = uiState.isSignInButtonEnabled,
                     onClick = {
                         uiState.eventSink(SignInEvent.SignInClicked)
                     }
