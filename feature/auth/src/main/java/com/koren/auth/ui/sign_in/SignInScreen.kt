@@ -24,7 +24,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +42,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.auth.R
 import com.koren.common.util.Destination
+import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
@@ -68,46 +68,32 @@ fun SignInScreen(
         )
     )
 
-    val uiState by signInViewModel.state.collectAsStateWithLifecycle()
+    val uiState by signInViewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        signInViewModel.sideEffects.collect { event ->
-            when (event) {
-                is SignInSideEffect.NavigateToHome -> onSignInSuccess()
-                is SignInSideEffect.ShowError -> {
-                    onShowSnackbar(event.message)
-                }
-            }
+    CollectSideEffects(viewModel = signInViewModel) {
+        when (it) {
+            is SignInSideEffect.ShowError -> onShowSnackbar(it.message)
+            is SignInSideEffect.NavigateToHome -> onSignInSuccess()
+            is SignInSideEffect.NavigateToSignUp -> navigateToSignUp()
         }
     }
 
-    SignInContent(
-        uiState = uiState,
-        onSignInSuccess = onSignInSuccess,
-        navigateToSignUp = navigateToSignUp
-    )
+    SignInContent(uiState = uiState)
 }
 
 @Composable
 private fun SignInContent(
-    uiState: SignInUiState,
-    onSignInSuccess: () -> Unit,
-    navigateToSignUp: () -> Unit
+    uiState: SignInUiState
 ) {
 
     when (uiState) {
-        is SignInUiState.NavigateToHome -> { LaunchedEffect(Unit) { onSignInSuccess() } }
-        is SignInUiState.Shown -> ShownContent(
-            uiState = uiState,
-            navigateToSignUp = navigateToSignUp
-        )
+        is SignInUiState.Shown -> ShownContent(uiState = uiState)
     }
 }
 
 @Composable
 private fun ShownContent(
-    uiState: SignInUiState.Shown,
-    navigateToSignUp: () -> Unit
+    uiState: SignInUiState.Shown
 ) {
 
     SimpleSnackbar(uiState.errorMessage)
@@ -292,7 +278,7 @@ private fun ShownContent(
                     Text(
                         modifier = Modifier
                             .clickable {
-                                navigateToSignUp()
+                                uiState.eventSink(SignInEvent.NavigateToSignUp)
                             },
                         text = stringResource(id = R.string.sign_up),
                         color = MaterialTheme.colorScheme.primary
@@ -311,9 +297,7 @@ fun SignInPreview() {
         SignInContent(
             uiState = SignInUiState.Shown(
                 eventSink = {}
-            ),
-            onSignInSuccess = {},
-            navigateToSignUp = {}
+            )
         )
     }
 }

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.koren.core)
     alias(libs.plugins.koren.hilt)
+    alias(libs.plugins.koren.compose.library)
 }
 
 android {
@@ -8,11 +9,4 @@ android {
 }
 
 dependencies {
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 }
