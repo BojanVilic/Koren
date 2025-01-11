@@ -2,11 +2,11 @@ package com.koren.auth.di
 
 import android.content.Context
 import androidx.credentials.CredentialManager
-import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.koren.auth.service.DefaultAuthService
+import com.koren.auth.service.EmailAuthService
 import com.koren.auth.service.GoogleAuthService
 import com.koren.auth.service.UserSessionImpl
 import com.koren.common.services.ResourceProvider
@@ -62,13 +62,24 @@ object SingletonModule {
     fun provideAuthService(
         credentialManager: CredentialManager,
         auth: FirebaseAuth,
-        googleAuthService: GoogleAuthService
+        googleAuthService: GoogleAuthService,
+        emailAuthService: EmailAuthService
     ): AuthService {
         return DefaultAuthService(
             credentialManager,
             auth,
-            googleAuthService
+            googleAuthService,
+            emailAuthService
         )
     }
 
+    @Provides
+    @Singleton
+    fun provideEmailAuthService(
+        auth: FirebaseAuth
+    ): EmailAuthService {
+        return EmailAuthService(
+            auth
+        )
+    }
 }

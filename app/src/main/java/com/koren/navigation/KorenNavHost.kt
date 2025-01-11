@@ -9,7 +9,7 @@ import com.koren.MainActivityUiState
 import com.koren.MainActivityViewModel
 import com.koren.account.ui.accountScreen
 import com.koren.activity.ui.activityScreen
-import com.koren.auth.navigation.AuthDestination
+import com.koren.auth.navigation.AuthGraph
 import com.koren.auth.navigation.authScreen
 import com.koren.home.navigation.HomeGraph
 import com.koren.home.navigation.homeScreen
@@ -30,7 +30,7 @@ fun KorenNavHost(
     val uiState = mainActivityViewModel.uiState.collectAsStateWithLifecycle()
 
     val startDestination = when {
-        uiState.value is MainActivityUiState.LoggedOut -> AuthDestination
+        uiState.value is MainActivityUiState.LoggedOut -> AuthGraph
         else -> HomeGraph
     }
 
@@ -41,8 +41,9 @@ fun KorenNavHost(
             startDestination = startDestination
         ) {
             authScreen(
+                navController = navController,
                 onSignInSuccess = {
-                    mainActivityViewModel.onLoginSuccess()
+                    mainActivityViewModel.onSignInSuccess()
                     navController.navigate(HomeGraph)
                 },
             )
@@ -62,7 +63,11 @@ fun KorenNavHost(
             activityScreen(navController = navController)
             accountScreen(
                 navController = navController,
-                onLogOut = { navController.navigate(AuthDestination) }
+                onLogOut = {
+                    navController.navigate(AuthGraph) {
+                        popUpTo(AuthGraph) { inclusive = true }
+                    }
+                }
             )
             invitationScreen(navController = navController)
         }

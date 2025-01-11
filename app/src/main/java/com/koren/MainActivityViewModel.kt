@@ -40,9 +40,9 @@ class MainActivityViewModel @Inject constructor(
         }
     }
 
-    fun onLoginSuccess() {
+    fun onSignInSuccess() {
         viewModelScope.launch(Dispatchers.IO) {
-            userSession.updateUserDataOnLogin()
+            userSession.updateUserDataOnSignIn()
         }
     }
 }

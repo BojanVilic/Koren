@@ -3,6 +3,8 @@
     <string name="app_name">TaskHub</string>
     <string name="server_client_id">312203129156-tvhd71qr3ogir2epdidmmqhmpql65ihb.apps.googleusercontent.com</string>
     <string name="google_sign_in_title">Continue with Google</string>
+    <string name="first_name_label">First name</string>
+    <string name="last_name_label">Last name</string>
     <string name="email_label">Email</string>
     <string name="password_label">Password</string>
     <string name="or_label">or</string>

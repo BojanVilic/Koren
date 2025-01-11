@@ -1,7 +1,8 @@
-package com.koren.auth.ui
+package com.koren.auth.ui.sign_in
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +22,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,19 +33,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.auth.R
+import com.koren.common.util.Destination
+import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
-import kotlinx.coroutines.launch
-import timber.log.Timber
+import kotlinx.serialization.Serializable
+
+@Serializable
+data object SignInScreen : Destination
 
 @Composable
 fun SignInScreen(
-    modifier: Modifier = Modifier,
-    authViewModel: AuthViewModel = hiltViewModel(),
-    onSignInSuccess: () -> Unit
+    signInViewModel: SignInViewModel = hiltViewModel(),
+    onSignInSuccess: () -> Unit,
+    navigateToSignUp: () -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
@@ -53,30 +60,41 @@ fun SignInScreen(
         )
     )
 
-    val scope = rememberCoroutineScope()
+    val uiState by signInViewModel.state.collectAsStateWithLifecycle()
 
     SignInContent(
-        modifier = modifier,
-        onGoogleSignInClicked = {
-            scope.launch {
-                val result = authViewModel.signIn()
-                when {
-                    result.isSuccess -> onSignInSuccess()
-                    result.isFailure -> Timber.e("Sign in failed: ${result.exceptionOrNull()}")
-                }
-            }
-        }
+        uiState = uiState,
+        onSignInSuccess = onSignInSuccess,
+        navigateToSignUp = navigateToSignUp
     )
 }
 
 @Composable
 private fun SignInContent(
-    modifier: Modifier = Modifier,
-    onGoogleSignInClicked: () -> Unit
+    uiState: SignInUiState,
+    onSignInSuccess: () -> Unit,
+    navigateToSignUp: () -> Unit
 ) {
 
+    when (uiState) {
+        is SignInUiState.NavigateToHome -> { LaunchedEffect(Unit) { onSignInSuccess() } }
+        is SignInUiState.Shown -> ShownContent(
+            uiState = uiState,
+            navigateToSignUp = navigateToSignUp
+        )
+    }
+}
+
+@Composable
+private fun ShownContent(
+    uiState: SignInUiState.Shown,
+    navigateToSignUp: () -> Unit
+) {
+
+    SimpleSnackbar(uiState.errorMessage)
+
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.primary),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -157,7 +175,7 @@ private fun SignInContent(
                     modifier = Modifier
                         .padding(top = 32.dp)
                         .fillMaxWidth(0.8f),
-                    onClick = onGoogleSignInClicked
+                    onClick = {}
                 ) {
                     Text(text = stringResource(id = R.string.sign_in))
                 }
@@ -178,9 +196,10 @@ private fun SignInContent(
                 }
 
                 Button(
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f),
-                    onClick = onGoogleSignInClicked
+                    modifier = Modifier.fillMaxWidth(0.8f),
+                    onClick = {
+                        uiState.eventSink(SignInEvent.GoogleSignIn)
+                    }
                 ) {
                     Image(
                         modifier = Modifier
@@ -205,6 +224,10 @@ private fun SignInContent(
                     )
 
                     Text(
+                        modifier = Modifier
+                            .clickable {
+                                navigateToSignUp()
+                            },
                         text = stringResource(id = R.string.sign_up),
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -220,7 +243,11 @@ private fun SignInContent(
 fun SignInPreview() {
     KorenTheme {
         SignInContent(
-            onGoogleSignInClicked = {}
+            uiState = SignInUiState.Shown(
+                eventSink = {}
+            ),
+            onSignInSuccess = {},
+            navigateToSignUp = {}
         )
     }
 }

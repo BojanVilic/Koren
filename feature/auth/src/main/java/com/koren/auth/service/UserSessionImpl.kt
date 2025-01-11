@@ -45,7 +45,7 @@ class UserSessionImpl : UserSession {
 
     }.flowOn(Dispatchers.Default)
 
-    override suspend fun updateUserDataOnLogin() {
+    override suspend fun updateUserDataOnSignIn() {
         val currentUserData = Firebase.database.getReference("users")
             .child(auth.currentUser?.uid ?: "")
             .get()

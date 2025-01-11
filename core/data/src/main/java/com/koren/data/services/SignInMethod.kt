@@ -1,6 +1,6 @@
 package com.koren.data.services
 
-enum class SignInMethod {
-    EMAIL,
-    GOOGLE
+sealed class SignInMethod {
+    data class Email(val email: String, val password: String): SignInMethod()
+    data object Google: SignInMethod()
 }

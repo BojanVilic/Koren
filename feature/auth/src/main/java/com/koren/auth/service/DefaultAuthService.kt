@@ -10,15 +10,21 @@ import javax.inject.Inject
 class DefaultAuthService @Inject constructor(
     private val credentialManager: CredentialManager,
     private val auth: FirebaseAuth,
-    private val googleAuthService: GoogleAuthService
+    private val googleAuthService: GoogleAuthService,
+    private val emailAuthService: EmailAuthService
 ): AuthService {
 
     override suspend fun signIn(signInMethod: SignInMethod): Result<Unit> {
         return when (signInMethod) {
-            SignInMethod.EMAIL -> Result.failure(Exception("Email sign in is not supported yet!"))
-            SignInMethod.GOOGLE -> googleAuthService()
+            is SignInMethod.Email -> Result.failure(IllegalArgumentException("Email sign in not supported"))
+            is SignInMethod.Google -> googleAuthService()
         }
     }
+
+    override suspend fun signUp(email: String, password: String, result: (Result<Unit>) -> Unit) {
+        emailAuthService.signUp(email, password, result)
+    }
+
     override suspend fun signOut(): Result<Unit> {
         try {
             credentialManager.clearCredentialState(ClearCredentialStateRequest())

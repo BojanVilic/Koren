@@ -6,5 +6,5 @@ import kotlinx.coroutines.flow.Flow
 interface UserSession {
     val isLoggedIn: Boolean
     val currentUser: Flow<UserData>
-    suspend fun updateUserDataOnLogin()
+    suspend fun updateUserDataOnSignIn()
 }
