@@ -98,7 +98,7 @@ fun CreateFamilyScreen(
 
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { 3 })
-    val state by createFamilyViewModel.state.collectAsStateWithLifecycle()
+    val state by createFamilyViewModel.uiState.collectAsStateWithLifecycle()
 
     LocalScaffoldStateProvider.current.setScaffoldState(
         state = ScaffoldState(
