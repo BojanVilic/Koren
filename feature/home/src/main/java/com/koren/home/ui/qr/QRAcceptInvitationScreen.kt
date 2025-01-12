@@ -32,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.common.models.Invitation
 import com.koren.common.models.getExpiryText
 import com.koren.common.models.toRelativeTime
+import com.koren.common.util.CollectSideEffects
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
@@ -53,10 +54,11 @@ fun QRAcceptInvitationScreen(
     familyId: String,
     invitationCode: String,
     qrInvitationViewModel: QRInvitationViewModel = hiltViewModel(),
-    onNavigateToHome: suspend (errorMessage: String) -> Unit
+    onNavigateToHome: () -> Unit,
+    onNavigateToHomeWithError: suspend (errorMessage: String) -> Unit
 ) {
 
-    val uiState by qrInvitationViewModel.state.collectAsStateWithLifecycle()
+    val uiState by qrInvitationViewModel.uiState.collectAsStateWithLifecycle()
 
     LocalScaffoldStateProvider.current.setScaffoldState(state = ScaffoldState(isTopBarVisible = false))
 
@@ -68,18 +70,25 @@ fun QRAcceptInvitationScreen(
         )
     }
 
+    CollectSideEffects(
+        viewModel = qrInvitationViewModel
+    ) { sideEffect ->
+        when (sideEffect) {
+            is QRInvitationSideEffect.NavigateToHome -> onNavigateToHome()
+            is QRInvitationSideEffect.NavigateToHomeWithError -> onNavigateToHomeWithError(sideEffect.errorMessage)
+        }
+    }
+
     QRAcceptInvitationContent(
         uiState = uiState,
-        invitationCode = invitationCode,
-        onNavigateToHome = onNavigateToHome
+        invitationCode = invitationCode
     )
 }
 
 @Composable
 private fun QRAcceptInvitationContent(
     uiState: QRInvitationUiState,
-    invitationCode: String,
-    onNavigateToHome: suspend (errorMessage: String) -> Unit
+    invitationCode: String
 ) {
     when (uiState) {
         is QRInvitationUiState.Loading -> LoadingContent()
@@ -88,19 +97,7 @@ private fun QRAcceptInvitationContent(
             acceptInvitation = { uiState.eventSink(QRInvitationUiEvent.AcceptInvitation(invitationCode)) },
             declineInvitation = { uiState.eventSink(QRInvitationUiEvent.DeclineInvitation) }
         )
-        is QRInvitationUiState.NavigateToHome -> NavigateToHomeWithErrorMessageContent(
-            uiState = uiState,
-            onNavigateToHome = onNavigateToHome
-        )
     }
-}
-
-@Composable
-private fun NavigateToHomeWithErrorMessageContent(
-    uiState: QRInvitationUiState.NavigateToHome,
-    onNavigateToHome: suspend (errorMessage: String) -> Unit
-) {
-    LaunchedEffect(Unit) { onNavigateToHome(uiState.errorMessage) }
 }
 
 @Composable
@@ -204,7 +201,6 @@ fun QRAcceptInvitationScreenPreview() {
             invitation = Invitation(),
             eventSink = {}
         ),
-        invitationCode = "123456",
-        onNavigateToHome = {}
+        invitationCode = "123456"
     )
 }

@@ -47,7 +47,10 @@ fun NavGraphBuilder.homeScreen(
                 invitationId = backStackEntry.toRoute<QRAcceptInvitationDestination>().invitationId,
                 familyId = backStackEntry.toRoute<QRAcceptInvitationDestination>().familyId,
                 invitationCode = backStackEntry.toRoute<QRAcceptInvitationDestination>().invitationCode,
-                onNavigateToHome = { errorMessage ->
+                onNavigateToHome = {
+                    navController.navigateUp()
+                },
+                onNavigateToHomeWithError = { errorMessage ->
                     onShowSnackbar(errorMessage)
                     navController.navigateUp()
                 }
