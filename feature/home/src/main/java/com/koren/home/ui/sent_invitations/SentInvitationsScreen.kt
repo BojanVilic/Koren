@@ -72,7 +72,7 @@ fun SentInvitationsScreen(
         )
     )
 
-    val uiState by sentInvitationViewModel.state.collectAsStateWithLifecycle()
+    val uiState by sentInvitationViewModel.uiState.collectAsStateWithLifecycle()
 
     SentInvitationsContent(
         uiState = uiState

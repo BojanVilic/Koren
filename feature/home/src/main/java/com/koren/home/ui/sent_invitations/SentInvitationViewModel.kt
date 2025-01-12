@@ -1,13 +1,10 @@
 package com.koren.home.ui.sent_invitations
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.koren.common.util.StateViewModel
 import com.koren.data.repository.InvitationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -15,18 +12,17 @@ import javax.inject.Inject
 @HiltViewModel
 class SentInvitationViewModel @Inject constructor(
     private val invitationRepository: InvitationRepository
-) : ViewModel() {
+) : StateViewModel<SentInvitationEvent, SentInvitationUiState, Nothing>() {
 
-    private val _state = MutableStateFlow<SentInvitationUiState>(SentInvitationUiState.Loading)
-    val state: StateFlow<SentInvitationUiState> = _state.asStateFlow()
+    override fun setInitialState(): SentInvitationUiState = SentInvitationUiState.Loading
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
             invitationRepository.getSentInvitations().collect { sentInvitations ->
                 val uiSentInvitations = sentInvitations.map { UiSentInvitation(invitation = it) }
                 if (uiSentInvitations.isEmpty())
-                    _state.update { SentInvitationUiState.Empty }
-                else _state.update {
+                    _uiState.update { SentInvitationUiState.Empty }
+                else _uiState.update {
                     SentInvitationUiState.Shown(
                         sentInvitations = uiSentInvitations,
                         eventSink = ::handleEvent
@@ -36,8 +32,8 @@ class SentInvitationViewModel @Inject constructor(
         }
     }
 
-    private fun handleEvent(event: SentInvitationEvent) {
-        withShownState { current ->
+    override fun handleEvent(event: SentInvitationEvent) {
+        withEventfulState<SentInvitationUiState.Shown> { current ->
             when (event) {
                 is SentInvitationEvent.ExpandQRCode -> expandOrCollapseQRInvitation(event.id, current)
             }
@@ -49,13 +45,6 @@ class SentInvitationViewModel @Inject constructor(
             if (uiInvitation.invitation.id == id) uiInvitation.copy(expanded = !uiInvitation.expanded)
             else uiInvitation
         }
-        _state.update { current.copy(sentInvitations = updatedInvitations) }
-    }
-
-    private inline fun withShownState(action: (SentInvitationUiState.Shown) -> Unit) {
-        val currentState = _state.value
-        if (currentState is SentInvitationUiState.Shown) {
-            action(currentState)
-        }
+        _uiState.update { current.copy(sentInvitations = updatedInvitations) }
     }
 }
