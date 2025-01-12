@@ -1,6 +1,5 @@
 package com.koren.map.ui
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -8,13 +7,11 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.koren.common.models.UserData
 import com.koren.common.services.LocationService
+import com.koren.common.util.StateViewModel
 import com.koren.domain.GetAllFamilyMembersUseCase
 import com.koren.domain.UpdateUserLocationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -24,10 +21,9 @@ class MapViewModel @Inject constructor(
     private val locationService: LocationService,
     private val updateUserLocationUseCase: UpdateUserLocationUseCase,
     private val getAllFamilyMembersUseCase: GetAllFamilyMembersUseCase
-): ViewModel() {
+): StateViewModel<MapEvent, MapUiState, Nothing>() {
 
-    private val _state = MutableStateFlow<MapUiState>(MapUiState.Loading)
-    val state: StateFlow<MapUiState> = _state.asStateFlow()
+    override fun setInitialState(): MapUiState = MapUiState.Loading
 
     init {
         viewModelScope.launch {
@@ -38,7 +34,7 @@ class MapViewModel @Inject constructor(
                     }
                 }
                 result.onFailure {
-                    Timber.d("PROBAVANJE greska: $it")
+                    Timber.d("Failed to get user location: $it")
                 }
             }
         }
@@ -46,7 +42,7 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             getAllFamilyMembersUseCase().collect {
                 val firstMemberCameraPosition = it.firstNotNullOf { user -> user.lastLocation }
-                _state.value = MapUiState.Shown(
+                _uiState.value = MapUiState.Shown(
                     familyMembers = it,
                     cameraPosition = CameraPositionState(position = CameraPosition.fromLatLngZoom(LatLng(firstMemberCameraPosition.latitude, firstMemberCameraPosition.longitude), 15f)),
                     eventSink = { event -> handleEvent(event) }
@@ -55,10 +51,10 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    private fun handleEvent(event: MapEvent) {
-        withShownState { current ->
+    override fun handleEvent(event: MapEvent) {
+        withEventfulState<MapUiState.Shown> { current ->
             when (event) {
-                is MapEvent.MapPinClicked -> updateCameraPosition(current, event.userData)
+                is MapEvent.FamilyMemberClicked -> updateCameraPosition(current, event.userData)
             }
         }
     }
@@ -76,13 +72,6 @@ class MapViewModel @Inject constructor(
                 update = cameraUpdate,
                 durationMs = 1000
             )
-        }
-    }
-
-    private inline fun withShownState(action: (MapUiState.Shown) -> Unit) {
-        val currentState = _state.value
-        if (currentState is MapUiState.Shown) {
-            action(currentState)
         }
     }
 }

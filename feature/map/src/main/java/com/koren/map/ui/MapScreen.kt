@@ -53,14 +53,11 @@ import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
 import com.koren.common.models.UserData
 import com.koren.common.models.UserLocation
 import com.koren.common.util.Destination
@@ -106,7 +103,7 @@ fun MapScreen(
         }
     }
 
-    val uiState by mapViewModel.state.collectAsStateWithLifecycle()
+    val uiState by mapViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         scaffoldState.bottomSheetState.expand()
@@ -161,7 +158,7 @@ fun ShownContent(
                     displayName = member.displayName,
                     location = member.lastLocation?: UserLocation(),
                     onClick = {
-                        uiState.eventSink(MapEvent.MapPinClicked(member))
+                        uiState.eventSink(MapEvent.FamilyMemberClicked(member))
                     }
                 )
             }
@@ -219,7 +216,7 @@ fun ActionBottomSheetContent(
                         .size(48.dp)
                         .clip(CircleShape)
                         .clickable {
-                            uiState.eventSink(MapEvent.MapPinClicked(member))
+                            uiState.eventSink(MapEvent.FamilyMemberClicked(member))
                         },
                     model = ImageRequest.Builder(LocalContext.current)
                         .crossfade(true)
