@@ -68,7 +68,8 @@ fun KorenNavHost(
                     navController.navigate(AuthGraph) {
                         popUpTo(AuthGraph) { inclusive = true }
                     }
-                }
+                },
+                onShowSnackbar = onShowSnackbar
             )
             invitationScreen(navController = navController)
         }

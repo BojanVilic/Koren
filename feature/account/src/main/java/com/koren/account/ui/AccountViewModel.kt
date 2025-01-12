@@ -1,16 +1,16 @@
 package com.koren.account.ui
 
 import android.net.Uri
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.koren.common.services.UserSession
+import com.koren.common.util.StateViewModel
+import com.koren.common.util.UiSideEffect
+import com.koren.common.util.UiState
+import com.koren.common.util.orUnknownError
 import com.koren.data.services.AuthService
 import com.koren.domain.UploadProfilePictureUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,21 +20,20 @@ class AccountViewModel @Inject constructor(
     private val uploadProfilePictureUseCase: UploadProfilePictureUseCase,
     private val userSession: UserSession,
     private val authService: AuthService
-): ViewModel() {
+): StateViewModel<AccountUiEvent, AccountUiState, AccountUiSideEffect>() {
 
-    private val _state = MutableStateFlow<AccountUiState>(AccountUiState.Loading)
-    val state: StateFlow<AccountUiState> = _state.asStateFlow()
+    override fun setInitialState(): AccountUiState = AccountUiState.Loading
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
             userSession.currentUser.collect { user ->
-                _state.update { AccountUiState.Shown(userData = user, eventSink = ::handleEvent) }
+                _uiState.update { AccountUiState.Shown(userData = user, eventSink = ::handleEvent) }
             }
         }
     }
 
-    private fun handleEvent(event: AccountUiEvent) {
-        withShownState { currentState ->
+    override fun handleEvent(event: AccountUiEvent) {
+        withEventfulState<AccountUiState.Shown> { currentState ->
             when (event) {
                 is AccountUiEvent.UploadNewProfilePicture -> uploadProfilePicture(currentState, event.uri)
                 is AccountUiEvent.LogOut -> signOut()
@@ -45,6 +44,8 @@ class AccountViewModel @Inject constructor(
     private fun signOut() {
         viewModelScope.launch(Dispatchers.Default) {
             authService.signOut()
+                .onSuccess { _sideEffects.emitSuspended(AccountUiSideEffect.LogOut) }
+                .onFailure { error -> _sideEffects.emitSuspended(AccountUiSideEffect.ShowError(message = error.message.orUnknownError())) }
         }
     }
 
@@ -53,15 +54,8 @@ class AccountViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val result = uploadProfilePictureUseCase(currentState.userData.id, pictureUri)
             if (result.isFailure) {
-                _state.update { currentState.copy(errorMessage = result.exceptionOrNull()?.message?: "") }
+                _sideEffects.emitSuspended(AccountUiSideEffect.ShowError(message = result.exceptionOrNull()?.message.orUnknownError()))
             }
-        }
-    }
-
-    private inline fun withShownState(action: (AccountUiState.Shown) -> Unit) {
-        val currentState = _state.value
-        if (currentState is AccountUiState.Shown) {
-            action(currentState)
         }
     }
 }

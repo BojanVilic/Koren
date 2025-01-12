@@ -12,13 +12,17 @@ object AccountGraph : Destination
 
 fun NavGraphBuilder.accountScreen(
     navController: NavHostController,
-    onLogOut: () -> Unit
+    onLogOut: () -> Unit,
+    onShowSnackbar: suspend (message: String) -> Unit
 ) {
     navigation<AccountGraph>(
         startDestination = AccountDestination
     ) {
         composable<AccountDestination> {
-            AccountScreen(onLogOut = onLogOut)
+            AccountScreen(
+                onLogOut = onLogOut,
+                onShowSnackbar = onShowSnackbar
+            )
         }
     }
 }

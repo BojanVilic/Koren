@@ -38,6 +38,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.koren.common.util.CollectSideEffects
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.theme.KorenTheme
@@ -50,38 +51,43 @@ object AccountDestination : Destination
 @Composable
 fun AccountScreen(
     viewModel: AccountViewModel = hiltViewModel(),
-    onLogOut: () -> Unit
+    onLogOut: () -> Unit,
+    onShowSnackbar: suspend (message: String) -> Unit
 ) {
 
-    val uiState by viewModel.state.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    CollectSideEffects(
+        viewModel = viewModel
+    ) { uiSideEffect ->
+        when (uiSideEffect) {
+            is AccountUiSideEffect.LogOut -> onLogOut()
+            is AccountUiSideEffect.ShowError -> onShowSnackbar(uiSideEffect.message)
+        }
+    }
 
     AccountScreenContent(
-        uiState = uiState,
-        onLogOut = onLogOut
+        uiState = uiState
     )
 }
 
 @Composable
 private fun AccountScreenContent(
-    uiState: AccountUiState,
-    onLogOut: () -> Unit
+    uiState: AccountUiState
 ) {
 
     when (uiState) {
         is AccountUiState.Loading -> CircularProgressIndicator()
         is AccountUiState.Shown -> AccountScreenShownContent(
-            uiState = uiState,
-            onLogOut = onLogOut
+            uiState = uiState
         )
     }
 }
 
 @Composable
 private fun AccountScreenShownContent(
-    uiState: AccountUiState.Shown,
-    onLogOut: () -> Unit
+    uiState: AccountUiState.Shown
 ) {
-    SimpleSnackbar(message = uiState.errorMessage)
 
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -154,7 +160,6 @@ private fun AccountScreenShownContent(
         Button(
             modifier = Modifier.padding(top = 16.dp),
             onClick = {
-                onLogOut()
                 uiState.eventSink(AccountUiEvent.LogOut)
             }
         ) {
@@ -170,10 +175,8 @@ fun AccountScreenPreview() {
         AccountScreenContent(
             uiState = AccountUiState.Shown(
                 userData = null,
-                errorMessage = "",
                 eventSink = {}
-            ),
-            onLogOut = {}
+            )
         )
     }
 }

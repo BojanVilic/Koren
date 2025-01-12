@@ -27,7 +27,7 @@ class GetAllFamilyMembersUseCase @Inject constructor(
         val memberIds = firebaseDatabase.getReference("families/$familyId")
             .get()
             .await()
-            .getValue<Family>()?.members?: throw Exception("Family not found")
+            .getValue<Family>()?.members
 
         val query = firebaseDatabase.getReference("users")
 
@@ -35,7 +35,7 @@ class GetAllFamilyMembersUseCase @Inject constructor(
             override fun onDataChange(snapshot: DataSnapshot) {
                 val users = snapshot.children.mapNotNull { dataSnapshot ->
                     dataSnapshot.getValue<UserData>()
-                }.filter { it.id in memberIds }
+                }.filter { it.id in (memberIds ?: emptyList()) }
                 trySend(users).isSuccess
             }
 
