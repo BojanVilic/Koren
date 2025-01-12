@@ -117,24 +117,25 @@ fun CreateFamilyScreen(
         )
     )
 
-    when (val currentState = state) {
+    CreateFamilyContent(
+        state = state,
+        pagerState = pagerState,
+        onNavigateToHome = onNavigateToHome
+    )
+}
+
+@Composable
+private fun CreateFamilyContent(
+    state: CreateFamilyUiState,
+    pagerState: PagerState,
+    onNavigateToHome: () -> Unit
+) {
+    when (state) {
         is CreateFamilyUiState.Step -> CreateFamilyStepContent(
-            state = currentState,
-            pagerState = pagerState,
-            setFamilyPortraitPath = {
-                currentState.eventSink(CreateFamilyEvent.SetPhotoUri(it))
-            },
-            setFamilyName = {
-                currentState.eventSink(CreateFamilyEvent.SetFamilyName(it))
-            },
-            onNextStep = {
-                currentState.eventSink(CreateFamilyEvent.NextStep)
-            },
-            createFamily = {
-                currentState.eventSink(CreateFamilyEvent.CreateFamily)
-            }
+            state = state,
+            pagerState = pagerState
         )
-        is CreateFamilyUiState.Error -> BrokenBranchErrorScreen(errorMessage = currentState.errorMessage)
+        is CreateFamilyUiState.Error -> BrokenBranchErrorScreen(errorMessage = state.errorMessage)
         is CreateFamilyUiState.CreatingFamily -> FamilyCreationLoadingScreen()
         is CreateFamilyUiState.FamilyCreated -> FamilyCreated(onNavigateToHome = onNavigateToHome)
         is CreateFamilyUiState.Loading -> LoadingContent()
@@ -144,11 +145,7 @@ fun CreateFamilyScreen(
 @Composable
 private fun CreateFamilyStepContent(
     state: CreateFamilyUiState.Step,
-    pagerState: PagerState,
-    setFamilyPortraitPath: (Uri?) -> Unit,
-    setFamilyName: (String) -> Unit,
-    onNextStep: () -> Unit,
-    createFamily: () -> Unit
+    pagerState: PagerState
 ) {
     val coroutineScope = rememberCoroutineScope()
     val currentPage by remember { derivedStateOf { pagerState.currentPage } }
@@ -207,12 +204,16 @@ private fun CreateFamilyStepContent(
                 ) {
                     when (page) {
                         0 -> AddImageStep(
-                            setFamilyPortraitPath = setFamilyPortraitPath,
+                            setFamilyPortraitPath = {
+                                state.eventSink(CreateFamilyEvent.SetPhotoUri(it))
+                            },
                             familyPortraitPath = state.photoUri
                         )
                         1 -> AddNameStep(
                             familyName = state.familyName,
-                            setFamilyName = setFamilyName
+                            setFamilyName = {
+                                state.eventSink(CreateFamilyEvent.SetFamilyName(it))
+                            }
                         )
                     }
                 }
@@ -229,12 +230,12 @@ private fun CreateFamilyStepContent(
                     if (state.isStepValid) {
                         coroutineScope.launch {
                             pagerState.scrollToPage(currentPage + 1)
-                            onNextStep()
+                            state.eventSink(CreateFamilyEvent.NextStep)
                             keyboardController?.hide()
                         }
                     }
                 } else {
-                    createFamily()
+                    state.eventSink(CreateFamilyEvent.CreateFamily)
                 }
             },
             enabled = state.isStepValid,
@@ -530,11 +531,7 @@ fun CreateFamilyPreview() {
     KorenTheme {
         CreateFamilyStepContent(
             state = CreateFamilyUiState.Step(eventSink = {}),
-            pagerState = rememberPagerState(pageCount = { 3 }),
-            setFamilyPortraitPath = {},
-            setFamilyName = {},
-            onNextStep = {},
-            createFamily = {}
+            pagerState = rememberPagerState(pageCount = { 3 })
         )
     }
 }
