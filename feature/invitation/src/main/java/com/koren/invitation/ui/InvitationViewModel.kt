@@ -3,6 +3,7 @@ package com.koren.invitation.ui
 
 import androidx.lifecycle.viewModelScope
 import com.koren.common.util.StateViewModel
+import com.koren.common.util.orUnknownError
 import com.koren.data.repository.InvitationRepository
 import com.koren.domain.GetFamilyUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,7 +23,7 @@ class InvitationViewModel @Inject constructor(
         viewModelScope.launch {
             getFamilyUseCase()
                 .onSuccess { family -> withEventfulState<InvitationUiState.Shown> { currentState -> _uiState.update { currentState.copy(familyName = family.name) } } }
-                .onFailure { error -> _uiState.update { InvitationUiState.Error(errorMessage = error.message ?: "Unknown error") } }
+                .onFailure { error -> _uiState.update { InvitationUiState.Error(errorMessage = error.message.orUnknownError()) } }
         }
     }
 
@@ -46,7 +47,7 @@ class InvitationViewModel @Inject constructor(
                     _uiState.update { currentState.copy(emailInvitation = result, emailInvitationLoading = false) }
                 }
                 .onFailure { error ->
-                    _uiState.update { currentState.copy(errorMessage = error.message?: "Unknown error") }
+                    _uiState.update { currentState.copy(errorMessage = error.message.orUnknownError()) }
                 }
         }
     }
@@ -63,7 +64,7 @@ class InvitationViewModel @Inject constructor(
                     _uiState.update { currentState.copy(qrInvitation = result, isCreateQRInvitationExpanded = true, qrInvitationLoading = false) }
                 }
                 .onFailure { error ->
-                    _uiState.update { currentState.copy(errorMessage = error.message ?: "Unknown error") }
+                    _uiState.update { currentState.copy(errorMessage = error.message.orUnknownError()) }
                 }
         }
     }

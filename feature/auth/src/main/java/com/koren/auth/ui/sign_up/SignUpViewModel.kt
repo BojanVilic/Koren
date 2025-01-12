@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.koren.auth.domain.UpdateUserDataOnSignUpUseCase
 import com.koren.auth.service.EmailAuthService.Companion.parsePasswordRequirements
 import com.koren.common.util.StateViewModel
+import com.koren.common.util.orUnknownError
 import com.koren.data.services.AuthService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -51,10 +52,10 @@ class SignUpViewModel @Inject constructor(
                     }
                     .onFailure { error ->
                         when (error) {
-                            is FirebaseAuthInvalidCredentialsException -> _uiState.update { current.copy(emailErrorMessage = error.message?: "Unknown error") }
+                            is FirebaseAuthInvalidCredentialsException -> _uiState.update { current.copy(emailErrorMessage = error.message.orUnknownError()) }
                             is FirebaseAuthUserCollisionException -> _sideEffects.emitSuspended(SignUpUiSideEffect.ShowGenericMessage(error.message?: "Email already in use. Please go to the sign in page and try again."))
                             is FirebaseException -> _uiState.update { current.copy(passwordErrorMessage = error.parsePasswordRequirements().joinToString("\n"), emailErrorMessage = "", genericErrorMessage = "") }
-                            else -> _uiState.update { current.copy(genericErrorMessage = error.message?: "Unknown error", emailErrorMessage = "", passwordErrorMessage = "") }
+                            else -> _uiState.update { current.copy(genericErrorMessage = error.message.orUnknownError(), emailErrorMessage = "", passwordErrorMessage = "") }
                         }
                     }
             }

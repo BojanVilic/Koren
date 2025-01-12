@@ -15,6 +15,8 @@ class GetFamilyUseCase @Inject constructor(
     suspend operator fun invoke(): Result<Family> {
         val familyId = userSession.currentUser.first().familyId
 
+        if (familyId.isBlank()) return Result.failure(Exception("Family not found. \uD83D\uDE22"))
+
         val family = firebaseDatabase.getReference("families/$familyId")
             .get()
             .await()

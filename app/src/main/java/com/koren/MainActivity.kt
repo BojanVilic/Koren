@@ -48,8 +48,6 @@ class MainActivity : ComponentActivity() {
 
         splashScreen.setKeepOnScreenCondition { viewModel.uiState.value.shouldKeepSplashScreen() }
 
-        Timber.d("PROBAVANJE ${shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION)}")
-
         setContent {
             KorenTheme {
 

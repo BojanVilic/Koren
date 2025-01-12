@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.koren.common.models.UserData
 import com.koren.common.services.UserNotLoggedInException
 import com.koren.common.services.UserSession
+import com.koren.common.util.orUnknownError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,7 +34,7 @@ class MainActivityViewModel @Inject constructor(
                         _uiState.value = MainActivityUiState.LoggedOut
                     }
                     catch (e: Exception) {
-                        _uiState.value = MainActivityUiState.Error(e.message ?: "Unknown error")
+                        _uiState.value = MainActivityUiState.Error(e.message.orUnknownError())
                     }
                 }
             }
