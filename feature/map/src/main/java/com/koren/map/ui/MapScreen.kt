@@ -99,9 +99,7 @@ fun MapScreen(
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
-        ScaffoldState(
-            isTopBarVisible = false
-        )
+        ScaffoldState(isTopBarVisible = false)
     )
 
     val uiState by mapViewModel.uiState.collectAsStateWithLifecycle()
@@ -160,87 +158,15 @@ private fun LocationPermissionPermanentDenial() {
 @Composable
 private fun PermissionNotGrantedContent(uiState: MapUiState.LocationPermissionNotGranted) {
     val fineLocationPermissionState = rememberPermissionState(ACCESS_FINE_LOCATION)
-    var showDialog by remember { mutableStateOf(false) }
-    var showPermanentDenial by remember { mutableStateOf(false) }
 
     LaunchedEffect(fineLocationPermissionState.status.isGranted) {
-        if (fineLocationPermissionState.status.isGranted) {
+        if (fineLocationPermissionState.status.isGranted)
             uiState.onPermissionGranted()
-        } else {
+        else
             fineLocationPermissionState.launchPermissionRequest()
-        }
     }
 
-    LaunchedEffect(fineLocationPermissionState.status.shouldShowRationale) {
-        if (fineLocationPermissionState.status.shouldShowRationale) {
-            showDialog = true
-        } else {
-            showPermanentDenial = true
-        }
-    }
-
-    if (showDialog) {
-        BasicAlertDialog(
-            onDismissRequest = {
-                fineLocationPermissionState.launchPermissionRequest()
-            }
-        ) {
-            Surface(
-                modifier = Modifier.wrapContentSize(),
-                shape = MaterialTheme.shapes.large,
-                tonalElevation = AlertDialogDefaults.TonalElevation
-            ) {
-                Column(modifier = Modifier
-                    .wrapContentSize()
-                    .padding(16.dp)) {
-                    Icon(
-                        modifier = Modifier
-                            .padding(bottom = 16.dp)
-                            .size(48.dp)
-                            .align(Alignment.CenterHorizontally),
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "Location Sharing"
-                    )
-                    Text(
-                        text = "Keep your family in the loop and know where everyone is by enabling location permission.",
-                        style = MaterialTheme.typography.labelLarge,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Text(
-                        modifier = Modifier.padding(top = 16.dp),
-                        text = "Your privacy is protected: your location is always kept private and secure, and only shared with your family.",
-                        style = MaterialTheme.typography.labelLarge,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    TextButton(
-                        onClick = {
-                            showDialog = false
-                            fineLocationPermissionState.launchPermissionRequest()
-                        },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text("Dismiss")
-                    }
-                }
-            }
-        }
-    } else {
-        Crossfade(
-            targetState = showPermanentDenial,
-            label = "",
-            animationSpec = tween(
-                durationMillis = 1000,
-                delayMillis = 1000,
-                easing = LinearOutSlowInEasing
-            )
-        ) {
-            if (it) {
-                LocationPermissionPermanentDenial()
-            }
-        }
-    }
+    LocationPermissionPermanentDenial()
 }
 
 @Composable
