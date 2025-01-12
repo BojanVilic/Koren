@@ -1,8 +1,8 @@
 package com.koren.auth.ui.sign_in
 
-import com.koren.common.util.Event
+import com.koren.common.util.UiEvent
 import com.koren.common.util.EventHandler
-import com.koren.common.util.SideEffect
+import com.koren.common.util.UiSideEffect
 import com.koren.common.util.UiState
 
 sealed interface SignInUiState : UiState {
@@ -11,25 +11,25 @@ sealed interface SignInUiState : UiState {
         val email: String = "",
         val password: String = "",
         val showPassword: Boolean = false,
-        override val eventSink: (SignInEvent) -> Unit
-    ) : SignInUiState, EventHandler<SignInEvent> {
+        override val eventSink: (SignInUiEvent) -> Unit
+    ) : SignInUiState, EventHandler<SignInUiEvent> {
         val isSignInButtonEnabled: Boolean
             get() = email.isNotBlank() && password.isNotBlank()
     }
 }
 
-sealed interface SignInEvent : Event {
-    data class EmailChanged(val email: String) : SignInEvent
-    data class PasswordChanged(val password: String) : SignInEvent
-    data object ShowPasswordClicked : SignInEvent
-    data object SignInClicked : SignInEvent
-    data object GoogleSignIn : SignInEvent
-    data object ClearErrorMessage : SignInEvent
-    data object NavigateToSignUp : SignInEvent
+sealed interface SignInUiEvent : UiEvent {
+    data class EmailChanged(val email: String) : SignInUiEvent
+    data class PasswordChanged(val password: String) : SignInUiEvent
+    data object ShowPasswordClicked : SignInUiEvent
+    data object SignInClicked : SignInUiEvent
+    data object GoogleSignIn : SignInUiEvent
+    data object ClearErrorMessage : SignInUiEvent
+    data object NavigateToSignUp : SignInUiEvent
 }
 
-sealed interface SignInSideEffect : SideEffect {
-    data class ShowError(val message: String) : SignInSideEffect
-    data object NavigateToHome : SignInSideEffect
-    data object NavigateToSignUp : SignInSideEffect
+sealed interface SignInUiSideEffect : UiSideEffect {
+    data class ShowError(val message: String) : SignInUiSideEffect
+    data object NavigateToHome : SignInUiSideEffect
+    data object NavigateToSignUp : SignInUiSideEffect
 }

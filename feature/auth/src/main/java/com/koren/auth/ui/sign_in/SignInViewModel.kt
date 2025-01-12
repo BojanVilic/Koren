@@ -3,7 +3,7 @@ package com.koren.auth.ui.sign_in
 import androidx.lifecycle.viewModelScope
 import com.koren.data.services.AuthService
 import com.koren.data.services.SignInMethod
-import com.koren.common.util.BaseViewModel
+import com.koren.common.util.StateViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
@@ -13,20 +13,20 @@ import javax.inject.Inject
 @HiltViewModel
 class SignInViewModel @Inject constructor(
     private val authService: AuthService
-): BaseViewModel<SignInEvent, SignInUiState, SignInSideEffect>() {
+): StateViewModel<SignInUiEvent, SignInUiState, SignInUiSideEffect>() {
 
     override fun setInitialState(): SignInUiState = SignInUiState.Shown(eventSink = ::handleEvent)
 
-    override fun handleEvent(event: SignInEvent) {
+    override fun handleEvent(event: SignInUiEvent) {
         withEventfulState<SignInUiState.Shown> { current ->
             when (event) {
-                is SignInEvent.GoogleSignIn -> googleSignIn(current)
-                is SignInEvent.EmailChanged -> _uiState.update { current.copy(email = event.email) }
-                is SignInEvent.PasswordChanged -> _uiState.update { current.copy(password = event.password) }
-                is SignInEvent.ShowPasswordClicked -> _uiState.update { current.copy(showPassword = !current.showPassword) }
-                is SignInEvent.ClearErrorMessage -> _uiState.update { current.copy(errorMessage = "") }
-                is SignInEvent.NavigateToSignUp -> _sideEffects.emitSuspended(SignInSideEffect.NavigateToSignUp)
-                is SignInEvent.SignInClicked -> signIn(current)
+                is SignInUiEvent.GoogleSignIn -> googleSignIn(current)
+                is SignInUiEvent.EmailChanged -> _uiState.update { current.copy(email = event.email) }
+                is SignInUiEvent.PasswordChanged -> _uiState.update { current.copy(password = event.password) }
+                is SignInUiEvent.ShowPasswordClicked -> _uiState.update { current.copy(showPassword = !current.showPassword) }
+                is SignInUiEvent.ClearErrorMessage -> _uiState.update { current.copy(errorMessage = "") }
+                is SignInUiEvent.NavigateToSignUp -> _sideEffects.emitSuspended(SignInUiSideEffect.NavigateToSignUp)
+                is SignInUiEvent.SignInClicked -> signIn(current)
             }
         }
     }
@@ -34,15 +34,15 @@ class SignInViewModel @Inject constructor(
     private fun signIn(current: SignInUiState.Shown) {
         viewModelScope.launch(Dispatchers.Default) {
             authService.signIn(SignInMethod.Email(current.email, current.password))
-                .onSuccess { _sideEffects.emit(SignInSideEffect.NavigateToHome) }
-                .onFailure { error -> _sideEffects.emit(SignInSideEffect.ShowError(message = error.message?: "Unknown error.")) }
+                .onSuccess { _sideEffects.emit(SignInUiSideEffect.NavigateToHome) }
+                .onFailure { error -> _sideEffects.emit(SignInUiSideEffect.ShowError(message = error.message?: "Unknown error.")) }
         }
     }
 
     private fun googleSignIn(current: SignInUiState.Shown) {
         viewModelScope.launch(Dispatchers.Default) {
             authService.signIn(SignInMethod.Google)
-                .onSuccess { _sideEffects.emit(SignInSideEffect.NavigateToHome) }
+                .onSuccess { _sideEffects.emit(SignInUiSideEffect.NavigateToHome) }
                 .onFailure { error -> _uiState.update { current.copy(errorMessage = error.message?: "Unknown error.") } }
         }
     }

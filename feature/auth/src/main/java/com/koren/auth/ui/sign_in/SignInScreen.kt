@@ -72,9 +72,9 @@ fun SignInScreen(
 
     CollectSideEffects(viewModel = signInViewModel) { sideEffect ->
         when (sideEffect) {
-            is SignInSideEffect.ShowError -> onShowSnackbar(sideEffect.message)
-            is SignInSideEffect.NavigateToHome -> onSignInSuccess()
-            is SignInSideEffect.NavigateToSignUp -> navigateToSignUp()
+            is SignInUiSideEffect.ShowError -> onShowSnackbar(sideEffect.message)
+            is SignInUiSideEffect.NavigateToHome -> onSignInSuccess()
+            is SignInUiSideEffect.NavigateToSignUp -> navigateToSignUp()
         }
     }
 
@@ -155,7 +155,7 @@ private fun ShownContent(
                         .fillMaxWidth(0.8f),
                     value = uiState.email,
                     onValueChange = {
-                        uiState.eventSink(SignInEvent.EmailChanged(it))
+                        uiState.eventSink(SignInUiEvent.EmailChanged(it))
                     },
                     label = { Text(text = stringResource(id = R.string.email_label)) },
                     leadingIcon = {
@@ -176,7 +176,7 @@ private fun ShownContent(
                         .padding(top = 8.dp),
                     value = uiState.password,
                     onValueChange = {
-                        uiState.eventSink(SignInEvent.PasswordChanged(it))
+                        uiState.eventSink(SignInUiEvent.PasswordChanged(it))
                     },
                     label = { Text(text = stringResource(id = R.string.password_label)) },
                     leadingIcon = {
@@ -197,7 +197,7 @@ private fun ShownContent(
                     trailingIcon = {
                         Icon(
                             modifier = Modifier.clickable {
-                                uiState.eventSink(SignInEvent.ShowPasswordClicked)
+                                uiState.eventSink(SignInUiEvent.ShowPasswordClicked)
                             },
                             painter = painterResource(
                                 id = if (uiState.showPassword) {
@@ -226,7 +226,7 @@ private fun ShownContent(
                         .fillMaxWidth(0.8f),
                     enabled = uiState.isSignInButtonEnabled,
                     onClick = {
-                        uiState.eventSink(SignInEvent.SignInClicked)
+                        uiState.eventSink(SignInUiEvent.SignInClicked)
                     }
                 ) {
                     Text(text = stringResource(id = R.string.sign_in))
@@ -250,7 +250,7 @@ private fun ShownContent(
                 Button(
                     modifier = Modifier.fillMaxWidth(0.8f),
                     onClick = {
-                        uiState.eventSink(SignInEvent.GoogleSignIn)
+                        uiState.eventSink(SignInUiEvent.GoogleSignIn)
                     }
                 ) {
                     Image(
@@ -278,7 +278,7 @@ private fun ShownContent(
                     Text(
                         modifier = Modifier
                             .clickable {
-                                uiState.eventSink(SignInEvent.NavigateToSignUp)
+                                uiState.eventSink(SignInUiEvent.NavigateToSignUp)
                             },
                         text = stringResource(id = R.string.sign_up),
                         color = MaterialTheme.colorScheme.primary

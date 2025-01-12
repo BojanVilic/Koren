@@ -88,9 +88,9 @@ fun SignUpScreen(
         viewModel = signUpViewModel
     ) { sideEffect ->
         when (sideEffect) {
-            is SignUpSideEffect.NavigateBack -> onNavigateBack()
-            is SignUpSideEffect.NavigateToHome -> onSignUpSuccess()
-            is SignUpSideEffect.ShowGenericMessage -> onShowSnackbar(sideEffect.message)
+            is SignUpUiSideEffect.NavigateBack -> onNavigateBack()
+            is SignUpUiSideEffect.NavigateToHome -> onSignUpSuccess()
+            is SignUpUiSideEffect.ShowGenericMessage -> onShowSnackbar(sideEffect.message)
         }
     }
 
@@ -117,7 +117,7 @@ private fun ShownContent(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             uri?.let {
-                uiState.eventSink(SignUpEvent.SetImageUri(it))
+                uiState.eventSink(SignUpUiEvent.SetImageUri(it))
             }
         }
     )
@@ -218,7 +218,7 @@ private fun ShownContent(
                 .fillMaxWidth(0.8f),
             value = uiState.firstName,
             onValueChange = {
-                uiState.eventSink(SignUpEvent.FirstNameChanged(it))
+                uiState.eventSink(SignUpUiEvent.FirstNameChanged(it))
             },
             label = { Text(text = stringResource(id = R.string.first_name_label)) },
             keyboardOptions = KeyboardOptions(
@@ -233,7 +233,7 @@ private fun ShownContent(
                 .fillMaxWidth(0.8f),
             value = uiState.lastName,
             onValueChange = {
-                uiState.eventSink(SignUpEvent.LastNameChanged(it))
+                uiState.eventSink(SignUpUiEvent.LastNameChanged(it))
             },
             label = { Text(text = stringResource(id = R.string.last_name_label)) },
             keyboardOptions = KeyboardOptions(
@@ -248,7 +248,7 @@ private fun ShownContent(
                 .fillMaxWidth(0.8f),
             value = uiState.email,
             onValueChange = {
-                uiState.eventSink(SignUpEvent.EmailChanged(it))
+                uiState.eventSink(SignUpUiEvent.EmailChanged(it))
             },
             label = { Text(text = stringResource(id = R.string.email_label)) },
             leadingIcon = {
@@ -282,7 +282,7 @@ private fun ShownContent(
                 .padding(top = 8.dp),
             value = uiState.password,
             onValueChange = {
-                uiState.eventSink(SignUpEvent.PasswordChanged(it))
+                uiState.eventSink(SignUpUiEvent.PasswordChanged(it))
             },
             label = { Text(text = stringResource(id = R.string.password_label)) },
             leadingIcon = {
@@ -316,7 +316,7 @@ private fun ShownContent(
             trailingIcon = {
                 Icon(
                     modifier = Modifier.clickable {
-                        uiState.eventSink(SignUpEvent.ShowPasswordClicked)
+                        uiState.eventSink(SignUpUiEvent.ShowPasswordClicked)
                     },
                     painter = painterResource(
                         id = if (uiState.showPassword) {
@@ -345,7 +345,7 @@ private fun ShownContent(
                 .fillMaxWidth(0.8f),
             enabled = uiState.isSignUpButtonEnabled,
             onClick = {
-                uiState.eventSink(SignUpEvent.SignUpButtonClicked)
+                uiState.eventSink(SignUpUiEvent.SignUpButtonClicked)
             }
         ) {
             Text(text = stringResource(id = R.string.sign_up))
@@ -366,7 +366,7 @@ private fun ShownContent(
             Text(
                 modifier = Modifier
                     .clickable {
-                        uiState.eventSink(SignUpEvent.SignInClicked)
+                        uiState.eventSink(SignUpUiEvent.SignInClicked)
                     },
                 text = stringResource(id = R.string.sign_in),
                 color = MaterialTheme.colorScheme.primary
