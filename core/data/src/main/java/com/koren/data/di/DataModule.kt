@@ -1,5 +1,7 @@
 package com.koren.data.di
 
+import com.koren.data.repository.ActivityRepository
+import com.koren.data.repository.DefaultActivityRepository
 import com.koren.data.repository.DefaultInvitationRepository
 import com.koren.data.repository.InvitationRepository
 import dagger.Binds
@@ -15,4 +17,9 @@ abstract class DataModule {
     internal abstract fun bindsInvitationRepository(
         invitationRepository: DefaultInvitationRepository
     ): InvitationRepository
+
+    @Binds
+    internal abstract fun bindsActivityRepository(
+        activityRepository: DefaultActivityRepository
+    ): ActivityRepository
 }
