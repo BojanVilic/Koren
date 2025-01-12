@@ -12,6 +12,8 @@ import com.koren.domain.GetAllFamilyMembersUseCase
 import com.koren.domain.UpdateUserLocationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -26,27 +28,45 @@ class MapViewModel @Inject constructor(
     override fun setInitialState(): MapUiState = MapUiState.Loading
 
     init {
-        viewModelScope.launch {
-            locationService.getLocation { result ->
-                result.onSuccess { location ->
-                    viewModelScope.launch(Dispatchers.Default) {
-                        updateUserLocationUseCase(location)
+        if (!locationService.isLocationPermissionGranted()) {
+            _uiState.update {
+                MapUiState.LocationPermissionNotGranted(
+                    onPermissionGranted = {
+                        _uiState.update { MapUiState.Shown(eventSink = ::handleEvent) }
+                    }
+                )
+            }
+        } else {
+            viewModelScope.launch {
+                locationService.getLocation { result ->
+                    result.onSuccess { location ->
+                        viewModelScope.launch(Dispatchers.Default) {
+                            updateUserLocationUseCase(location)
+                        }
+                    }
+                    result.onFailure {
+                        Timber.d("Failed to get user location: $it")
                     }
                 }
-                result.onFailure {
-                    Timber.d("Failed to get user location: $it")
-                }
             }
-        }
 
-        viewModelScope.launch(Dispatchers.Default) {
-            getAllFamilyMembersUseCase().collect {
-                val firstMemberCameraPosition = it.firstNotNullOf { user -> user.lastLocation }
-                _uiState.value = MapUiState.Shown(
-                    familyMembers = it,
-                    cameraPosition = CameraPositionState(position = CameraPosition.fromLatLngZoom(LatLng(firstMemberCameraPosition.latitude, firstMemberCameraPosition.longitude), 15f)),
-                    eventSink = { event -> handleEvent(event) }
-                )
+            viewModelScope.launch(Dispatchers.Default) {
+                getAllFamilyMembersUseCase()
+                    .catch { _uiState.update { MapUiState.Shown(eventSink = ::handleEvent) } }
+                    .collect { familyMembers ->
+                        if (familyMembers.all { it.lastLocation == null }) {
+                            _uiState.update { MapUiState.Shown(eventSink = ::handleEvent) }
+                            return@collect
+                        }
+                        val firstMemberCameraPosition = familyMembers.firstNotNullOf { user -> user.lastLocation }
+                        _uiState.update {
+                            MapUiState.Shown(
+                                familyMembers = familyMembers,
+                                cameraPosition = CameraPositionState(position = CameraPosition.fromLatLngZoom(LatLng(firstMemberCameraPosition.latitude, firstMemberCameraPosition.longitude), 15f)),
+                                eventSink = { event -> handleEvent(event) }
+                            )
+                        }
+                    }
             }
         }
     }

@@ -3,16 +3,25 @@
 package com.koren.map.ui
 
 import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -22,27 +31,38 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -53,6 +73,7 @@ import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
@@ -83,6 +104,149 @@ fun MapScreen(
         )
     )
 
+    val uiState by mapViewModel.uiState.collectAsStateWithLifecycle()
+
+    MapScreenContent(uiState = uiState)
+}
+
+@Composable
+private fun MapScreenContent(
+    uiState: MapUiState
+) {
+    when (uiState) {
+        is MapUiState.Loading -> LoadingContent()
+        is MapUiState.LocationPermissionNotGranted -> PermissionNotGrantedContent(uiState)
+        is MapUiState.Shown -> ShownContent(uiState = uiState)
+    }
+}
+
+@Composable
+private fun LocationPermissionPermanentDenial() {
+    val context = LocalContext.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Keep your family in the loop and know where everyone is by enabling location sharing.",
+            style = MaterialTheme.typography.titleSmall,
+            textAlign = TextAlign.Center
+        )
+
+        Text(
+            modifier = Modifier.padding(top = 16.dp),
+            text = "Your privacy is protected: your location is always kept private and secure, and only shared with your family.",
+            style = MaterialTheme.typography.titleSmall,
+            textAlign = TextAlign.Center
+        )
+
+        Button(
+            modifier = Modifier.padding(top = 32.dp),
+            onClick = {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                intent.data = Uri.fromParts("package", context.packageName, null)
+                context.startActivity(intent)
+            },
+        ) {
+            Text("Enable Location Sharing")
+        }
+    }
+}
+
+@Composable
+private fun PermissionNotGrantedContent(uiState: MapUiState.LocationPermissionNotGranted) {
+    val fineLocationPermissionState = rememberPermissionState(ACCESS_FINE_LOCATION)
+    var showDialog by remember { mutableStateOf(false) }
+    var showPermanentDenial by remember { mutableStateOf(false) }
+
+    LaunchedEffect(fineLocationPermissionState.status.isGranted) {
+        if (fineLocationPermissionState.status.isGranted) {
+            uiState.onPermissionGranted()
+        } else {
+            fineLocationPermissionState.launchPermissionRequest()
+        }
+    }
+
+    LaunchedEffect(fineLocationPermissionState.status.shouldShowRationale) {
+        if (fineLocationPermissionState.status.shouldShowRationale) {
+            showDialog = true
+        } else {
+            showPermanentDenial = true
+        }
+    }
+
+    if (showDialog) {
+        BasicAlertDialog(
+            onDismissRequest = {
+                fineLocationPermissionState.launchPermissionRequest()
+            }
+        ) {
+            Surface(
+                modifier = Modifier.wrapContentSize(),
+                shape = MaterialTheme.shapes.large,
+                tonalElevation = AlertDialogDefaults.TonalElevation
+            ) {
+                Column(modifier = Modifier
+                    .wrapContentSize()
+                    .padding(16.dp)) {
+                    Icon(
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .size(48.dp)
+                            .align(Alignment.CenterHorizontally),
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Location Sharing"
+                    )
+                    Text(
+                        text = "Keep your family in the loop and know where everyone is by enabling location permission.",
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Text(
+                        modifier = Modifier.padding(top = 16.dp),
+                        text = "Your privacy is protected: your location is always kept private and secure, and only shared with your family.",
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    TextButton(
+                        onClick = {
+                            showDialog = false
+                            fineLocationPermissionState.launchPermissionRequest()
+                        },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Dismiss")
+                    }
+                }
+            }
+        }
+    } else {
+        Crossfade(
+            targetState = showPermanentDenial,
+            label = "",
+            animationSpec = tween(
+                durationMillis = 1000,
+                delayMillis = 1000,
+                easing = LinearOutSlowInEasing
+            )
+        ) {
+            if (it) {
+                LocationPermissionPermanentDenial()
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShownContent(
+    uiState: MapUiState.Shown
+) {
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
             initialValue = SheetValue.Expanded,
@@ -93,17 +257,6 @@ fun MapScreen(
     )
 
     val coroutineScope = rememberCoroutineScope()
-    val cameraPermissionState = rememberPermissionState(ACCESS_FINE_LOCATION)
-
-    if (cameraPermissionState.status.isGranted) {
-        Text("Location permission Granted")
-    } else {
-        LaunchedEffect(cameraPermissionState.status.isGranted) {
-            cameraPermissionState.launchPermissionRequest()
-        }
-    }
-
-    val uiState by mapViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         scaffoldState.bottomSheetState.expand()
@@ -126,48 +279,30 @@ fun MapScreen(
         },
         sheetPeekHeight = 112.dp
     ) {
-        MapScreenContent(uiState = uiState)
-    }
-}
+        Box {
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraPositionState = uiState.cameraPosition,
+                uiSettings = MapUiSettings(zoomControlsEnabled = false)
+            ) {
 
-@Composable
-private fun MapScreenContent(
-    uiState: MapUiState
-) {
-    when (uiState) {
-        is MapUiState.Loading -> LoadingContent()
-        is MapUiState.LocationPermissionNotGranted -> Text("Location permission must be granted!")
-        is MapUiState.Shown -> ShownContent(uiState = uiState)
-    }
-}
-
-@Composable
-fun ShownContent(
-    uiState: MapUiState.Shown
-) {
-    Box {
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = uiState.cameraPosition,
-            uiSettings = MapUiSettings(zoomControlsEnabled = false)
-        ) {
-
-            uiState.familyMembers.filter { it.lastLocation != null }.forEach { member ->
-                Pin(
-                    imageUrl = member.profilePictureUrl,
-                    displayName = member.displayName,
-                    location = member.lastLocation?: UserLocation(),
-                    onClick = {
-                        uiState.eventSink(MapEvent.FamilyMemberClicked(member))
-                    }
-                )
+                uiState.familyMembers.filter { it.lastLocation != null }.forEach { member ->
+                    Pin(
+                        imageUrl = member.profilePictureUrl,
+                        displayName = member.displayName,
+                        location = member.lastLocation?: UserLocation(),
+                        onClick = {
+                            uiState.eventSink(MapEvent.FamilyMemberClicked(member))
+                        }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun ActionBottomSheetContent(
+private fun ActionBottomSheetContent(
     uiState: MapUiState.Shown
 ) {
     val actions = listOf(
@@ -231,7 +366,7 @@ fun ActionBottomSheetContent(
 }
 
 @Composable
-fun Pin(
+private fun Pin(
     imageUrl: String?,
     displayName: String,
     location: UserLocation,
@@ -300,7 +435,7 @@ private fun PinImage(
 
 @ThemePreview
 @Composable
-fun PinImagePreview() {
+private fun PinImagePreview() {
     KorenTheme {
         PinImage(
             imageUrl = null,
@@ -317,7 +452,7 @@ fun PinImagePreview() {
 
 @ThemePreview
 @Composable
-fun MapScreenPreview() {
+private fun MapScreenPreview() {
     KorenTheme {
         MapScreenContent(
             uiState = MapUiState.Shown(

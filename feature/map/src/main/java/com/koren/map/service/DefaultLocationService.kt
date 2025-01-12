@@ -6,6 +6,7 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.location.Location
 import android.os.Looper
 import androidx.core.app.ActivityCompat.checkSelfPermission
+import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -51,4 +52,8 @@ class DefaultLocationService @Inject constructor(
             awaitClose { fusedLocationClient.removeLocationUpdates(locationCallback) }
         }
     }.flowOn(Dispatchers.Default)
+
+    override fun isLocationPermissionGranted(): Boolean {
+        return checkSelfPermission(context, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED
+    }
 }

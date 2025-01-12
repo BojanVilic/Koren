@@ -10,7 +10,7 @@ import com.koren.common.util.UiState
 
 sealed interface MapUiState : UiState {
     data object Loading : MapUiState
-    data object LocationPermissionNotGranted : MapUiState
+    data class LocationPermissionNotGranted(val onPermissionGranted: () -> Unit) : MapUiState
 
     data class Shown(
         val familyMembers: List<UserData> = emptyList(),

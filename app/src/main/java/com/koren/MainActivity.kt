@@ -1,5 +1,6 @@
 package com.koren
 
+import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,6 +33,7 @@ import com.koren.navigation.BottomNavigationBar
 import com.koren.navigation.KorenNavHost
 import com.koren.navigation.topLevelRoutes
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @AndroidEntryPoint
@@ -45,6 +47,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         splashScreen.setKeepOnScreenCondition { viewModel.uiState.value.shouldKeepSplashScreen() }
+
+        Timber.d("PROBAVANJE ${shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION)}")
 
         setContent {
             KorenTheme {
