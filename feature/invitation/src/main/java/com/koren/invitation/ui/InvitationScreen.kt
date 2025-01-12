@@ -72,7 +72,7 @@ fun InvitationScreen(
         )
     )
 
-    val invitationUiState by invitationViewModel.state.collectAsStateWithLifecycle()
+    val invitationUiState by invitationViewModel.uiState.collectAsStateWithLifecycle()
 
     InvitationContent(
         invitationUiState = invitationUiState

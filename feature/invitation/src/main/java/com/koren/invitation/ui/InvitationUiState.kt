@@ -1,8 +1,11 @@
 package com.koren.invitation.ui
 
 import com.koren.common.models.InvitationResult
+import com.koren.common.util.EventHandler
+import com.koren.common.util.UiEvent
+import com.koren.common.util.UiState
 
-sealed interface InvitationUiState {
+sealed interface InvitationUiState : UiState {
     data class Error(val errorMessage: String): InvitationUiState
 
     data class Shown(
@@ -15,14 +18,14 @@ sealed interface InvitationUiState {
         val emailInvitationLoading: Boolean = false,
         val qrInvitationLoading: Boolean = false,
         val errorMessage: String = "",
-        val eventSink: (InvitationEvent) -> Unit
-    ): InvitationUiState {
+        override val eventSink: (InvitationEvent) -> Unit
+    ): InvitationUiState, EventHandler<InvitationEvent> {
         val isEmailInviteButtonEnabled: Boolean
             get() = emailInviteText.isNotBlank()
     }
 }
 
-sealed interface InvitationEvent {
+sealed interface InvitationEvent : UiEvent {
     data object CreateQRInvitation : InvitationEvent
     data object CollapseCreateQRInvitation : InvitationEvent
     data object InviteViaEmailClick : InvitationEvent
