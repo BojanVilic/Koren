@@ -2,8 +2,12 @@ package com.koren.home.ui.home
 
 import com.koren.common.models.Invitation
 import com.koren.common.models.UserData
+import com.koren.common.util.EventHandler
+import com.koren.common.util.UiEvent
+import com.koren.common.util.UiSideEffect
+import com.koren.common.util.UiState
 
-sealed interface HomeUiState {
+sealed interface HomeUiState : UiState {
     data object Loading : HomeUiState
     data class Shown(
         val receivedInvitations: List<Invitation> = emptyList(),
@@ -11,11 +15,11 @@ sealed interface HomeUiState {
         val invitationCodeText: String = "",
         val invitationCodeError: String = "",
         val familyMembers: List<UserData> = emptyList(),
-        val eventSink: (HomeEvent) -> Unit
-    ) : HomeUiState
+        override val eventSink: (HomeEvent) -> Unit
+    ) : HomeUiState, EventHandler<HomeEvent>
 }
 
-sealed interface HomeEvent {
+sealed interface HomeEvent : UiEvent {
     data class AcceptInvitation(
         val invitation: Invitation,
         val typedCode: String
@@ -23,4 +27,14 @@ sealed interface HomeEvent {
 
     data class DeclineInvitation(val id: String) : HomeEvent
     data class InvitationCodeChanged(val code: String) : HomeEvent
+    data object NavigateToInviteFamilyMember : HomeEvent
+    data object NavigateToCreateFamily : HomeEvent
+    data object NavigateToSentInvitations : HomeEvent
+}
+
+sealed interface HomeSideEffect : UiSideEffect {
+    data object NavigateToInviteFamilyMember : HomeSideEffect
+    data object NavigateToCreateFamily : HomeSideEffect
+    data object NavigateToSentInvitations : HomeSideEffect
+    data class ShowError(val message: String) : HomeSideEffect
 }

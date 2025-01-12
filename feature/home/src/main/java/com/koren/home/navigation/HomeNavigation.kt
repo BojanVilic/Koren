@@ -31,7 +31,8 @@ fun NavGraphBuilder.homeScreen(
             HomeScreen(
                 inviteFamilyMember = inviteFamilyMember,
                 createFamily = createFamily,
-                sentInvitations = { navController.navigate(SentInvitationsDestination) }
+                sentInvitations = { navController.navigate(SentInvitationsDestination) },
+                onShowSnackbar = onShowSnackbar
             )
         }
 

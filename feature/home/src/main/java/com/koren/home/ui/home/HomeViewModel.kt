@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.koren.common.models.Invitation
 import com.koren.common.models.InvitationStatus
+import com.koren.common.util.StateViewModel
 import com.koren.data.repository.InvitationRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,10 +24,9 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val invitationRepository: InvitationRepository,
     getAllFamilyMembers: GetAllFamilyMembersUseCase
-): ViewModel() {
+): StateViewModel<HomeEvent, HomeUiState, HomeSideEffect>() {
 
-    private val _state = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
-    val state: StateFlow<HomeUiState> = _state.asStateFlow()
+    override fun setInitialState(): HomeUiState = HomeUiState.Loading
 
     init {
         combine(
@@ -34,7 +34,7 @@ class HomeViewModel @Inject constructor(
             invitationRepository.getSentInvitations(),
             getAllFamilyMembers()
         ) { receivedInvitations, sentInvitations, familyMembers ->
-            _state.update {
+            _uiState.update {
                 HomeUiState.Shown(
                     receivedInvitations = receivedInvitations.filter { it.status == InvitationStatus.PENDING },
                     sentInvitations = sentInvitations,
@@ -49,12 +49,15 @@ class HomeViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun handleEvent(event: HomeEvent) {
-        withShownState { current ->
+    override fun handleEvent(event: HomeEvent) {
+        withEventfulState<HomeUiState.Shown> { current ->
             when (event) {
                 is HomeEvent.AcceptInvitation -> acceptInvitation(event.invitation, event.typedCode, current)
                 is HomeEvent.DeclineInvitation -> declineInvitation(event.id)
-                is HomeEvent.InvitationCodeChanged -> _state.update { current.copy(invitationCodeText = event.code, invitationCodeError = "") }
+                is HomeEvent.InvitationCodeChanged -> _uiState.update { current.copy(invitationCodeText = event.code, invitationCodeError = "") }
+                is HomeEvent.NavigateToCreateFamily -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToCreateFamily)
+                is HomeEvent.NavigateToInviteFamilyMember -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToInviteFamilyMember)
+                is HomeEvent.NavigateToSentInvitations -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToSentInvitations)
             }
         }
     }
@@ -67,7 +70,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val result = invitationRepository.acceptInvitation(invitation, typedCode)
             if (result.isFailure) {
-                _state.update { current.copy(invitationCodeError = result.exceptionOrNull()?.message ?: "") }
+                _uiState.update { current.copy(invitationCodeError = result.exceptionOrNull()?.message ?: "") }
             }
         }
     }
@@ -75,13 +78,6 @@ class HomeViewModel @Inject constructor(
     private fun declineInvitation(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             invitationRepository.declineInvitation(id)
-        }
-    }
-
-    private inline fun withShownState(action: (HomeUiState.Shown) -> Unit) {
-        val currentState = _state.value
-        if (currentState is HomeUiState.Shown) {
-            action(currentState)
         }
     }
 }

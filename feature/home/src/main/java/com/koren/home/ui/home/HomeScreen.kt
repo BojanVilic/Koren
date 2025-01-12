@@ -64,6 +64,7 @@ import com.koren.common.models.InvitationStatus
 import com.koren.common.models.UserData
 import com.koren.common.models.getExpiryText
 import com.koren.common.models.toRelativeTime
+import com.koren.common.util.CollectSideEffects
 import com.koren.common.util.Destination
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.LoadingContent
@@ -83,7 +84,8 @@ fun HomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
     inviteFamilyMember: () -> Unit,
     createFamily: () -> Unit,
-    sentInvitations: () -> Unit
+    sentInvitations: () -> Unit,
+    onShowSnackbar: suspend (message: String) -> Unit
 ) {
 
     val scaffoldStateProvider = LocalScaffoldStateProvider.current
@@ -92,76 +94,71 @@ fun HomeScreen(
         onResume = { scaffoldStateProvider.setScaffoldState(ScaffoldState(isTopBarVisible = false, isBottomBarVisible = true)) }
     )
 
-    val state by homeViewModel.state.collectAsStateWithLifecycle()
+    val state by homeViewModel.uiState.collectAsStateWithLifecycle()
+
+    CollectSideEffects(
+        viewModel = homeViewModel
+    ) { sideEffect ->
+        when (sideEffect) {
+            is HomeSideEffect.ShowError -> onShowSnackbar(sideEffect.message)
+            is HomeSideEffect.NavigateToCreateFamily -> createFamily()
+            is HomeSideEffect.NavigateToInviteFamilyMember -> inviteFamilyMember()
+            is HomeSideEffect.NavigateToSentInvitations -> sentInvitations()
+        }
+    }
 
     HomeContent(
-        state = state,
-        inviteFamilyMember = inviteFamilyMember,
-        createFamily = createFamily,
-        sentInvitations = sentInvitations
+        state = state
     )
 }
 
 @Composable
 private fun HomeContent(
-    state: HomeUiState,
-    inviteFamilyMember: () -> Unit,
-    createFamily: () -> Unit,
-    sentInvitations: () -> Unit
+    state: HomeUiState
 ) {
     when (state) {
         is HomeUiState.Loading -> LoadingContent()
         is HomeUiState.Shown -> ShownContent(
-            state = state,
-            inviteFamilyMember = inviteFamilyMember,
-            createFamily = createFamily,
-            sentInvitations = sentInvitations
+            state = state
         )
     }
 }
 
 @Composable
 private fun ShownContent(
-    state: HomeUiState.Shown,
-    inviteFamilyMember: () -> Unit,
-    removeFamilyMember: () -> Unit = {},
-    scheduleEvent: () -> Unit = {},
-    reminder: () -> Unit = {},
-    chat: () -> Unit = {},
-    createFamily: () -> Unit,
-    sentInvitations: () -> Unit
+    state: HomeUiState.Shown
 ) {
 
     val actions = listOf(
         ActionItem(
             icon = IconResource.Drawable(R.drawable.create_family),
             text = "Create\nfamily",
-            onClick = createFamily
+            onClick = { state.eventSink(HomeEvent.NavigateToCreateFamily) }
         ),
         ActionItem(
             icon = IconResource.Vector(Icons.Default.Add),
             text = "Invite",
-            onClick = inviteFamilyMember
+            onClick = { state.eventSink(HomeEvent.NavigateToInviteFamilyMember) }
         ),
         ActionItem(
             icon = IconResource.Vector(Icons.Default.Email),
             text = "Chat",
-            onClick = chat
+            onClick = {}
         ),
         ActionItem(
             icon = IconResource.Vector(Icons.Default.DateRange),
             text = "Schedule",
-            onClick = scheduleEvent
+            onClick = {}
         ),
         ActionItem(
             icon = IconResource.Vector(Icons.Default.Notifications),
             text = "Reminder",
-            onClick = reminder
+            onClick = {}
         ),
         ActionItem(
             icon = IconResource.Drawable(R.drawable.remove_person),
             text = "Remove",
-            onClick = removeFamilyMember
+            onClick = {}
         ),
     )
 
@@ -191,7 +188,7 @@ private fun ShownContent(
                     }
                     item {
                         FilledTonalIconButton(
-                            onClick = { inviteFamilyMember() }
+                            onClick = { state.eventSink(HomeEvent.NavigateToInviteFamilyMember) }
                         ) {
                             Icon(
                                 modifier = Modifier
@@ -226,7 +223,7 @@ private fun ShownContent(
                     .padding(top = 8.dp)
                     .fillMaxWidth()
                     .clip(MaterialTheme.shapes.medium),
-                onClick = { sentInvitations() }
+                onClick = { state.eventSink(HomeEvent.NavigateToSentInvitations) }
             ) {
                 Row(
                     modifier = Modifier
@@ -506,10 +503,7 @@ fun HomePreview() {
                     )
                 ),
                 eventSink = {}
-            ),
-            inviteFamilyMember = {},
-            createFamily = {},
-            sentInvitations = {}
+            )
         )
     }
 }
