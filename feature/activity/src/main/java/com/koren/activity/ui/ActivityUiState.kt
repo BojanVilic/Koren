@@ -1,5 +1,6 @@
 package com.koren.activity.ui
 
+import com.koren.common.models.activity.LocationActivity
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
@@ -10,6 +11,7 @@ sealed interface ActivityUiState : UiState {
     data object Error : ActivityUiState
     data object Empty : ActivityUiState
     data class Shown(
+        val activities: List<LocationActivity>,
         override val eventSink: (ActivityEvent) -> Unit
     ): ActivityUiState, EventHandler<ActivityEvent>
 }

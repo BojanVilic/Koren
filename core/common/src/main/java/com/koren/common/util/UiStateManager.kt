@@ -19,7 +19,7 @@ interface EventHandler<E: UiEvent> : UiState {
 }
 
 abstract class StateViewModel<Event: UiEvent, State: UiState, SideEffect: UiSideEffect> : ViewModel() {
-    abstract fun setInitialState(): State
+    protected abstract fun setInitialState(): State
     protected abstract fun handleEvent(event: Event)
 
     private val initialState: State by lazy { setInitialState() }

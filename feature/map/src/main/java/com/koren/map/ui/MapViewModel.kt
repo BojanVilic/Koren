@@ -13,6 +13,8 @@ import com.koren.domain.UpdateUserLocationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -38,14 +40,11 @@ class MapViewModel @Inject constructor(
             }
         } else {
             viewModelScope.launch {
-                locationService.getLocation { result ->
-                    result.onSuccess { location ->
-                        viewModelScope.launch(Dispatchers.Default) {
-                            updateUserLocationUseCase(location)
-                        }
-                    }
-                    result.onFailure {
-                        Timber.d("Failed to get user location: $it")
+                locationService.requestLocationUpdates().collect { location ->
+                    try {
+                        updateUserLocationUseCase(location)
+                    } catch (e: Exception) {
+                        Timber.d("Failed to update user location: $e")
                     }
                 }
             }

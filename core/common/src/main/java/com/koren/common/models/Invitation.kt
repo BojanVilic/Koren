@@ -33,7 +33,7 @@ fun Long.toHumanReadableDateTime(
     return try {
         val instant = Instant.ofEpochMilli(this)
         val localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
-        val formatter = DateTimeFormatter.ofPattern("HH:mm d-MMM-yyyy", locale)
+        val formatter = DateTimeFormatter.ofPattern("HH:mm:ss d-MMM-yyyy", locale)
         localDateTime.format(formatter)
     } catch (e: Exception) {
         "Invalid Date"

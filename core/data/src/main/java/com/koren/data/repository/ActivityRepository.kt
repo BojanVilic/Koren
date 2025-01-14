@@ -1,8 +1,9 @@
 package com.koren.data.repository
 
-import com.koren.common.models.activity.BaseActivity
+import com.koren.common.models.activity.LocationActivity
+import kotlinx.coroutines.flow.Flow
 
 interface ActivityRepository {
-    fun insertNewActivity(activity: BaseActivity)
-    fun getActivities(): List<BaseActivity>
+    suspend fun insertNewActivity(activity: LocationActivity)
+    fun getActivities(): Flow<List<LocationActivity>>
 }

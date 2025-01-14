@@ -2,6 +2,8 @@ package com.koren.map.di
 
 import android.content.Context
 import com.koren.common.services.LocationService
+import com.koren.common.services.UserSession
+import com.koren.data.repository.ActivityRepository
 import com.koren.map.service.DefaultLocationService
 import dagger.Module
 import dagger.Provides
@@ -17,8 +19,14 @@ object SingletonModule {
     @Singleton
     @Provides
     fun provideLocationService(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        activityRepository: ActivityRepository,
+        userSession: UserSession
     ): LocationService {
-        return DefaultLocationService(context)
+        return DefaultLocationService(
+            context,
+            activityRepository,
+            userSession
+        )
     }
 }
