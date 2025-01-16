@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.auth.R
-import com.koren.common.util.Destination
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.theme.KorenTheme
@@ -51,7 +50,7 @@ import com.koren.designsystem.theme.ThemePreview
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object SignInScreen : Destination
+data object SignInScreen
 
 @Composable
 fun SignInScreen(

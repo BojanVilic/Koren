@@ -33,7 +33,6 @@ import com.koren.common.models.Invitation
 import com.koren.common.models.getExpiryText
 import com.koren.common.models.toRelativeTime
 import com.koren.common.util.CollectSideEffects
-import com.koren.common.util.Destination
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -46,7 +45,7 @@ data class QRAcceptInvitationDestination(
     val invitationId: String,
     val familyId: String,
     val invitationCode: String
-) : Destination
+)
 
 @Composable
 fun QRAcceptInvitationScreen(

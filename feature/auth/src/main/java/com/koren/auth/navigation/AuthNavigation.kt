@@ -6,11 +6,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.koren.auth.ui.sign_in.SignInScreen
 import com.koren.auth.ui.sign_up.SignUpScreen
-import com.koren.common.util.Destination
 import kotlinx.serialization.Serializable
 
 @Serializable
-object AuthGraph : Destination
+object AuthGraph
 
 fun NavGraphBuilder.authScreen(
     navController: NavController,

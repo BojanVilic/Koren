@@ -6,8 +6,8 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,13 +15,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -30,39 +28,35 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialogDefaults
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -73,7 +67,6 @@ import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
@@ -81,17 +74,17 @@ import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
 import com.koren.common.models.UserData
 import com.koren.common.models.UserLocation
-import com.koren.common.util.Destination
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 @Serializable
-object MapDestination : Destination
+object MapDestination
 
 @Composable
 fun MapScreen(
@@ -183,6 +176,12 @@ private fun ShownContent(
     )
 
     val coroutineScope = rememberCoroutineScope()
+    val progress = remember{ mutableFloatStateOf(0f) }
+    val sheetOffset = remember { mutableFloatStateOf(-1f) }
+    val fabYOffset by animateDpAsState(
+        targetValue = if(progress.floatValue == 0f) 240.dp else 112.dp,
+        animationSpec = tween(300, easing = LinearOutSlowInEasing)
+    )
 
     LaunchedEffect(Unit) {
         scaffoldState.bottomSheetState.expand()
@@ -198,10 +197,19 @@ private fun ShownContent(
         }
     }
 
+    LaunchedEffect(scaffoldState.bottomSheetState) {
+        snapshotFlow { scaffoldState.bottomSheetState.requireOffset() }.debounce(100).collect { offset ->
+            if (sheetOffset.floatValue == -1f) {
+                sheetOffset.floatValue = offset
+            }
+            progress.floatValue = 1-(offset/sheetOffset.floatValue)
+        }
+    }
+
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetContent = {
-            (uiState as? MapUiState.Shown)?.let { ActionBottomSheetContent(it) }
+            ActionBottomSheetContent(uiState = uiState)
         },
         sheetPeekHeight = 112.dp
     ) {
@@ -222,6 +230,21 @@ private fun ShownContent(
                         }
                     )
                 }
+            }
+
+            FloatingActionButton(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = 8.dp, end = 16.dp)
+                    .offset {
+                        IntOffset(x = 0, y = -fabYOffset.roundToPx())
+                    },
+                onClick = {}
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit"
+                )
             }
         }
     }
@@ -271,7 +294,10 @@ private fun ActionBottomSheetContent(
             modifier = Modifier.padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(uiState.familyMembers) { member ->
+            items(
+                items = uiState.familyMembers,
+                key = { it.id }
+            ) { member ->
                 AsyncImage(
                     modifier = Modifier
                         .size(48.dp)

@@ -13,8 +13,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 class DefaultActivityRepository @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase,
@@ -26,9 +27,32 @@ class DefaultActivityRepository @Inject constructor(
     }
 
     override suspend fun insertNewActivity(activity: LocationActivity) {
-        firebaseDatabase.getReference(activitiesPath(activity, LOCATION_ACTIVITY))
-            .setValue(activity)
-            .await()
+        val userData = userSession.currentUser.first()
+
+        firebaseDatabase.reference.child("activities/${activity.familyId}/location")
+            .orderByChild("userId")
+            .equalTo(userData.id)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val lastLocation = snapshot.children.mapNotNull {
+                        it.getValue<LocationActivity>()
+                    }.maxByOrNull {
+                        it.createdAt
+                    }
+
+                    if (lastLocation != null) {
+                        val timeDifferenceInMins = (activity.createdAt - lastLocation.createdAt).milliseconds.inWholeMinutes
+                        if (timeDifferenceInMins > 5 && lastLocation.locationName.equals(activity.locationName, true).not()) {
+                            firebaseDatabase.getReference(activitiesPath(activity, LOCATION_ACTIVITY))
+                                .setValue(activity)
+                        }
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Timber.e(error.toException())
+                }
+            })
     }
 
     override fun getActivities(): Flow<List<LocationActivity>> = callbackFlow {

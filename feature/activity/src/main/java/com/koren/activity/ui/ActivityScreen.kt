@@ -9,7 +9,6 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.common.models.activity.LocationActivity
-import com.koren.common.util.Destination
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
@@ -19,7 +18,7 @@ import kotlinx.serialization.Serializable
 import org.w3c.dom.Text
 
 @Serializable
-object ActivityDestination : Destination
+object ActivityDestination
 
 @Composable
 fun ActivityScreen(

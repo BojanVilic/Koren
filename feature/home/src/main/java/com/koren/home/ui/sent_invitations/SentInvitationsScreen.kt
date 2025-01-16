@@ -45,7 +45,6 @@ import com.koren.common.models.InvitationStatus
 import com.koren.common.models.getExpiryText
 import com.koren.common.models.isQRInvitation
 import com.koren.common.models.toRelativeTime
-import com.koren.common.util.Destination
 import com.koren.designsystem.components.BrokenBranchErrorScreen
 import com.koren.designsystem.components.EmptyContent
 import com.koren.designsystem.components.LoadingContent
@@ -57,7 +56,7 @@ import com.koren.home.R
 import kotlinx.serialization.Serializable
 
 @Serializable
-object SentInvitationsDestination : Destination
+object SentInvitationsDestination
 
 @Composable
 fun SentInvitationsScreen(

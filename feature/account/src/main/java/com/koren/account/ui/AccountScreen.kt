@@ -39,14 +39,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.koren.common.util.CollectSideEffects
-import com.koren.common.util.Destination
 import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
 import kotlinx.serialization.Serializable
 
 @Serializable
-object AccountDestination : Destination
+object AccountDestination
 
 @Composable
 fun AccountScreen(

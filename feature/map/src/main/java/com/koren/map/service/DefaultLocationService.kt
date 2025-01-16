@@ -6,16 +6,22 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.location.Location
 import android.os.Looper
 import androidx.core.app.ActivityCompat.checkSelfPermission
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.koren.common.models.activity.LocationActivity
 import com.koren.common.services.LocationService
+import com.koren.common.services.ResourceProvider
 import com.koren.common.services.UserSession
 import com.koren.data.repository.ActivityRepository
+import com.koren.map.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +29,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onEach
+import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.minutes
@@ -30,8 +37,33 @@ import kotlin.time.Duration.Companion.minutes
 class DefaultLocationService @Inject constructor(
     private val context: Context,
     private val activityRepository: ActivityRepository,
-    private val userSession: UserSession
+    private val userSession: UserSession,
+    resourceProvider: ResourceProvider
 ): LocationService {
+
+    init {
+        Places.initialize(context, resourceProvider[R.string.google_maps_key])
+        val placesClient = Places.createClient(context)
+
+        val placeFields: List<Place.Field> = listOf(Place.Field.DISPLAY_NAME)
+        val request: FindCurrentPlaceRequest = FindCurrentPlaceRequest.newInstance(placeFields)
+
+        if (checkSelfPermission(context, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED) {
+            placesClient.findCurrentPlace(request)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val response = task.result
+                        val place = response.placeLikelihoods.first()
+                        Timber.d("Place '${place.place.displayName}' has likelihood: ${place.likelihood}")
+                    } else {
+                        val exception = task.exception
+                        if (exception is ApiException) {
+                            Timber.d("Place not found: ${exception.statusCode}")
+                        }
+                    }
+                }
+        }
+    }
 
     private val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30.minutes.inWholeMilliseconds)
         .build()

@@ -6,7 +6,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
-import com.koren.common.util.Destination
 import com.koren.home.ui.home.HomeDestination
 import com.koren.home.ui.home.HomeScreen
 import com.koren.home.ui.qr.QRAcceptInvitationDestination
@@ -16,7 +15,7 @@ import com.koren.home.ui.sent_invitations.SentInvitationsScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
-object HomeGraph : Destination
+object HomeGraph
 
 fun NavGraphBuilder.homeScreen(
     navController: NavHostController,

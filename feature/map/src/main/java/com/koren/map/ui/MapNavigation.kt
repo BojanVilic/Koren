@@ -4,11 +4,10 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.koren.common.util.Destination
 import kotlinx.serialization.Serializable
 
 @Serializable
-object MapGraph : Destination
+object MapGraph
 
 fun NavGraphBuilder.mapScreen(
     navController: NavHostController

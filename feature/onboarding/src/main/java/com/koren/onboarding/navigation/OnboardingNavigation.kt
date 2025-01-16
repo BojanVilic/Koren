@@ -4,13 +4,12 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.koren.common.util.Destination
 import com.koren.onboarding.ui.create_family.CreateFamilyDestination
 import com.koren.onboarding.ui.create_family.CreateFamilyScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
-object OnboardingGraph : Destination
+object OnboardingGraph
 
 fun NavGraphBuilder.onboardingScreen(
     navController: NavHostController,

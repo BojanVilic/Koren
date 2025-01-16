@@ -16,4 +16,7 @@ dependencies {
 
     implementation(libs.accompanist.permissions)
     implementation(libs.play.services.location)
+    implementation(libs.play.services.places)
+    implementation(libs.places)
+    implementation(libs.play.services.fitness)
 }

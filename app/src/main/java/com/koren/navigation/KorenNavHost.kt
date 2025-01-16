@@ -29,7 +29,7 @@ fun KorenNavHost(
 ) {
     val uiState = mainActivityViewModel.uiState.collectAsStateWithLifecycle()
 
-    val startDestination = when {
+    val startDestination: Any = when {
         uiState.value is MainActivityUiState.LoggedOut -> AuthGraph
         else -> HomeGraph
     }

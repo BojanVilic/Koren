@@ -65,7 +65,6 @@ import com.koren.common.models.UserData
 import com.koren.common.models.getExpiryText
 import com.koren.common.models.toRelativeTime
 import com.koren.common.util.CollectSideEffects
-import com.koren.common.util.Destination
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.components.StyledStringResource
@@ -77,7 +76,7 @@ import com.koren.home.R
 import kotlinx.serialization.Serializable
 
 @Serializable
-object HomeDestination : Destination
+object HomeDestination
 
 @Composable
 fun HomeScreen(

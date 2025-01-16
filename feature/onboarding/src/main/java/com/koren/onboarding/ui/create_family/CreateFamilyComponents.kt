@@ -74,7 +74,6 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.koren.common.util.Destination
 import com.koren.designsystem.components.BrokenBranchErrorScreen
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.components.dashedBorder
@@ -88,7 +87,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 @Serializable
-object CreateFamilyDestination : Destination
+object CreateFamilyDestination
 
 @Composable
 fun CreateFamilyScreen(
