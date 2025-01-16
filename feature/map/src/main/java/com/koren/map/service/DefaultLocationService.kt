@@ -13,9 +13,15 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.model.PlaceTypes
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
+import com.google.android.libraries.places.api.net.PlacesClient
 import com.koren.common.models.activity.LocationActivity
 import com.koren.common.services.LocationService
 import com.koren.common.services.ResourceProvider
@@ -29,6 +35,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
@@ -38,13 +46,10 @@ class DefaultLocationService @Inject constructor(
     private val context: Context,
     private val activityRepository: ActivityRepository,
     private val userSession: UserSession,
-    resourceProvider: ResourceProvider
+    private val placesClient: PlacesClient
 ): LocationService {
 
     init {
-        Places.initialize(context, resourceProvider[R.string.google_maps_key])
-        val placesClient = Places.createClient(context)
-
         val placeFields: List<Place.Field> = listOf(Place.Field.DISPLAY_NAME)
         val request: FindCurrentPlaceRequest = FindCurrentPlaceRequest.newInstance(placeFields)
 
@@ -108,5 +113,36 @@ class DefaultLocationService @Inject constructor(
 
     override fun isLocationPermissionGranted(): Boolean {
         return checkSelfPermission(context, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED
+    }
+
+    override fun getPlaceSuggestions(query: String): Flow<List<Pair<String, String>>> = callbackFlow {
+        val token = AutocompleteSessionToken.newInstance()
+
+        val autocompleteRequest = FindAutocompletePredictionsRequest.builder()
+            .setOrigin(LatLng(-33.8749937, 151.2041382)) // Example location
+            .setTypesFilter(listOf(PlaceTypes.ADDRESS))
+            .setSessionToken(token)
+            .setQuery(query)
+            .build()
+
+        try {
+            val response: FindAutocompletePredictionsResponse = withContext(Dispatchers.IO) {
+                placesClient.findAutocompletePredictions(autocompleteRequest).await()
+            }
+            val addressPair = response.autocompletePredictions.map { prediction ->
+                prediction.getPrimaryText(null).toString() to prediction.getSecondaryText(null).toString()
+            }
+
+            trySend(addressPair)
+        } catch (exception: Exception) {
+            if (exception is ApiException) {
+                Timber.e("Place not found: ${exception.statusCode}")
+            } else {
+                Timber.e(exception, "Error fetching places")
+            }
+            trySend(emptyList())
+        }
+
+        awaitClose()
     }
 }

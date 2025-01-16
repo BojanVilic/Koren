@@ -1,4 +1,4 @@
-package com.koren.home.ui.home
+package com.koren.designsystem.models
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.size

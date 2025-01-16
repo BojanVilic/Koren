@@ -33,10 +33,8 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,9 +63,12 @@ import com.koren.common.models.UserData
 import com.koren.common.models.getExpiryText
 import com.koren.common.models.toRelativeTime
 import com.koren.common.util.CollectSideEffects
+import com.koren.designsystem.components.ActionButton
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.components.StyledStringResource
+import com.koren.designsystem.models.ActionItem
+import com.koren.designsystem.models.IconResource
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -270,28 +271,6 @@ private fun ShownContent(
         }
     }
 }
-
-@Composable
-private fun ActionButton(
-    actionItem: ActionItem
-) {
-    OutlinedButton(
-        onClick = actionItem.onClick,
-        border = null
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            actionItem.IconComposable()
-            Text(
-                modifier = Modifier.padding(top = 4.dp),
-                text = actionItem.text,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
-}
-
 
 @Composable
 private fun FamilyMember(member: UserData) {

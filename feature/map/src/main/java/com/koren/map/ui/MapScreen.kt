@@ -6,38 +6,42 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
@@ -45,10 +49,8 @@ import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,7 +58,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -74,12 +75,14 @@ import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
 import com.koren.common.models.UserData
 import com.koren.common.models.UserLocation
+import com.koren.designsystem.components.ActionButton
 import com.koren.designsystem.components.LoadingContent
+import com.koren.designsystem.models.ActionItem
+import com.koren.designsystem.models.IconResource
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
@@ -176,19 +179,13 @@ private fun ShownContent(
     )
 
     val coroutineScope = rememberCoroutineScope()
-    val progress = remember{ mutableFloatStateOf(0f) }
-    val sheetOffset = remember { mutableFloatStateOf(-1f) }
-    val fabYOffset by animateDpAsState(
-        targetValue = if(progress.floatValue == 0f) 240.dp else 112.dp,
-        animationSpec = tween(300, easing = LinearOutSlowInEasing)
-    )
 
     LaunchedEffect(Unit) {
         scaffoldState.bottomSheetState.expand()
     }
 
-    LaunchedEffect((uiState as? MapUiState.Shown)?.cameraPosition?.isMoving) {
-        if ((uiState as? MapUiState.Shown)?.cameraPosition?.isMoving == true) {
+    LaunchedEffect(uiState.cameraPosition.isMoving) {
+        if (uiState.cameraPosition.isMoving) {
             if (scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded) {
                 coroutineScope.launch {
                     scaffoldState.bottomSheetState.partialExpand()
@@ -197,21 +194,21 @@ private fun ShownContent(
         }
     }
 
-    LaunchedEffect(scaffoldState.bottomSheetState) {
-        snapshotFlow { scaffoldState.bottomSheetState.requireOffset() }.debounce(100).collect { offset ->
-            if (sheetOffset.floatValue == -1f) {
-                sheetOffset.floatValue = offset
-            }
-            progress.floatValue = 1-(offset/sheetOffset.floatValue)
-        }
-    }
-
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetContent = {
-            ActionBottomSheetContent(uiState = uiState)
+            AnimatedVisibility(
+                visible = uiState.editMode
+            ) {
+                PlacesSearchBar(uiState = uiState)
+            }
+            AnimatedVisibility(
+                visible = !uiState.editMode
+            ) {
+                ActionBottomSheetContent(uiState)
+            }
         },
-        sheetPeekHeight = 112.dp
+        sheetPeekHeight = 128.dp
     ) {
         Box {
             GoogleMap(
@@ -219,7 +216,6 @@ private fun ShownContent(
                 cameraPositionState = uiState.cameraPosition,
                 uiSettings = MapUiSettings(zoomControlsEnabled = false)
             ) {
-
                 uiState.familyMembers.filter { it.lastLocation != null }.forEach { member ->
                     Pin(
                         imageUrl = member.profilePictureUrl,
@@ -231,20 +227,73 @@ private fun ShownContent(
                     )
                 }
             }
+        }
+    }
+}
 
-            FloatingActionButton(
+@Composable
+private fun PlacesSearchBar(
+    uiState: MapUiState.Shown
+) {
+
+    SearchBar(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        inputField = {
+            SearchBarDefaults.InputField(
+                query = uiState.searchQuery,
+                onQueryChange = { uiState.eventSink(MapEvent.SearchTextChanged(it)) },
+                onSearch = { uiState.eventSink(MapEvent.CollapseSearchBar) },
+                expanded = uiState.searchBarExpanded,
+                onExpandedChange = {
+                    if (it) uiState.eventSink(MapEvent.ExpandSearchBar)
+                    else uiState.eventSink(MapEvent.CollapseSearchBar)
+                },
+                placeholder = { Text("Hinted search text") },
+                leadingIcon = {
+                    Icon(
+                        modifier = Modifier.clickable {
+                            uiState.eventSink(MapEvent.EditModeFinished)
+                        },
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null
+                    )
+                },
+                trailingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            )
+        },
+        expanded = uiState.searchBarExpanded,
+        onExpandedChange = {
+            if (it) uiState.eventSink(MapEvent.ExpandSearchBar)
+            else uiState.eventSink(MapEvent.CollapseSearchBar)
+        },
+        colors = SearchBarDefaults.colors(
+            containerColor = BottomSheetDefaults.ContainerColor
+        ),
+        windowInsets = WindowInsets(0, 0, 0, 0)
+    ) {
+        Column {
+            LazyColumn(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(bottom = 8.dp, end = 16.dp)
-                    .offset {
-                        IntOffset(x = 0, y = -fabYOffset.roundToPx())
-                    },
-                onClick = {}
+                    .fillMaxWidth()
+                    .animateContentSize()
             ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit"
-                )
+                items(uiState.locationSuggestions) { suggestion ->
+                    ListItem(
+                        modifier = Modifier
+                            .clickable {
+                                uiState.eventSink(MapEvent.CollapseSearchBar)
+                            }
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        headlineContent = { Text(suggestion.first) },
+                        supportingContent = { Text(suggestion.second) },
+                        leadingContent = { Icon(Icons.Filled.Star, contentDescription = null) },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                    )
+
+                }
             }
         }
     }
@@ -254,11 +303,13 @@ private fun ShownContent(
 private fun ActionBottomSheetContent(
     uiState: MapUiState.Shown
 ) {
+
     val actions = listOf(
-        Icons.Default.Add,
-        Icons.Default.ThumbUp,
-        Icons.Default.DateRange,
-        Icons.Default.Create
+        ActionItem(
+            icon = IconResource.Vector(Icons.Default.Edit),
+            text = "Edit places",
+            onClick = { uiState.eventSink(MapEvent.EditModeClicked) }
+        )
     )
 
     Column(
@@ -269,15 +320,7 @@ private fun ActionBottomSheetContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(actions) { actionItem ->
-                IconButton(
-                    onClick = { }
-                ) {
-                    Icon(
-                        modifier = Modifier.size(24.dp),
-                        imageVector = actionItem,
-                        contentDescription = "Action"
-                    )
-                }
+                ActionButton(actionItem)
             }
         }
 

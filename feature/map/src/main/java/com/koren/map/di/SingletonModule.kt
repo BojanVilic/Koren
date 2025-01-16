@@ -1,10 +1,13 @@
 package com.koren.map.di
 
 import android.content.Context
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.net.PlacesClient
 import com.koren.common.services.LocationService
 import com.koren.common.services.ResourceProvider
 import com.koren.common.services.UserSession
 import com.koren.data.repository.ActivityRepository
+import com.koren.map.R
 import com.koren.map.service.DefaultLocationService
 import dagger.Module
 import dagger.Provides
@@ -23,13 +26,23 @@ object SingletonModule {
         @ApplicationContext context: Context,
         activityRepository: ActivityRepository,
         userSession: UserSession,
-        resourceProvider: ResourceProvider
+        placesClient: PlacesClient
     ): LocationService {
         return DefaultLocationService(
             context,
             activityRepository,
             userSession,
-            resourceProvider
+            placesClient
         )
+    }
+
+    @Singleton
+    @Provides
+    fun providePlacesClient(
+        @ApplicationContext context: Context,
+        resourceProvider: ResourceProvider
+    ): PlacesClient {
+        Places.initialize(context, resourceProvider[R.string.google_maps_key])
+        return Places.createClient(context)
     }
 }
