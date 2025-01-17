@@ -9,7 +9,6 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.koren.common.models.family.SavedLocation
 import com.koren.common.models.suggestion.SuggestionResponse
-import com.koren.common.models.user.UserData
 import com.koren.common.services.LocationService
 import com.koren.common.util.StateViewModel
 import com.koren.domain.GetAllFamilyMembersUseCase
@@ -23,7 +22,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
@@ -51,7 +49,7 @@ class MapViewModel @Inject constructor(
             _uiState.update {
                 MapUiState.LocationPermissionNotGranted(
                     onPermissionGranted = {
-                        _uiState.update { MapUiState.Shown(eventSink = ::handleEvent) }
+                        _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) }
                     }
                 )
             }
@@ -73,25 +71,27 @@ class MapViewModel @Inject constructor(
                 ) { familyMembers, savedLocations ->
                     familyMembers to savedLocations
                 }
-                .catch { _uiState.update { MapUiState.Shown(eventSink = ::handleEvent) } }
+                .catch { _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) } }
                 .collect { (familyMembers, savedLocations) ->
                     if (familyMembers.all { it.lastLocation == null }) {
-                        _uiState.update { MapUiState.Shown(eventSink = ::handleEvent) }
+                        _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) }
                         return@collect
                     }
                     val firstMemberCameraPosition = familyMembers.firstNotNullOf { user -> user.lastLocation }
-                    if (_uiState.value is MapUiState.Shown) {
+                    val current = (_uiState.value as? MapUiState.Shown)
+                    if (current != null) {
                         _uiState.update {
-                            (_uiState.value as MapUiState.Shown).copy(
+                            MapUiState.Shown.IdleMap(
                                 familyMembers = familyMembers,
                                 savedLocations = savedLocations,
+                                cameraPosition = current.cameraPosition,
                                 eventSink = { event -> handleEvent(event) }
                             )
                         }
-                        exitEditMode(_uiState.value as MapUiState.Shown)
+                        exitEditMode((_uiState.value as MapUiState.Shown))
                     } else {
                         _uiState.update {
-                            MapUiState.Shown(
+                            MapUiState.Shown.IdleMap(
                                 familyMembers = familyMembers,
                                 cameraPosition = CameraPositionState(position = CameraPosition.fromLatLngZoom(LatLng(firstMemberCameraPosition.latitude, firstMemberCameraPosition.longitude), 15f)),
                                 savedLocations = savedLocations,
@@ -133,17 +133,15 @@ class MapViewModel @Inject constructor(
 
                     }
                     .collect { suggestions ->
-                        val currentState = (_uiState.value as? MapUiState.Shown)?: return@collect
-                        if (currentState.editMode) {
-                            _uiState.update { currentState.copy(locationSuggestions = suggestions)}
-                        }
+                        val currentState = (_uiState.value as? MapUiState.Shown.SearchMode)?: return@collect
+                        _uiState.update { currentState.copy(locationSuggestions = suggestions)}
                     }
             }
         }
     }
 
     override fun handleEvent(event: MapEvent) {
-        withEventfulState<MapUiState.Shown> { current ->
+        withEventfulState<MapUiState.Shown.IdleMap> { current ->
             when (event) {
                 is MapEvent.FamilyMemberClicked -> updateCameraPosition(
                     current = current,
@@ -151,6 +149,19 @@ class MapViewModel @Inject constructor(
                     longitude = event.userData.lastLocation?.longitude?: 0.0
                 )
                 is MapEvent.EditModeClicked -> enterEditMode(current)
+                is MapEvent.PinClicked -> updateCameraPosition(
+                    current = current,
+                    latitude = event.latitude,
+                    longitude = event.longitude
+                )
+                else -> Unit
+            }
+        }
+    }
+
+    private fun handleSearchModeEvents(event: MapEvent) {
+        withEventfulState<MapUiState.Shown.SearchMode> { current ->
+            when (event) {
                 is MapEvent.EditModeFinished -> exitEditMode(current)
                 is MapEvent.SearchTextChanged -> {
                     _uiState.update { current.copy(searchQuery = event.text) }
@@ -158,21 +169,36 @@ class MapViewModel @Inject constructor(
                 }
                 is MapEvent.ExpandSearchBar -> _uiState.update { current.copy(searchBarExpanded = true) }
                 is MapEvent.CollapseSearchBar -> _uiState.update { current.copy(searchBarExpanded = false) }
-                is MapEvent.LocationSuggestionClicked -> _uiState.update { current.copy(saveLocationShown = true, saveLocationSuggestion = event.location) }
-                is MapEvent.SaveLocationClicked -> saveLocation(current)
-                is MapEvent.SaveLocationDismissed -> _uiState.update { current.copy(saveLocationShown = false) }
-                is MapEvent.SaveLocationNameChanged -> _uiState.update { current.copy(saveLocationName = event.name) }
-                is MapEvent.SaveLocationIconChanged -> _uiState.update { current.copy(saveLocationIcon = event.icon) }
-                is MapEvent.PinClicked -> updateCameraPosition(
-                    current = current,
-                    latitude = event.latitude,
-                    longitude = event.longitude
-                )
+                is MapEvent.LocationSuggestionClicked -> _uiState.update { MapUiState.Shown.SaveLocation(
+                    cameraPosition = current.cameraPosition,
+                    familyMembers = current.familyMembers,
+                    savedLocations = current.savedLocations,
+                    saveLocationSuggestion = event.location,
+                    eventSink = ::handleSaveLocationEvents
+                ) }
+                else -> Unit
             }
         }
     }
 
-    private fun saveLocation(current: MapUiState.Shown) {
+    private fun handleSaveLocationEvents(event: MapEvent) {
+        withEventfulState<MapUiState.Shown.SaveLocation> { current ->
+            when (event) {
+                is MapEvent.SaveLocationClicked -> saveLocation(current)
+                is MapEvent.SaveLocationDismissed -> _uiState.update { MapUiState.Shown.IdleMap(
+                    cameraPosition = current.cameraPosition,
+                    familyMembers = current.familyMembers,
+                    savedLocations = current.savedLocations,
+                    eventSink = ::handleEvent
+                ) }
+                is MapEvent.SaveLocationNameChanged -> _uiState.update { current.copy(saveLocationName = event.name) }
+                is MapEvent.SaveLocationIconChanged -> _uiState.update { current.copy(saveLocationIcon = event.icon) }
+                else -> Unit
+            }
+        }
+    }
+
+    private fun saveLocation(current: MapUiState.Shown.SaveLocation) {
         viewModelScope.launch(Dispatchers.Default) {
             try {
                 val location = SavedLocation(
@@ -196,12 +222,22 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    private fun enterEditMode(current: MapUiState.Shown) {
-        _uiState.update { current.copy(editMode = true) }
+    private fun enterEditMode(current: MapUiState.Shown.IdleMap) {
+        _uiState.update { MapUiState.Shown.SearchMode(
+            cameraPosition = current.cameraPosition,
+            familyMembers = current.familyMembers,
+            savedLocations = current.savedLocations,
+            eventSink = ::handleSearchModeEvents
+        ) }
     }
 
     private fun exitEditMode(current: MapUiState.Shown) {
-        _uiState.update { current.copy(editMode = false, saveLocationShown = false) }
+        _uiState.update { MapUiState.Shown.IdleMap(
+            cameraPosition = current.cameraPosition,
+            familyMembers = current.familyMembers,
+            savedLocations = current.savedLocations,
+            eventSink = ::handleEvent
+        ) }
     }
 
     private fun updateCameraPosition(

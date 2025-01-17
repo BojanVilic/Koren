@@ -207,11 +207,13 @@ private fun ShownContent(
         scaffoldState.bottomSheetState.expand()
     }
 
-    LaunchedEffect(uiState.cameraPosition.isMoving) {
-        if (uiState.cameraPosition.isMoving) {
-            if (scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded) {
-                coroutineScope.launch {
-                    scaffoldState.bottomSheetState.partialExpand()
+    if (uiState is MapUiState.Shown.IdleMap) {
+        LaunchedEffect(uiState.cameraPosition.isMoving) {
+            if (uiState.cameraPosition.isMoving) {
+                if (scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded) {
+                    coroutineScope.launch {
+                        scaffoldState.bottomSheetState.partialExpand()
+                    }
                 }
             }
         }
@@ -220,22 +222,10 @@ private fun ShownContent(
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetContent = {
-            AnimatedVisibility(
-                visible = uiState.editMode && uiState.saveLocationShown.not()
-            ) {
-                PlacesSearchBar(uiState = uiState)
-            }
-            AnimatedVisibility(
-                visible = !uiState.editMode
-            ) {
-                ActionBottomSheetContent(uiState)
-            }
-            AnimatedVisibility(
-                visible = uiState.saveLocationShown
-            ) {
-                SaveLocation(
-                    uiState = uiState
-                )
+            when (uiState) {
+                is MapUiState.Shown.SearchMode -> PlacesSearchBar(uiState)
+                is MapUiState.Shown.SaveLocation -> SaveLocation(uiState)
+                is MapUiState.Shown.IdleMap -> ActionBottomSheetContent(uiState)
             }
         },
         sheetPeekHeight = 128.dp
@@ -251,7 +241,7 @@ private fun ShownContent(
                     Pin(
                         imageUrl = member.profilePictureUrl,
                         displayName = member.displayName,
-                        location = member.lastLocation?: UserLocation(),
+                        location = member.lastLocation ?: UserLocation(),
                         onClick = {
                             uiState.eventSink(MapEvent.FamilyMemberClicked(member))
                         }
@@ -265,7 +255,12 @@ private fun ShownContent(
                         latitude = location.latitude,
                         longitude = location.longitude,
                         onClick = {
-                            uiState.eventSink(MapEvent.PinClicked(location.latitude, location.longitude))
+                            uiState.eventSink(
+                                MapEvent.PinClicked(
+                                    location.latitude,
+                                    location.longitude
+                                )
+                            )
                         }
                     )
                 }
@@ -276,7 +271,7 @@ private fun ShownContent(
 
 @Composable
 private fun PlacesSearchBar(
-    uiState: MapUiState.Shown
+    uiState: MapUiState.Shown.SearchMode
 ) {
 
     Column {
@@ -364,7 +359,7 @@ private fun PlacesSearchBar(
 
 @Composable
 private fun SaveLocation(
-    uiState: MapUiState.Shown
+    uiState: MapUiState.Shown.SaveLocation
 ) {
     val icons = LocationIcon.entries
     val quickPickNames = listOf(
@@ -420,7 +415,7 @@ private fun SaveLocation(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             value = uiState.saveLocationName,
-            onValueChange = {},
+            onValueChange = { uiState.eventSink(MapEvent.SaveLocationNameChanged(it)) },
             label = { Text(text = stringResource(R.string.location_name)) }
         )
 
@@ -469,7 +464,7 @@ private fun SaveLocation(
 
 @Composable
 private fun ActionBottomSheetContent(
-    uiState: MapUiState.Shown
+    uiState: MapUiState.Shown.IdleMap
 ) {
 
     val actions = listOf(
@@ -661,7 +656,7 @@ private fun PinImagePreview() {
 private fun MapScreenPreview() {
     KorenTheme {
         MapScreenContent(
-            uiState = MapUiState.Shown(
+            uiState = MapUiState.Shown.IdleMap(
                 familyMembers = listOf(
                     UserData(
                         id = "1",
@@ -680,7 +675,7 @@ private fun MapScreenPreview() {
 private fun SaveLocationDialogPreview() {
     KorenTheme {
         SaveLocation(
-            uiState = MapUiState.Shown(
+            uiState = MapUiState.Shown.SaveLocation(
                 saveLocationSuggestion = SuggestionResponse(
                     primaryText = "5550 McGrail Ave",
                     secondaryText = "Niagara Falls, ON, Canada"
