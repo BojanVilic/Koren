@@ -1,11 +1,10 @@
 package com.koren.map.ui
 
-import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.koren.common.models.family.LocationIcon
+import com.koren.common.models.family.SavedLocation
 import com.koren.common.models.suggestion.SuggestionResponse
 import com.koren.common.models.user.UserData
-import com.koren.common.models.user.UserLocation
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
@@ -18,6 +17,7 @@ sealed interface MapUiState : UiState {
     data class Shown(
         val familyMembers: List<UserData> = emptyList(),
         val cameraPosition: CameraPositionState = CameraPositionState(),
+        val savedLocations : List<SavedLocation> = emptyList(),
         val editMode: Boolean = false,
         val searchQuery: String = "",
         val searchBarExpanded: Boolean = false,
@@ -32,6 +32,7 @@ sealed interface MapUiState : UiState {
 
 sealed interface MapEvent : UiEvent {
     data class FamilyMemberClicked(val userData: UserData) : MapEvent
+    data class PinClicked(val latitude: Double, val longitude: Double) : MapEvent
     data object EditModeClicked : MapEvent
     data class SearchTextChanged(val text: String) : MapEvent
     data class LocationSuggestionClicked(val location: SuggestionResponse) : MapEvent
@@ -48,5 +49,3 @@ sealed interface MapSideEffect : UiSideEffect {
     data class GetNewLocationSuggestions(val newQuery: String) : MapSideEffect
     data class ShowSnackbar(val message: String) : MapSideEffect
 }
-
-fun UserLocation.toLatLng() = LatLng(latitude, longitude)

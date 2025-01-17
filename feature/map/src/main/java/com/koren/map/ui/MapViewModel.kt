@@ -13,6 +13,7 @@ import com.koren.common.models.user.UserData
 import com.koren.common.services.LocationService
 import com.koren.common.util.StateViewModel
 import com.koren.domain.GetAllFamilyMembersUseCase
+import com.koren.domain.GetFamilyLocations
 import com.koren.domain.SaveLocationUseCase
 import com.koren.domain.UpdateUserLocationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +22,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
@@ -37,7 +40,8 @@ class MapViewModel @Inject constructor(
     private val locationService: LocationService,
     private val updateUserLocationUseCase: UpdateUserLocationUseCase,
     private val getAllFamilyMembersUseCase: GetAllFamilyMembersUseCase,
-    private val saveLocationUseCase: SaveLocationUseCase
+    private val saveLocationUseCase: SaveLocationUseCase,
+    private val getFamilyLocations: GetFamilyLocations
 ): StateViewModel<MapEvent, MapUiState, MapSideEffect>() {
 
     override fun setInitialState(): MapUiState = MapUiState.Loading
@@ -63,22 +67,39 @@ class MapViewModel @Inject constructor(
             }
 
             viewModelScope.launch(Dispatchers.Default) {
-                getAllFamilyMembersUseCase()
-                    .catch { _uiState.update { MapUiState.Shown(eventSink = ::handleEvent) } }
-                    .collect { familyMembers ->
-                        if (familyMembers.all { it.lastLocation == null }) {
-                            _uiState.update { MapUiState.Shown(eventSink = ::handleEvent) }
-                            return@collect
+                combine(
+                    getAllFamilyMembersUseCase(),
+                    getFamilyLocations()
+                ) { familyMembers, savedLocations ->
+                    familyMembers to savedLocations
+                }
+                .catch { _uiState.update { MapUiState.Shown(eventSink = ::handleEvent) } }
+                .collect { (familyMembers, savedLocations) ->
+                    if (familyMembers.all { it.lastLocation == null }) {
+                        _uiState.update { MapUiState.Shown(eventSink = ::handleEvent) }
+                        return@collect
+                    }
+                    val firstMemberCameraPosition = familyMembers.firstNotNullOf { user -> user.lastLocation }
+                    if (_uiState.value is MapUiState.Shown) {
+                        _uiState.update {
+                            (_uiState.value as MapUiState.Shown).copy(
+                                familyMembers = familyMembers,
+                                savedLocations = savedLocations,
+                                eventSink = { event -> handleEvent(event) }
+                            )
                         }
-                        val firstMemberCameraPosition = familyMembers.firstNotNullOf { user -> user.lastLocation }
+                        exitEditMode(_uiState.value as MapUiState.Shown)
+                    } else {
                         _uiState.update {
                             MapUiState.Shown(
                                 familyMembers = familyMembers,
                                 cameraPosition = CameraPositionState(position = CameraPosition.fromLatLngZoom(LatLng(firstMemberCameraPosition.latitude, firstMemberCameraPosition.longitude), 15f)),
+                                savedLocations = savedLocations,
                                 eventSink = { event -> handleEvent(event) }
                             )
                         }
                     }
+                }
             }
 
             viewModelScope.launch(Dispatchers.Default) {
@@ -124,7 +145,11 @@ class MapViewModel @Inject constructor(
     override fun handleEvent(event: MapEvent) {
         withEventfulState<MapUiState.Shown> { current ->
             when (event) {
-                is MapEvent.FamilyMemberClicked -> updateCameraPosition(current, event.userData)
+                is MapEvent.FamilyMemberClicked -> updateCameraPosition(
+                    current = current,
+                    latitude = event.userData.lastLocation?.latitude?: 0.0,
+                    longitude = event.userData.lastLocation?.longitude?: 0.0
+                )
                 is MapEvent.EditModeClicked -> enterEditMode(current)
                 is MapEvent.EditModeFinished -> exitEditMode(current)
                 is MapEvent.SearchTextChanged -> {
@@ -138,6 +163,11 @@ class MapViewModel @Inject constructor(
                 is MapEvent.SaveLocationDismissed -> _uiState.update { current.copy(saveLocationShown = false) }
                 is MapEvent.SaveLocationNameChanged -> _uiState.update { current.copy(saveLocationName = event.name) }
                 is MapEvent.SaveLocationIconChanged -> _uiState.update { current.copy(saveLocationIcon = event.icon) }
+                is MapEvent.PinClicked -> updateCameraPosition(
+                    current = current,
+                    latitude = event.latitude,
+                    longitude = event.longitude
+                )
             }
         }
     }
@@ -156,7 +186,7 @@ class MapViewModel @Inject constructor(
 
                 saveLocationUseCase(location)
                     .onSuccess {
-                        exitEditMode(current)
+//                        exitEditMode(current)
                         _sideEffects.emitSuspended(MapSideEffect.ShowSnackbar("Location saved!"))
                     }
                     .onFailure { Timber.d("Failed to save location: $it") }
@@ -174,10 +204,14 @@ class MapViewModel @Inject constructor(
         _uiState.update { current.copy(editMode = false, saveLocationShown = false) }
     }
 
-    private fun updateCameraPosition(current: MapUiState.Shown, userData: UserData) {
+    private fun updateCameraPosition(
+        current: MapUiState.Shown,
+        latitude: Double,
+        longitude: Double
+    ) {
         val cameraUpdate = CameraUpdateFactory.newCameraPosition(
             CameraPosition.fromLatLngZoom(
-                userData.lastLocation?.toLatLng()?: LatLng(0.0, 0.0),
+                LatLng(latitude, longitude),
                 18f
             )
         )

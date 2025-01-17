@@ -6,7 +6,7 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import android.widget.Space
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
@@ -38,7 +38,6 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -241,6 +240,7 @@ private fun ShownContent(
         },
         sheetPeekHeight = 128.dp
     ) {
+
         Box {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
@@ -254,6 +254,18 @@ private fun ShownContent(
                         location = member.lastLocation?: UserLocation(),
                         onClick = {
                             uiState.eventSink(MapEvent.FamilyMemberClicked(member))
+                        }
+                    )
+                }
+
+                uiState.savedLocations.forEach { location ->
+                    Pin(
+                        imageResource = LocationIcon.fromString(location.iconName).drawableResId,
+                        displayName = location.name,
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                        onClick = {
+                            uiState.eventSink(MapEvent.PinClicked(location.latitude, location.longitude))
                         }
                     )
                 }
@@ -518,6 +530,35 @@ private fun ActionBottomSheetContent(
 
 @Composable
 private fun Pin(
+    @DrawableRes imageResource: Int,
+    displayName: String,
+    latitude: Double,
+    longitude: Double,
+    onClick: () -> Unit
+) {
+    val markerState = remember { MarkerState(position = LatLng(latitude, longitude)) }
+    val painter = rememberAsyncImagePainter(
+        ImageRequest.Builder(LocalContext.current)
+            .data(imageResource)
+            .allowHardware(false)
+            .build()
+    )
+
+    MarkerComposable(
+        keys = arrayOf(displayName, painter.state),
+        state = markerState,
+        title = displayName,
+        onClick = {
+            onClick()
+            true
+        }
+    ) {
+        PinIcon(painter = painter)
+    }
+}
+
+@Composable
+private fun Pin(
     imageUrl: String?,
     displayName: String,
     location: UserLocation,
@@ -546,6 +587,20 @@ private fun Pin(
             painter = painter
         )
     }
+}
+
+@Composable
+private fun PinIcon(
+    painter: AsyncImagePainter
+) {
+    Image(
+        modifier = Modifier
+            .clip(MaterialTheme.shapes.large)
+            .size(64.dp),
+        painter = painter,
+        contentDescription = null,
+        contentScale = ContentScale.Crop
+    )
 }
 
 @Composable
