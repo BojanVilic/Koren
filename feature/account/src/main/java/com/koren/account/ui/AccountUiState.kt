@@ -1,7 +1,7 @@
 package com.koren.account.ui
 
 import android.net.Uri
-import com.koren.common.models.UserData
+import com.koren.common.models.user.UserData
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect

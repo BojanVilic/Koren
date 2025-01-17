@@ -1,7 +1,7 @@
 package com.koren.home.ui.qr
 
 import androidx.lifecycle.viewModelScope
-import com.koren.common.models.Invitation
+import com.koren.common.models.invitation.Invitation
 import com.koren.common.util.StateViewModel
 import com.koren.common.util.orUnknownError
 import com.koren.data.repository.InvitationRepository

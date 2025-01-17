@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="google_maps_key" translatable="false">AIzaSyClhvdwrqfQyh3awIZrQhMD1F_IhskW6Sg</string>
+
+    <string name="save_label">Save</string>
+    <string name="cancel_label">Cancel</string>
+    <string name="location_name">Location name</string>
+
+    <string name="home">Home</string>
+    <string name="work">Work</string>
+    <string name="school">School</string>
+    <string name="gym">Gym</string>
+    <string name="grocery_store">Grocery Store</string>
+    <string name="park">Park</string>
+
 </resources>

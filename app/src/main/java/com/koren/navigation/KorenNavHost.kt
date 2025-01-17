@@ -60,7 +60,10 @@ fun KorenNavHost(
                 navController = navController,
                 onNavigateToHome = { navController.navigate(HomeDestination) }
             )
-            mapScreen(navController = navController)
+            mapScreen(
+                navController = navController,
+                onShowSnackbar = onShowSnackbar
+            )
             activityScreen(navController = navController)
             accountScreen(
                 navController = navController,

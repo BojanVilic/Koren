@@ -29,9 +29,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.koren.common.models.Invitation
-import com.koren.common.models.getExpiryText
-import com.koren.common.models.toRelativeTime
+import com.koren.common.models.invitation.Invitation
+import com.koren.common.models.invitation.getExpiryText
+import com.koren.common.models.invitation.toRelativeTime
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.theme.LocalScaffoldStateProvider

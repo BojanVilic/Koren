@@ -45,7 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.koren.common.models.InvitationResult
+import com.koren.common.models.invitation.InvitationResult
 import com.koren.designsystem.components.BrokenBranchErrorScreen
 import com.koren.designsystem.components.QRCodeImage
 import com.koren.designsystem.components.SimpleSnackbar

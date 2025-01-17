@@ -1,4 +1,4 @@
-package com.koren.common.models
+package com.koren.common.models.invitation
 
 data class InvitationResult(
     val invitationId: String = "",

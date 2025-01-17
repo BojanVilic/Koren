@@ -1,4 +1,4 @@
-package com.koren.common.models
+package com.koren.common.models.invitation
 
 import java.time.Duration
 import java.time.Instant

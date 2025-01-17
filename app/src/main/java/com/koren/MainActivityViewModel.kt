@@ -2,7 +2,7 @@ package com.koren
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.koren.common.models.UserData
+import com.koren.common.models.user.UserData
 import com.koren.common.services.UserNotLoggedInException
 import com.koren.common.services.UserSession
 import com.koren.common.util.orUnknownError

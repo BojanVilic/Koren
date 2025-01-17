@@ -2,7 +2,7 @@ package com.koren.onboarding.usecases
 
 import android.net.Uri
 import com.google.firebase.database.FirebaseDatabase
-import com.koren.common.models.Family
+import com.koren.common.models.family.Family
 import com.koren.common.services.UserSession
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await

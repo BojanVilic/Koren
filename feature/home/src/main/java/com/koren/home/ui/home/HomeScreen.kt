@@ -57,11 +57,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.koren.common.models.Invitation
-import com.koren.common.models.InvitationStatus
-import com.koren.common.models.UserData
-import com.koren.common.models.getExpiryText
-import com.koren.common.models.toRelativeTime
+import com.koren.common.models.invitation.Invitation
+import com.koren.common.models.invitation.InvitationStatus
+import com.koren.common.models.user.UserData
+import com.koren.common.models.invitation.getExpiryText
+import com.koren.common.models.invitation.toRelativeTime
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.ActionButton
 import com.koren.designsystem.components.DisposableEffectWithLifecycle

@@ -2,8 +2,8 @@ package com.koren.domain
 
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.getValue
-import com.koren.common.models.Invitation
-import com.koren.common.models.InvitationStatus
+import com.koren.common.models.invitation.Invitation
+import com.koren.common.models.invitation.InvitationStatus
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 

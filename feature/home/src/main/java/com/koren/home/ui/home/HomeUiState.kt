@@ -1,7 +1,7 @@
 package com.koren.home.ui.home
 
-import com.koren.common.models.Invitation
-import com.koren.common.models.UserData
+import com.koren.common.models.invitation.Invitation
+import com.koren.common.models.user.UserData
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect

@@ -6,6 +6,7 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.widget.Space
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
@@ -14,32 +15,39 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SheetValue
@@ -57,6 +65,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -73,8 +83,11 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
-import com.koren.common.models.UserData
-import com.koren.common.models.UserLocation
+import com.koren.common.models.family.LocationIcon
+import com.koren.common.models.suggestion.SuggestionResponse
+import com.koren.common.models.user.UserData
+import com.koren.common.models.user.UserLocation
+import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.ActionButton
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.models.ActionItem
@@ -83,6 +96,7 @@ import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
+import com.koren.map.R
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
@@ -91,7 +105,8 @@ object MapDestination
 
 @Composable
 fun MapScreen(
-    mapViewModel: MapViewModel = hiltViewModel()
+    mapViewModel: MapViewModel = hiltViewModel(),
+    onShowSnackbar: suspend (message: String) -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
@@ -99,6 +114,15 @@ fun MapScreen(
     )
 
     val uiState by mapViewModel.uiState.collectAsStateWithLifecycle()
+
+    CollectSideEffects(
+        viewModel = mapViewModel
+    ) { sideEffect ->
+        when (sideEffect) {
+            is MapSideEffect.ShowSnackbar -> onShowSnackbar(sideEffect.message)
+            else -> Unit
+        }
+    }
 
     MapScreenContent(uiState = uiState)
 }
@@ -198,7 +222,7 @@ private fun ShownContent(
         scaffoldState = scaffoldState,
         sheetContent = {
             AnimatedVisibility(
-                visible = uiState.editMode
+                visible = uiState.editMode && uiState.saveLocationShown.not()
             ) {
                 PlacesSearchBar(uiState = uiState)
             }
@@ -206,6 +230,13 @@ private fun ShownContent(
                 visible = !uiState.editMode
             ) {
                 ActionBottomSheetContent(uiState)
+            }
+            AnimatedVisibility(
+                visible = uiState.saveLocationShown
+            ) {
+                SaveLocation(
+                    uiState = uiState
+                )
             }
         },
         sheetPeekHeight = 128.dp
@@ -236,65 +267,190 @@ private fun PlacesSearchBar(
     uiState: MapUiState.Shown
 ) {
 
-    SearchBar(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        inputField = {
-            SearchBarDefaults.InputField(
-                query = uiState.searchQuery,
-                onQueryChange = { uiState.eventSink(MapEvent.SearchTextChanged(it)) },
-                onSearch = { uiState.eventSink(MapEvent.CollapseSearchBar) },
-                expanded = uiState.searchBarExpanded,
-                onExpandedChange = {
-                    if (it) uiState.eventSink(MapEvent.ExpandSearchBar)
-                    else uiState.eventSink(MapEvent.CollapseSearchBar)
-                },
-                placeholder = { Text("Hinted search text") },
-                leadingIcon = {
-                    Icon(
-                        modifier = Modifier.clickable {
-                            uiState.eventSink(MapEvent.EditModeFinished)
-                        },
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = null
-                    )
-                },
-                trailingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            )
-        },
-        expanded = uiState.searchBarExpanded,
-        onExpandedChange = {
-            if (it) uiState.eventSink(MapEvent.ExpandSearchBar)
-            else uiState.eventSink(MapEvent.CollapseSearchBar)
-        },
-        colors = SearchBarDefaults.colors(
-            containerColor = BottomSheetDefaults.ContainerColor
-        ),
-        windowInsets = WindowInsets(0, 0, 0, 0)
-    ) {
-        Column {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .animateContentSize()
-            ) {
-                items(uiState.locationSuggestions) { suggestion ->
-                    ListItem(
-                        modifier = Modifier
-                            .clickable {
-                                uiState.eventSink(MapEvent.CollapseSearchBar)
-                            }
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        headlineContent = { Text(suggestion.first) },
-                        supportingContent = { Text(suggestion.second) },
-                        leadingContent = { Icon(Icons.Filled.Star, contentDescription = null) },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-                    )
+    Column {
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            text = "Search for a place",
+            style = MaterialTheme.typography.titleSmall,
+            textAlign = TextAlign.Center
+        )
 
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp),
+            text = "Never wonder where your family is: save their frequent places.",
+            style = MaterialTheme.typography.labelLarge,
+            textAlign = TextAlign.Center
+        )
+
+        SearchBar(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            inputField = {
+                SearchBarDefaults.InputField(
+                    query = uiState.searchQuery,
+                    onQueryChange = { uiState.eventSink(MapEvent.SearchTextChanged(it)) },
+                    onSearch = { uiState.eventSink(MapEvent.CollapseSearchBar) },
+                    expanded = uiState.searchBarExpanded,
+                    onExpandedChange = {
+                        if (it) uiState.eventSink(MapEvent.ExpandSearchBar)
+                        else uiState.eventSink(MapEvent.CollapseSearchBar)
+                    },
+                    placeholder = { Text("Hinted search text") },
+                    leadingIcon = {
+                        Icon(
+                            modifier = Modifier.clickable {
+                                uiState.eventSink(MapEvent.EditModeFinished)
+                            },
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null
+                        )
+                    },
+                    trailingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                )
+            },
+            expanded = uiState.searchBarExpanded,
+            onExpandedChange = {
+                if (it) uiState.eventSink(MapEvent.ExpandSearchBar)
+                else uiState.eventSink(MapEvent.CollapseSearchBar)
+            },
+            colors = SearchBarDefaults.colors(
+                containerColor = BottomSheetDefaults.ContainerColor
+            ),
+            windowInsets = WindowInsets(0, 0, 0, 0)
+        ) {
+            Column {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize()
+                ) {
+                    items(uiState.locationSuggestions) { suggestion ->
+                        ListItem(
+                            modifier = Modifier
+                                .clickable {
+                                    uiState.eventSink(MapEvent.CollapseSearchBar)
+                                    uiState.eventSink(MapEvent.LocationSuggestionClicked(suggestion))
+                                }
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            headlineContent = { Text(suggestion.primaryText) },
+                            supportingContent = { Text(suggestion.secondaryText) },
+                            leadingContent = { Icon(Icons.Filled.Star, contentDescription = null) },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                        )
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SaveLocation(
+    uiState: MapUiState.Shown
+) {
+    val icons = LocationIcon.entries
+    val quickPickNames = listOf(
+        stringResource(R.string.home),
+        stringResource(R.string.work),
+        stringResource(R.string.school),
+        stringResource(R.string.gym),
+        stringResource(R.string.grocery_store),
+        stringResource(R.string.park)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                modifier = Modifier.size(36.dp),
+                painter = painterResource(uiState.saveLocationIcon.drawableResId),
+                contentDescription = null,
+                contentScale = ContentScale.FillBounds
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                modifier = Modifier.padding(top = 16.dp),
+                text = uiState.saveLocationSuggestion.primaryText,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+
+        LazyRow(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(quickPickNames) { name ->
+                AssistChip(
+                    label = { Text(text = name) },
+                    onClick = { uiState.eventSink(MapEvent.SaveLocationNameChanged(name)) },
+                )
+            }
+        }
+        
+        OutlinedTextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            value = uiState.saveLocationName,
+            onValueChange = {},
+            label = { Text(text = stringResource(R.string.location_name)) }
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        LazyRow(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp),
+        ) {
+            items(icons) { icon ->
+                IconButton(
+                    onClick = { uiState.eventSink(MapEvent.SaveLocationIconChanged(icon)) }
+                ) {
+                    Image(
+                        modifier = Modifier.size(64.dp),
+                        painter = painterResource(icon.drawableResId),
+                        contentDescription = null,
+                        contentScale = ContentScale.FillBounds
+                    )
+                }
+            }
+        }
+
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp),
+            onClick = { uiState.eventSink(MapEvent.SaveLocationClicked) }
+        ) {
+            Text(
+                text = stringResource(R.string.save_label)
+            )
+        }
+
+        OutlinedButton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            onClick = { uiState.eventSink(MapEvent.SaveLocationDismissed) }
+        ) {
+            Text(
+                text = stringResource(R.string.cancel_label)
+            )
         }
     }
 }
@@ -457,6 +613,22 @@ private fun MapScreenPreview() {
                         displayName = "John Doe",
                         lastLocation = UserLocation(37.7749, -122.4194)
                     )
+                ),
+                eventSink = {}
+            )
+        )
+    }
+}
+
+@ThemePreview
+@Composable
+private fun SaveLocationDialogPreview() {
+    KorenTheme {
+        SaveLocation(
+            uiState = MapUiState.Shown(
+                saveLocationSuggestion = SuggestionResponse(
+                    primaryText = "5550 McGrail Ave",
+                    secondaryText = "Niagara Falls, ON, Canada"
                 ),
                 eventSink = {}
             )

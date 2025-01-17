@@ -2,7 +2,7 @@ package com.koren.domain
 
 import android.location.Location
 import com.google.firebase.database.FirebaseDatabase
-import com.koren.common.models.UserLocation
+import com.koren.common.models.user.UserLocation
 import com.koren.common.services.UserSession
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await

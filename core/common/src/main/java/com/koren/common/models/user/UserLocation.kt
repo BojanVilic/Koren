@@ -1,4 +1,4 @@
-package com.koren.common.models
+package com.koren.common.models.user
 
 data class UserLocation(
     val latitude: Double = 0.0,

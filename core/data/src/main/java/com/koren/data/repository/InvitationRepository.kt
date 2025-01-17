@@ -1,7 +1,7 @@
 package com.koren.data.repository
 
-import com.koren.common.models.Invitation
-import com.koren.common.models.InvitationResult
+import com.koren.common.models.invitation.Invitation
+import com.koren.common.models.invitation.InvitationResult
 import kotlinx.coroutines.flow.Flow
 
 interface InvitationRepository {

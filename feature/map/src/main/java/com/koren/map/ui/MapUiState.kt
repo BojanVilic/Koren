@@ -2,8 +2,10 @@ package com.koren.map.ui
 
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
-import com.koren.common.models.UserData
-import com.koren.common.models.UserLocation
+import com.koren.common.models.family.LocationIcon
+import com.koren.common.models.suggestion.SuggestionResponse
+import com.koren.common.models.user.UserData
+import com.koren.common.models.user.UserLocation
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
@@ -19,7 +21,11 @@ sealed interface MapUiState : UiState {
         val editMode: Boolean = false,
         val searchQuery: String = "",
         val searchBarExpanded: Boolean = false,
-        val locationSuggestions: List<Pair<String, String>> = emptyList(),
+        val locationSuggestions: List<SuggestionResponse> = emptyList(),
+        val saveLocationShown: Boolean = false,
+        val saveLocationSuggestion: SuggestionResponse = SuggestionResponse(),
+        val saveLocationIcon: LocationIcon = LocationIcon.DEFAULT,
+        val saveLocationName: String = "",
         override val eventSink: (MapEvent) -> Unit
     ): MapUiState, EventHandler<MapEvent>
 }
@@ -28,15 +34,19 @@ sealed interface MapEvent : UiEvent {
     data class FamilyMemberClicked(val userData: UserData) : MapEvent
     data object EditModeClicked : MapEvent
     data class SearchTextChanged(val text: String) : MapEvent
+    data class LocationSuggestionClicked(val location: SuggestionResponse) : MapEvent
     data object EditModeFinished : MapEvent
     data object ExpandSearchBar : MapEvent
     data object CollapseSearchBar : MapEvent
+    data object SaveLocationClicked : MapEvent
+    data object SaveLocationDismissed : MapEvent
+    data class SaveLocationNameChanged(val name: String) : MapEvent
+    data class SaveLocationIconChanged(val icon: LocationIcon) : MapEvent
 }
 
 sealed interface MapSideEffect : UiSideEffect {
-    data object ShowEditMode : MapSideEffect
-    data object CloseEditMode : MapSideEffect
     data class GetNewLocationSuggestions(val newQuery: String) : MapSideEffect
+    data class ShowSnackbar(val message: String) : MapSideEffect
 }
 
 fun UserLocation.toLatLng() = LatLng(latitude, longitude)

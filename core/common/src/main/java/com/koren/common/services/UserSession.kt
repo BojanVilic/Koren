@@ -1,6 +1,6 @@
 package com.koren.common.services
 
-import com.koren.common.models.UserData
+import com.koren.common.models.user.UserData
 import kotlinx.coroutines.flow.Flow
 
 interface UserSession {

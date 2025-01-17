@@ -6,13 +6,12 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
-import com.koren.common.models.Invitation
-import com.koren.common.models.InvitationResult
-import com.koren.common.models.InvitationStatus
+import com.koren.common.models.invitation.Invitation
+import com.koren.common.models.invitation.InvitationResult
+import com.koren.common.models.invitation.InvitationStatus
 import com.koren.common.services.UserSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first

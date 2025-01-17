@@ -10,13 +10,16 @@ import kotlinx.serialization.Serializable
 object MapGraph
 
 fun NavGraphBuilder.mapScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    onShowSnackbar: suspend (message: String) -> Unit
 ) {
     navigation<MapGraph>(
         startDestination = MapDestination
     ) {
         composable<MapDestination> {
-            MapScreen()
+            MapScreen(
+                onShowSnackbar = onShowSnackbar
+            )
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.koren.invitation.ui
 
-import com.koren.common.models.InvitationResult
+import com.koren.common.models.invitation.InvitationResult
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiState

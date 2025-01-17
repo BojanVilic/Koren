@@ -2,8 +2,8 @@ package com.koren.domain
 
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.getValue
-import com.koren.common.models.Invitation
-import com.koren.common.models.InvitationStatus
+import com.koren.common.models.invitation.Invitation
+import com.koren.common.models.invitation.InvitationStatus
 import com.koren.common.services.UserSession
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
@@ -30,7 +30,8 @@ class AcceptQRInvitationUseCase @Inject constructor(
                 .setValue(members?.plus(userId))
                 .await()
             firebaseDatabase.reference.child("users/$userId").child("familyId").setValue(invitation.familyId).await()
-            firebaseDatabase.reference.child("invitations/${invitation.id}/status").setValue(InvitationStatus.ACCEPTED).await()
+            firebaseDatabase.reference.child("invitations/${invitation.id}/status").setValue(
+                InvitationStatus.ACCEPTED).await()
             return Result.success(Unit)
         } catch (e: Exception) {
             Timber.e("Failed to accept invitation: ${e.message}")

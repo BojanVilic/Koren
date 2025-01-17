@@ -1,4 +1,6 @@
-package com.koren.common.models
+package com.koren.common.models.user
+
+import com.koren.common.models.family.FamilyRole
 
 data class UserData(
     val id: String = "",

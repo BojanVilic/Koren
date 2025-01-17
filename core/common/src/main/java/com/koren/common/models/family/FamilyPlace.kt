@@ -1,4 +1,4 @@
-package com.koren.common.models
+package com.koren.common.models.family
 
 data class FamilyPlace(
     val id: String,

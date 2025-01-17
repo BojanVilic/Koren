@@ -6,7 +6,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.database
 import com.google.firebase.database.getValue
-import com.koren.common.models.UserData
+import com.koren.common.models.user.UserData
 import com.koren.domain.UploadProfilePictureUseCase
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject

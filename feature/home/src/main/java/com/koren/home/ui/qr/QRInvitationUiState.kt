@@ -1,6 +1,6 @@
 package com.koren.home.ui.qr
 
-import com.koren.common.models.Invitation
+import com.koren.common.models.invitation.Invitation
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
