@@ -88,10 +88,6 @@ class MapViewModel @Inject constructor(
             }
             .catch { _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) } }
             .collect { (familyMembers, savedLocations) ->
-                if (familyMembers.all { it.lastLocation == null }) {
-                    _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) }
-                    return@collect
-                }
                 val userLocation = userSession.currentUser.first().lastLocation
                 val current = (_uiState.value as? MapUiState.Shown)
                 if (current != null) {
