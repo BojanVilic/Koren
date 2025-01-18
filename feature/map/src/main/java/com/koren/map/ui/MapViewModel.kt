@@ -10,6 +10,7 @@ import com.google.maps.android.compose.CameraPositionState
 import com.koren.common.models.family.SavedLocation
 import com.koren.common.models.suggestion.SuggestionResponse
 import com.koren.common.services.LocationService
+import com.koren.common.services.UserSession
 import com.koren.common.util.StateViewModel
 import com.koren.domain.GetAllFamilyMembersUseCase
 import com.koren.domain.GetFamilyLocations
@@ -24,8 +25,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
@@ -41,7 +42,8 @@ class MapViewModel @Inject constructor(
     private val updateUserLocationUseCase: UpdateUserLocationUseCase,
     private val getAllFamilyMembersUseCase: GetAllFamilyMembersUseCase,
     private val saveLocationUseCase: SaveLocationUseCase,
-    private val getFamilyLocations: GetFamilyLocations
+    private val getFamilyLocations: GetFamilyLocations,
+    private val userSession: UserSession
 ): StateViewModel<MapEvent, MapUiState, MapSideEffect>() {
 
     override fun setInitialState(): MapUiState = MapUiState.Loading
@@ -90,7 +92,7 @@ class MapViewModel @Inject constructor(
                     _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) }
                     return@collect
                 }
-                val firstMemberCameraPosition = familyMembers.firstNotNullOf { user -> user.lastLocation }
+                val userLocation = userSession.currentUser.first().lastLocation
                 val current = (_uiState.value as? MapUiState.Shown)
                 if (current != null) {
                     _uiState.update {
@@ -109,8 +111,8 @@ class MapViewModel @Inject constructor(
                             cameraPosition = CameraPositionState(
                                 position = CameraPosition.fromLatLngZoom(
                                     LatLng(
-                                        firstMemberCameraPosition.latitude,
-                                        firstMemberCameraPosition.longitude
+                                        userLocation?.latitude?: 0.0,
+                                        userLocation?.longitude?: 0.0
                                     ),
                                     15f
                                 )

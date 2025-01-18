@@ -306,7 +306,7 @@ private fun PlacesSearchBar(
                         if (it) uiState.eventSink(MapEvent.ExpandSearchBar)
                         else uiState.eventSink(MapEvent.CollapseSearchBar)
                     },
-                    placeholder = { Text("Hinted search text") },
+                    placeholder = { Text("Home, work, gym... address") },
                     leadingIcon = {
                         Icon(
                             modifier = Modifier.clickable {
