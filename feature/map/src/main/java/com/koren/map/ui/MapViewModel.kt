@@ -66,79 +66,6 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    private fun setupLocationUpdates() {
-        viewModelScope.launch {
-            locationService.requestLocationUpdates().collect { location ->
-                try {
-                    updateUserLocationUseCase(location)
-                } catch (e: Exception) {
-                    Timber.d("Failed to update user location: $e")
-                }
-            }
-        }
-    }
-
-    private fun fetchFamilyData() {
-        viewModelScope.launch(Dispatchers.Default) {
-            combine(
-                getAllFamilyMembersUseCase(),
-                getFamilyLocations()
-            ) { familyMembers, savedLocations ->
-                familyMembers to savedLocations
-            }
-            .catch { _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) } }
-            .collect { (familyMembers, savedLocations) ->
-                val userLocation = userSession.currentUser.first().lastLocation
-                val current = (_uiState.value as? MapUiState.Shown)
-                if (current != null) {
-                    _uiState.update {
-                        MapUiState.Shown.IdleMap(
-                            familyMembers = familyMembers,
-                            savedLocations = savedLocations,
-                            cameraPosition = current.cameraPosition,
-                            eventSink = { event -> handleEvent(event) }
-                        )
-                    }
-                    exitEditMode(current)
-                } else {
-                    _uiState.update {
-                        MapUiState.Shown.IdleMap(
-                            familyMembers = familyMembers,
-                            cameraPosition = CameraPositionState(
-                                position = CameraPosition.fromLatLngZoom(
-                                    LatLng(
-                                        userLocation?.latitude?: 0.0,
-                                        userLocation?.longitude?: 0.0
-                                    ),
-                                    15f
-                                )
-                            ),
-                            savedLocations = savedLocations,
-                            eventSink = { event -> handleEvent(event) }
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    private fun observeLocationSuggestions() {
-        viewModelScope.launch(Dispatchers.Default) {
-            _sideEffects.asSharedFlow()
-                .debounce(300)
-                .filterIsInstance<MapSideEffect.GetNewLocationSuggestions>()
-                .flatMapLatest {
-    //                        locationService.getPlaceSuggestions(it.newQuery)
-                    getDummyLocationSuggestions()
-                }
-                .collect { suggestions ->
-                    val currentState =
-                        (_uiState.value as? MapUiState.Shown.SearchMode) ?: return@collect
-                    _uiState.update { currentState.copy(locationSuggestions = suggestions) }
-                }
-        }
-    }
-
     override fun handleEvent(event: MapEvent) {
         withEventfulState<MapUiState.Shown.IdleMap> { current ->
             when (event) {
@@ -255,6 +182,79 @@ class MapViewModel @Inject constructor(
                 update = cameraUpdate,
                 durationMs = 1000
             )
+        }
+    }
+
+    private fun setupLocationUpdates() {
+        viewModelScope.launch {
+            locationService.requestLocationUpdates().collect { location ->
+                try {
+                    updateUserLocationUseCase(location)
+                } catch (e: Exception) {
+                    Timber.d("Failed to update user location: $e")
+                }
+            }
+        }
+    }
+
+    private fun fetchFamilyData() {
+        viewModelScope.launch(Dispatchers.Default) {
+            combine(
+                getAllFamilyMembersUseCase(),
+                getFamilyLocations()
+            ) { familyMembers, savedLocations ->
+                familyMembers to savedLocations
+            }
+                .catch { _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) } }
+                .collect { (familyMembers, savedLocations) ->
+                    val userLocation = userSession.currentUser.first().lastLocation
+                    val current = (_uiState.value as? MapUiState.Shown)
+                    if (current != null) {
+                        _uiState.update {
+                            MapUiState.Shown.IdleMap(
+                                familyMembers = familyMembers,
+                                savedLocations = savedLocations,
+                                cameraPosition = current.cameraPosition,
+                                eventSink = { event -> handleEvent(event) }
+                            )
+                        }
+                        exitEditMode(current)
+                    } else {
+                        _uiState.update {
+                            MapUiState.Shown.IdleMap(
+                                familyMembers = familyMembers,
+                                cameraPosition = CameraPositionState(
+                                    position = CameraPosition.fromLatLngZoom(
+                                        LatLng(
+                                            userLocation?.latitude?: 0.0,
+                                            userLocation?.longitude?: 0.0
+                                        ),
+                                        15f
+                                    )
+                                ),
+                                savedLocations = savedLocations,
+                                eventSink = { event -> handleEvent(event) }
+                            )
+                        }
+                    }
+                }
+        }
+    }
+
+    private fun observeLocationSuggestions() {
+        viewModelScope.launch(Dispatchers.Default) {
+            _sideEffects.asSharedFlow()
+                .debounce(300)
+                .filterIsInstance<MapSideEffect.GetNewLocationSuggestions>()
+                .flatMapLatest {
+                    //                        locationService.getPlaceSuggestions(it.newQuery)
+                    getDummyLocationSuggestions()
+                }
+                .collect { suggestions ->
+                    val currentState =
+                        (_uiState.value as? MapUiState.Shown.SearchMode) ?: return@collect
+                    _uiState.update { currentState.copy(locationSuggestions = suggestions) }
+                }
         }
     }
 
