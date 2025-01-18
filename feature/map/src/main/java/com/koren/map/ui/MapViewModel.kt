@@ -103,7 +103,7 @@ class MapViewModel @Inject constructor(
                             eventSink = { event -> handleEvent(event) }
                         )
                     }
-                    exitEditMode((_uiState.value as MapUiState.Shown))
+                    exitEditMode(current)
                 } else {
                     _uiState.update {
                         MapUiState.Shown.IdleMap(
