@@ -19,11 +19,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
@@ -49,94 +51,93 @@ class MapViewModel @Inject constructor(
             _uiState.update {
                 MapUiState.LocationPermissionNotGranted(
                     onPermissionGranted = {
-                        _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) }
+                        setupLocationUpdates()
+                        fetchFamilyData()
+                        observeLocationSuggestions()
                     }
                 )
             }
         } else {
-            viewModelScope.launch {
-                locationService.requestLocationUpdates().collect { location ->
-                    try {
-                        updateUserLocationUseCase(location)
-                    } catch (e: Exception) {
-                        Timber.d("Failed to update user location: $e")
-                    }
+            setupLocationUpdates()
+            fetchFamilyData()
+            observeLocationSuggestions()
+        }
+    }
+
+    private fun setupLocationUpdates() {
+        viewModelScope.launch {
+            locationService.requestLocationUpdates().collect { location ->
+                try {
+                    updateUserLocationUseCase(location)
+                } catch (e: Exception) {
+                    Timber.d("Failed to update user location: $e")
                 }
             }
+        }
+    }
 
-            viewModelScope.launch(Dispatchers.Default) {
-                combine(
-                    getAllFamilyMembersUseCase(),
-                    getFamilyLocations()
-                ) { familyMembers, savedLocations ->
-                    familyMembers to savedLocations
-                }
-                .catch { _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) } }
-                .collect { (familyMembers, savedLocations) ->
-                    if (familyMembers.all { it.lastLocation == null }) {
-                        _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) }
-                        return@collect
-                    }
-                    val firstMemberCameraPosition = familyMembers.firstNotNullOf { user -> user.lastLocation }
-                    val current = (_uiState.value as? MapUiState.Shown)
-                    if (current != null) {
-                        _uiState.update {
-                            MapUiState.Shown.IdleMap(
-                                familyMembers = familyMembers,
-                                savedLocations = savedLocations,
-                                cameraPosition = current.cameraPosition,
-                                eventSink = { event -> handleEvent(event) }
-                            )
-                        }
-                        exitEditMode((_uiState.value as MapUiState.Shown))
-                    } else {
-                        _uiState.update {
-                            MapUiState.Shown.IdleMap(
-                                familyMembers = familyMembers,
-                                cameraPosition = CameraPositionState(position = CameraPosition.fromLatLngZoom(LatLng(firstMemberCameraPosition.latitude, firstMemberCameraPosition.longitude), 15f)),
-                                savedLocations = savedLocations,
-                                eventSink = { event -> handleEvent(event) }
-                            )
-                        }
-                    }
-                }
+    private fun fetchFamilyData() {
+        viewModelScope.launch(Dispatchers.Default) {
+            combine(
+                getAllFamilyMembersUseCase(),
+                getFamilyLocations()
+            ) { familyMembers, savedLocations ->
+                familyMembers to savedLocations
             }
-
-            viewModelScope.launch(Dispatchers.Default) {
-                _sideEffects.asSharedFlow()
-                    .filter { it is MapSideEffect.GetNewLocationSuggestions }
-                    .debounce(300)
-                    .flatMapLatest {
-//                        locationService.getPlaceSuggestions((it as MapSideEffect.GetNewLocationSuggestions).newQuery)
-                        val suggestions = listOf(
-                            SuggestionResponse(
-                                primaryText = "5550 McGrail Avenue",
-                                secondaryText = "Niagara Falls, ON, Canada",
-                                latitude = 43.094260528205254,
-                                longitude = -79.0765215277345
-                            ),
-                            SuggestionResponse(
-                                primaryText = "6430 Montrose Road",
-                                secondaryText = "Niagara Falls, ON, Canada",
-                                latitude = 43.08167874422444,
-                                longitude = -79.1219035989796
-                            ),
-                            SuggestionResponse(
-                                primaryText = "6767 Morrison St",
-                                secondaryText = "Niagara Falls, ON, Canada",
-                                latitude = 43.10512883109716,
-                                longitude = -79.10819105821295
-                            )
+            .catch { _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) } }
+            .collect { (familyMembers, savedLocations) ->
+                if (familyMembers.all { it.lastLocation == null }) {
+                    _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) }
+                    return@collect
+                }
+                val firstMemberCameraPosition = familyMembers.firstNotNullOf { user -> user.lastLocation }
+                val current = (_uiState.value as? MapUiState.Shown)
+                if (current != null) {
+                    _uiState.update {
+                        MapUiState.Shown.IdleMap(
+                            familyMembers = familyMembers,
+                            savedLocations = savedLocations,
+                            cameraPosition = current.cameraPosition,
+                            eventSink = { event -> handleEvent(event) }
                         )
-
-                        flowOf(suggestions)
-
                     }
-                    .collect { suggestions ->
-                        val currentState = (_uiState.value as? MapUiState.Shown.SearchMode)?: return@collect
-                        _uiState.update { currentState.copy(locationSuggestions = suggestions)}
+                    exitEditMode((_uiState.value as MapUiState.Shown))
+                } else {
+                    _uiState.update {
+                        MapUiState.Shown.IdleMap(
+                            familyMembers = familyMembers,
+                            cameraPosition = CameraPositionState(
+                                position = CameraPosition.fromLatLngZoom(
+                                    LatLng(
+                                        firstMemberCameraPosition.latitude,
+                                        firstMemberCameraPosition.longitude
+                                    ),
+                                    15f
+                                )
+                            ),
+                            savedLocations = savedLocations,
+                            eventSink = { event -> handleEvent(event) }
+                        )
                     }
+                }
             }
+        }
+    }
+
+    private fun observeLocationSuggestions() {
+        viewModelScope.launch(Dispatchers.Default) {
+            _sideEffects.asSharedFlow()
+                .debounce(300)
+                .filterIsInstance<MapSideEffect.GetNewLocationSuggestions>()
+                .flatMapLatest {
+    //                        locationService.getPlaceSuggestions(it.newQuery)
+                    getDummyLocationSuggestions()
+                }
+                .collect { suggestions ->
+                    val currentState =
+                        (_uiState.value as? MapUiState.Shown.SearchMode) ?: return@collect
+                    _uiState.update { currentState.copy(locationSuggestions = suggestions) }
+                }
         }
     }
 
@@ -212,7 +213,6 @@ class MapViewModel @Inject constructor(
 
                 saveLocationUseCase(location)
                     .onSuccess {
-//                        exitEditMode(current)
                         _sideEffects.emitSuspended(MapSideEffect.ShowSnackbar("Location saved!"))
                     }
                     .onFailure { Timber.d("Failed to save location: $it") }
@@ -258,5 +258,30 @@ class MapViewModel @Inject constructor(
                 durationMs = 1000
             )
         }
+    }
+
+    private fun getDummyLocationSuggestions(): Flow<List<SuggestionResponse>> {
+        val suggestions = listOf(
+            SuggestionResponse(
+                primaryText = "5550 McGrail Avenue",
+                secondaryText = "Niagara Falls, ON, Canada",
+                latitude = 43.094260528205254,
+                longitude = -79.0765215277345
+            ),
+            SuggestionResponse(
+                primaryText = "6430 Montrose Road",
+                secondaryText = "Niagara Falls, ON, Canada",
+                latitude = 43.08167874422444,
+                longitude = -79.1219035989796
+            ),
+            SuggestionResponse(
+                primaryText = "6767 Morrison St",
+                secondaryText = "Niagara Falls, ON, Canada",
+                latitude = 43.10512883109716,
+                longitude = -79.10819105821295
+            )
+        )
+
+        return flowOf(suggestions)
     }
 }

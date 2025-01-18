@@ -7,7 +7,6 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -679,6 +678,40 @@ private fun SaveLocationDialogPreview() {
                 saveLocationSuggestion = SuggestionResponse(
                     primaryText = "5550 McGrail Ave",
                     secondaryText = "Niagara Falls, ON, Canada"
+                ),
+                eventSink = {}
+            )
+        )
+    }
+}
+
+@ThemePreview
+@Composable
+private fun PlacesSearchBarPreview() {
+    KorenTheme {
+        PlacesSearchBar(
+            uiState = MapUiState.Shown.SearchMode(
+                searchQuery = "Search text",
+                searchBarExpanded = true,
+                locationSuggestions = listOf(
+                    SuggestionResponse(
+                        primaryText = "5550 McGrail Avenue",
+                        secondaryText = "Niagara Falls, ON, Canada",
+                        latitude = 43.094260528205254,
+                        longitude = -79.0765215277345
+                    ),
+                    SuggestionResponse(
+                        primaryText = "6430 Montrose Road",
+                        secondaryText = "Niagara Falls, ON, Canada",
+                        latitude = 43.08167874422444,
+                        longitude = -79.1219035989796
+                    ),
+                    SuggestionResponse(
+                        primaryText = "6767 Morrison St",
+                        secondaryText = "Niagara Falls, ON, Canada",
+                        latitude = 43.10512883109716,
+                        longitude = -79.10819105821295
+                    )
                 ),
                 eventSink = {}
             )
