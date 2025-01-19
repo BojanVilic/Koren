@@ -40,6 +40,7 @@ import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class DefaultLocationService @Inject constructor(
     private val context: Context,
@@ -52,24 +53,24 @@ class DefaultLocationService @Inject constructor(
         val placeFields: List<Place.Field> = listOf(Place.Field.DISPLAY_NAME)
         val request: FindCurrentPlaceRequest = FindCurrentPlaceRequest.newInstance(placeFields)
 
-        if (checkSelfPermission(context, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED) {
-            placesClient.findCurrentPlace(request)
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        val response = task.result
-                        val place = response.placeLikelihoods.first()
-                        Timber.d("Place '${place.place.displayName}' has likelihood: ${place.likelihood}")
-                    } else {
-                        val exception = task.exception
-                        if (exception is ApiException) {
-                            Timber.d("Place not found: ${exception.statusCode}")
-                        }
-                    }
-                }
-        }
+//        if (checkSelfPermission(context, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED) {
+//            placesClient.findCurrentPlace(request)
+//                .addOnCompleteListener { task ->
+//                    if (task.isSuccessful) {
+//                        val response = task.result
+//                        val place = response.placeLikelihoods.first()
+//                        Timber.d("Place '${place.place.displayName}' has likelihood: ${place.likelihood}")
+//                    } else {
+//                        val exception = task.exception
+//                        if (exception is ApiException) {
+//                            Timber.d("Place not found: ${exception.statusCode}")
+//                        }
+//                    }
+//                }
+//        }
     }
 
-    private val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30.minutes.inWholeMilliseconds)
+    private val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5.seconds.inWholeMilliseconds)
         .build()
 
     private val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)

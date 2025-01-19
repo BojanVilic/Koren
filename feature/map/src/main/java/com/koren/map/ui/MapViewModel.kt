@@ -7,6 +7,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
+import com.google.maps.android.compose.MarkerState
 import com.koren.common.models.family.SavedLocation
 import com.koren.common.models.suggestion.SuggestionResponse
 import com.koren.common.services.LocationService
@@ -212,7 +213,17 @@ class MapViewModel @Inject constructor(
                     if (current != null) {
                         _uiState.update {
                             MapUiState.Shown.IdleMap(
-                                familyMembers = familyMembers,
+                                familyMembers = familyMembers.map { userData ->
+                                    UiLocationMakerUserData(
+                                        markerState = current.familyMembers.find { it.userData.id == userData.id }?.markerState?.apply {
+                                            position = LatLng(
+                                                userData.lastLocation?.latitude ?: 0.0,
+                                                userData.lastLocation?.longitude ?: 0.0
+                                            )
+                                        }?: MarkerState(),
+                                        userData = userData
+                                    )
+                                },
                                 savedLocations = savedLocations,
                                 cameraPosition = current.cameraPosition,
                                 eventSink = { event -> handleEvent(event) }
@@ -222,7 +233,15 @@ class MapViewModel @Inject constructor(
                     } else {
                         _uiState.update {
                             MapUiState.Shown.IdleMap(
-                                familyMembers = familyMembers,
+                                familyMembers = familyMembers.map { userData ->
+                                    UiLocationMakerUserData(
+                                        markerState = MarkerState(position = LatLng(
+                                            userData.lastLocation?.latitude ?: 0.0,
+                                            userData.lastLocation?.longitude ?: 0.0
+                                        )),
+                                        userData = userData
+                                    )
+                                },
                                 cameraPosition = CameraPositionState(
                                     position = CameraPosition.fromLatLngZoom(
                                         LatLng(

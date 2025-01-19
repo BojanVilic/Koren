@@ -16,7 +16,7 @@ sealed interface MapUiState : UiState {
 
     sealed interface Shown : MapUiState, EventHandler<MapEvent> {
         val cameraPosition: CameraPositionState
-        val familyMembers: List<UserData>
+        val familyMembers: List<UiLocationMakerUserData>
         val savedLocations : List<SavedLocation>
 
         data class SearchMode(
@@ -24,7 +24,7 @@ sealed interface MapUiState : UiState {
             val searchBarExpanded: Boolean = false,
             val locationSuggestions: List<SuggestionResponse> = emptyList(),
             override val cameraPosition: CameraPositionState = CameraPositionState(),
-            override val familyMembers: List<UserData> = emptyList(),
+            override val familyMembers: List<UiLocationMakerUserData> = emptyList(),
             override val savedLocations: List<SavedLocation> = emptyList(),
             override val eventSink: (MapEvent) -> Unit
         ): Shown
@@ -34,14 +34,14 @@ sealed interface MapUiState : UiState {
             val saveLocationIcon: LocationIcon = LocationIcon.DEFAULT,
             val saveLocationName: String = "",
             override val cameraPosition: CameraPositionState = CameraPositionState(),
-            override val familyMembers: List<UserData> = emptyList(),
+            override val familyMembers: List<UiLocationMakerUserData> = emptyList(),
             override val savedLocations: List<SavedLocation> = emptyList(),
             override val eventSink: (MapEvent) -> Unit
         ): Shown
 
         data class IdleMap(
             override val cameraPosition: CameraPositionState = CameraPositionState(),
-            override val familyMembers: List<UserData> = emptyList(),
+            override val familyMembers: List<UiLocationMakerUserData> = emptyList(),
             override val savedLocations: List<SavedLocation> = emptyList(),
             override val eventSink: (MapEvent) -> Unit
         ): Shown

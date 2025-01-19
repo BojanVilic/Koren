@@ -236,14 +236,15 @@ private fun ShownContent(
                 cameraPositionState = uiState.cameraPosition,
                 uiSettings = MapUiSettings(zoomControlsEnabled = false)
             ) {
-                uiState.familyMembers.filter { it.lastLocation != null }.forEach { member ->
+                uiState.familyMembers.filter { it.userData.lastLocation != null }.forEach { member ->
                     Pin(
-                        imageUrl = member.profilePictureUrl,
-                        displayName = member.displayName,
-                        location = member.lastLocation ?: UserLocation(),
+                        imageUrl = member.userData.profilePictureUrl,
+                        displayName = member.userData.displayName,
+                        location = member.userData.lastLocation ?: UserLocation(),
                         onClick = {
-                            uiState.eventSink(MapEvent.FamilyMemberClicked(member))
-                        }
+                            uiState.eventSink(MapEvent.FamilyMemberClicked(member.userData))
+                        },
+                        markerState = member.markerState
                     )
                 }
 
@@ -501,18 +502,18 @@ private fun ActionBottomSheetContent(
         ) {
             items(
                 items = uiState.familyMembers,
-                key = { it.id }
+                key = { it.userData.id }
             ) { member ->
                 AsyncImage(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
                         .clickable {
-                            uiState.eventSink(MapEvent.FamilyMemberClicked(member))
+                            uiState.eventSink(MapEvent.FamilyMemberClicked(member.userData))
                         },
                     model = ImageRequest.Builder(LocalContext.current)
                         .crossfade(true)
-                        .data(member.profilePictureUrl)
+                        .data(member.userData.profilePictureUrl)
                         .build(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop
@@ -556,9 +557,9 @@ private fun Pin(
     imageUrl: String?,
     displayName: String,
     location: UserLocation,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    markerState: MarkerState
 ) {
-    val markerState = remember { MarkerState(position = LatLng(location.latitude, location.longitude)) }
     val painter = rememberAsyncImagePainter(
         ImageRequest.Builder(LocalContext.current)
             .data(imageUrl)
@@ -567,7 +568,7 @@ private fun Pin(
     )
 
     MarkerComposable(
-        keys = arrayOf(displayName, painter.state),
+        keys = arrayOf(location.latitude, location.longitude, displayName, painter.state),
         state = markerState,
         title = displayName,
         onClick = {
@@ -657,10 +658,13 @@ private fun MapScreenPreview() {
         MapScreenContent(
             uiState = MapUiState.Shown.IdleMap(
                 familyMembers = listOf(
-                    UserData(
-                        id = "1",
-                        displayName = "John Doe",
-                        lastLocation = UserLocation(37.7749, -122.4194)
+                    UiLocationMakerUserData(
+                        userData = UserData(
+                            id = "1",
+                            displayName = "John Doe",
+                            lastLocation = UserLocation(37.7749, -122.4194)
+                        ),
+                        markerState = MarkerState()
                     )
                 ),
                 eventSink = {}
