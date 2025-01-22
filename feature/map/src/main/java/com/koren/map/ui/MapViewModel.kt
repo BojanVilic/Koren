@@ -140,6 +140,7 @@ class MapViewModel @Inject constructor(
                 saveLocationUseCase(location)
                     .onSuccess {
                         _sideEffects.emitSuspended(MapSideEffect.ShowSnackbar("Location saved!"))
+                        exitEditMode(current)
                     }
                     .onFailure { Timber.d("Failed to save location: $it") }
             } catch (e: Exception) {
@@ -209,52 +210,39 @@ class MapViewModel @Inject constructor(
                 .catch { _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) } }
                 .collect { (familyMembers, savedLocations) ->
                     val userLocation = userSession.currentUser.first().lastLocation
-                    val current = (_uiState.value as? MapUiState.Shown)
-                    if (current != null) {
-                        _uiState.update {
+                    when (val current = _uiState.value) {
+                        MapUiState.Loading -> _uiState.update {
                             MapUiState.Shown.IdleMap(
-                                familyMembers = familyMembers.map { userData ->
-                                    UiLocationMakerUserData(
-                                        markerState = current.familyMembers.find { it.userData.id == userData.id }?.markerState?.apply {
-                                            position = LatLng(
-                                                userData.lastLocation?.latitude ?: 0.0,
-                                                userData.lastLocation?.longitude ?: 0.0
-                                            )
-                                        }?: MarkerState(),
-                                        userData = userData
-                                    )
-                                },
-                                savedLocations = savedLocations,
-                                cameraPosition = current.cameraPosition,
-                                eventSink = { event -> handleEvent(event) }
-                            )
-                        }
-                        exitEditMode(current)
-                    } else {
-                        _uiState.update {
-                            MapUiState.Shown.IdleMap(
-                                familyMembers = familyMembers.map { userData ->
-                                    UiLocationMakerUserData(
-                                        markerState = MarkerState(position = LatLng(
-                                            userData.lastLocation?.latitude ?: 0.0,
-                                            userData.lastLocation?.longitude ?: 0.0
-                                        )),
-                                        userData = userData
-                                    )
-                                },
                                 cameraPosition = CameraPositionState(
-                                    position = CameraPosition.fromLatLngZoom(
-                                        LatLng(
-                                            userLocation?.latitude?: 0.0,
-                                            userLocation?.longitude?: 0.0
-                                        ),
-                                        15f
+                                    CameraPosition.fromLatLngZoom(
+                                        LatLng(userLocation?.latitude?: 0.0, userLocation?.longitude?: 0.0),
+                                        18f
                                     )
                                 ),
+                                familyMembers = familyMembers,
                                 savedLocations = savedLocations,
-                                eventSink = { event -> handleEvent(event) }
+                                eventSink = ::handleEvent
                             )
                         }
+                        is MapUiState.Shown.IdleMap -> _uiState.update {
+                            current.copy(
+                                familyMembers = familyMembers,
+                                savedLocations = savedLocations
+                            )
+                        }
+                        is MapUiState.Shown.SaveLocation -> _uiState.update {
+                            current.copy(
+                                familyMembers = familyMembers,
+                                savedLocations = savedLocations
+                            )
+                        }
+                        is MapUiState.Shown.SearchMode -> _uiState.update {
+                            current.copy(
+                                familyMembers = familyMembers,
+                                savedLocations = savedLocations
+                            )
+                        }
+                        else -> Unit
                     }
                 }
         }

@@ -81,6 +81,7 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberMarkerState
 import com.koren.common.models.family.LocationIcon
 import com.koren.common.models.suggestion.SuggestionResponse
 import com.koren.common.models.user.UserData
@@ -236,15 +237,18 @@ private fun ShownContent(
                 cameraPositionState = uiState.cameraPosition,
                 uiSettings = MapUiSettings(zoomControlsEnabled = false)
             ) {
-                uiState.familyMembers.filter { it.userData.lastLocation != null }.forEach { member ->
+                uiState.familyMembers.filter { it.lastLocation != null }.forEach { member ->
+                    val markerState = rememberMarkerState(
+                        position = LatLng(member.lastLocation?.latitude?: 0.0, member.lastLocation?.longitude?: 0.0)
+                    )
                     Pin(
-                        imageUrl = member.userData.profilePictureUrl,
-                        displayName = member.userData.displayName,
-                        location = member.userData.lastLocation ?: UserLocation(),
+                        imageUrl = member.profilePictureUrl,
+                        displayName = member.displayName,
+                        location = member.lastLocation ?: UserLocation(),
                         onClick = {
-                            uiState.eventSink(MapEvent.FamilyMemberClicked(member.userData))
+                            uiState.eventSink(MapEvent.FamilyMemberClicked(member))
                         },
-                        markerState = member.markerState
+                        markerState = markerState
                     )
                 }
 
@@ -502,18 +506,18 @@ private fun ActionBottomSheetContent(
         ) {
             items(
                 items = uiState.familyMembers,
-                key = { it.userData.id }
+                key = { it.id }
             ) { member ->
                 AsyncImage(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
                         .clickable {
-                            uiState.eventSink(MapEvent.FamilyMemberClicked(member.userData))
+                            uiState.eventSink(MapEvent.FamilyMemberClicked(member))
                         },
                     model = ImageRequest.Builder(LocalContext.current)
                         .crossfade(true)
-                        .data(member.userData.profilePictureUrl)
+                        .data(member.profilePictureUrl)
                         .build(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop
@@ -566,6 +570,10 @@ private fun Pin(
             .allowHardware(false)
             .build()
     )
+
+    LaunchedEffect(location.latitude, location.longitude) {
+        markerState.position = LatLng(location.latitude, location.longitude)
+    }
 
     MarkerComposable(
         keys = arrayOf(location.latitude, location.longitude, displayName, painter.state),
@@ -658,14 +666,11 @@ private fun MapScreenPreview() {
         MapScreenContent(
             uiState = MapUiState.Shown.IdleMap(
                 familyMembers = listOf(
-                    UiLocationMakerUserData(
-                        userData = UserData(
-                            id = "1",
-                            displayName = "John Doe",
-                            lastLocation = UserLocation(37.7749, -122.4194)
-                        ),
-                        markerState = MarkerState()
-                    )
+                    UserData(
+                        id = "1",
+                        displayName = "John Doe",
+                        lastLocation = UserLocation(37.7749, -122.4194)
+                    ),
                 ),
                 eventSink = {}
             )
