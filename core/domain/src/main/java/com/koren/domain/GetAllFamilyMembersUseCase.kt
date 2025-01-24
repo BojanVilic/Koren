@@ -24,10 +24,10 @@ class GetAllFamilyMembersUseCase @Inject constructor(
     operator fun invoke(): Flow<List<UserData>> = callbackFlow {
         val familyId = userSession.currentUser.first().familyId
 
-        val memberIds = firebaseDatabase.getReference("families/$familyId")
+        val memberIds = firebaseDatabase.getReference("families/$familyId/members")
             .get()
             .await()
-            .getValue<Family>()?.members
+            .getValue<List<String>>()
 
         val query = firebaseDatabase.getReference("users")
 

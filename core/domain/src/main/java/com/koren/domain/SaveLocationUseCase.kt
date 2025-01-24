@@ -15,7 +15,7 @@ class SaveLocationUseCase @Inject constructor(
         val user = userSession.currentUser.first()
 
         try {
-            firebaseDatabase.reference.child("families/${user.familyId}/saved_locations/${location.id}")
+            firebaseDatabase.reference.child("families/${user.familyId}/savedLocations/${location.id}")
                 .setValue(location)
                 .await()
             return Result.success(Unit)

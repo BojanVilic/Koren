@@ -4,5 +4,6 @@ data class Family(
     val id: String = "",
     val name: String = "",
     val members: List<String> = emptyList(),
-    val familyPortrait: String = ""
+    val familyPortrait: String = "",
+    val savedLocations: List<SavedLocation> = emptyList()
 )

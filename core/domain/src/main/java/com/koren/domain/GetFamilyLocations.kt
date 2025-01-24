@@ -20,7 +20,7 @@ class GetFamilyLocations @Inject constructor(
     operator fun invoke(): Flow<List<SavedLocation>> = callbackFlow {
         val user = userSession.currentUser.first()
 
-        val ref = firebaseDatabase.reference.child("families/${user.familyId}/saved_locations")
+        val ref = firebaseDatabase.reference.child("families/${user.familyId}/savedLocations")
         val listener = ref
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {

@@ -22,8 +22,12 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
-import com.koren.common.models.suggestion.SuggestionResponse
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.getValue
+import com.google.maps.android.SphericalUtil
 import com.koren.common.models.activity.LocationActivity
+import com.koren.common.models.family.SavedLocation
+import com.koren.common.models.suggestion.SuggestionResponse
 import com.koren.common.services.LocationService
 import com.koren.common.services.UserSession
 import com.koren.data.repository.ActivityRepository
@@ -39,36 +43,15 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class DefaultLocationService @Inject constructor(
     private val context: Context,
     private val activityRepository: ActivityRepository,
     private val userSession: UserSession,
-    private val placesClient: PlacesClient
+    private val placesClient: PlacesClient,
+    private val firebaseDatabase: FirebaseDatabase,
 ): LocationService {
-
-    init {
-        val placeFields: List<Place.Field> = listOf(Place.Field.DISPLAY_NAME)
-        val request: FindCurrentPlaceRequest = FindCurrentPlaceRequest.newInstance(placeFields)
-
-//        if (checkSelfPermission(context, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED) {
-//            placesClient.findCurrentPlace(request)
-//                .addOnCompleteListener { task ->
-//                    if (task.isSuccessful) {
-//                        val response = task.result
-//                        val place = response.placeLikelihoods.first()
-//                        Timber.d("Place '${place.place.displayName}' has likelihood: ${place.likelihood}")
-//                    } else {
-//                        val exception = task.exception
-//                        if (exception is ApiException) {
-//                            Timber.d("Place not found: ${exception.statusCode}")
-//                        }
-//                    }
-//                }
-//        }
-    }
 
     private val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5.seconds.inWholeMilliseconds)
         .build()
@@ -82,7 +65,7 @@ class DefaultLocationService @Inject constructor(
             .addOnFailureListener { result(Result.failure(it)) }
     }
 
-    override fun requestLocationUpdates(): Flow<Location> = callbackFlow {
+    override fun requestLocationUpdates(): Flow<Location> = callbackFlow<Location> {
         if (checkSelfPermission(context, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED) {
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
@@ -96,9 +79,11 @@ class DefaultLocationService @Inject constructor(
             awaitClose { fusedLocationClient.removeLocationUpdates(locationCallback) }
         }
     }
-        .onEach {
+        .onEach { location ->
             withContext(Dispatchers.IO) {
                 val userData = userSession.currentUser.first()
+
+                Timber.d("Location name: ${getLocationName(location)}")
 
                 val locationActivity = LocationActivity(
                     id = UUID.randomUUID().toString(),
@@ -153,5 +138,39 @@ class DefaultLocationService @Inject constructor(
         }
 
         awaitClose()
+    }
+
+    override suspend fun getLocationName(location: Location): String {
+        if (checkSelfPermission(context, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED) return ""
+        val userData = userSession.currentUser.first()
+        val savedLocations = firebaseDatabase.reference.child("families/${userData.familyId}/savedLocations")
+            .get()
+            .await()
+            .children
+            .mapNotNull { it.getValue<SavedLocation>() }
+
+        val userLocation = LatLng(location.latitude, location.longitude)
+        val closestLocation = savedLocations.minByOrNull {
+            val savedLocation = LatLng(it.latitude, it.longitude)
+            SphericalUtil.computeDistanceBetween(userLocation, savedLocation)
+        }
+
+        val distance = closestLocation?.let {
+            SphericalUtil.computeDistanceBetween(userLocation, LatLng(it.latitude, it.longitude))
+        } ?: Double.MAX_VALUE
+
+        return if (distance > 300) {
+            val placeFields: List<Place.Field> = listOf(Place.Field.DISPLAY_NAME)
+            val request: FindCurrentPlaceRequest = FindCurrentPlaceRequest.newInstance(placeFields)
+
+            placesClient.findCurrentPlace(request)
+                .await()
+                .placeLikelihoods
+                .first()
+                .place
+                .displayName?: ""
+        } else {
+            closestLocation?.name ?: ""
+        }
     }
 }

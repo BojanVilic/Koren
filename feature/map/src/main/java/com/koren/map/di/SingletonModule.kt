@@ -3,6 +3,7 @@ package com.koren.map.di
 import android.content.Context
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.firebase.database.FirebaseDatabase
 import com.koren.common.services.LocationService
 import com.koren.common.services.ResourceProvider
 import com.koren.common.services.UserSession
@@ -26,13 +27,15 @@ object SingletonModule {
         @ApplicationContext context: Context,
         activityRepository: ActivityRepository,
         userSession: UserSession,
-        placesClient: PlacesClient
+        placesClient: PlacesClient,
+        firebaseDatabase: FirebaseDatabase
     ): LocationService {
         return DefaultLocationService(
             context,
             activityRepository,
             userSession,
-            placesClient
+            placesClient,
+            firebaseDatabase
         )
     }
 
