@@ -19,7 +19,7 @@ import kotlinx.coroutines.tasks.await
 class UserSessionImpl : UserSession {
 
     init {
-        Firebase.database.setPersistenceEnabled(true)
+        Firebase.database.setPersistenceEnabled(false)
     }
 
     private val auth = Firebase.auth

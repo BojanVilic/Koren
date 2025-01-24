@@ -97,17 +97,19 @@ class DefaultLocationService @Inject constructor(
         }
     }
         .onEach {
-            val userData = userSession.currentUser.first()
+            withContext(Dispatchers.IO) {
+                val userData = userSession.currentUser.first()
 
-            val locationActivity = LocationActivity(
-                id = UUID.randomUUID().toString(),
-                userId = userData.id,
-                familyId = userData.familyId,
-                createdAt = System.currentTimeMillis(),
-                locationName = "Location"
-            )
+                val locationActivity = LocationActivity(
+                    id = UUID.randomUUID().toString(),
+                    userId = userData.id,
+                    familyId = userData.familyId,
+                    createdAt = System.currentTimeMillis(),
+                    locationName = "Location"
+                )
 
-            activityRepository.insertNewActivity(locationActivity)
+                activityRepository.insertNewActivity(locationActivity)
+            }
         }
         .flowOn(Dispatchers.Default)
 
@@ -119,7 +121,6 @@ class DefaultLocationService @Inject constructor(
         val token = AutocompleteSessionToken.newInstance()
 
         val autocompleteRequest = FindAutocompletePredictionsRequest.builder()
-            .setOrigin(LatLng(-33.8749937, 151.2041382))
             .setTypesFilter(listOf(PlaceTypes.ADDRESS))
             .setSessionToken(token)
             .setQuery(query)

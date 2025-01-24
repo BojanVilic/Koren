@@ -6,20 +6,24 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
 import com.koren.common.models.activity.LocationActivity
+import com.koren.common.models.user.UserLocation
 import com.koren.common.services.UserSession
+import com.koren.domain.UpdateLastUserActivityUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
 class DefaultActivityRepository @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase,
-    private val userSession: UserSession
+    private val userSession: UserSession,
+    private val updateLastUserActivityUseCase: UpdateLastUserActivityUseCase
 ) : ActivityRepository {
 
     companion object {
@@ -28,31 +32,30 @@ class DefaultActivityRepository @Inject constructor(
 
     override suspend fun insertNewActivity(activity: LocationActivity) {
         val userData = userSession.currentUser.first()
+        val lastActivityIdRef = firebaseDatabase.reference.child("users/${userData.id}/lastActivityId")
+        val lastActivityId = lastActivityIdRef
+            .get()
+            .await()
+            .getValue<String>()
 
-        firebaseDatabase.reference.child("activities/${activity.familyId}/location")
-            .orderByChild("userId")
-            .equalTo(userData.id)
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val lastLocation = snapshot.children.mapNotNull {
-                        it.getValue<LocationActivity>()
-                    }.maxByOrNull {
-                        it.createdAt
-                    }
-
-                    if (lastLocation != null) {
-                        val timeDifferenceInMins = (activity.createdAt - lastLocation.createdAt).milliseconds.inWholeMinutes
-                        if (timeDifferenceInMins > 5 && lastLocation.locationName.equals(activity.locationName, true).not()) {
-                            firebaseDatabase.getReference(activitiesPath(activity, LOCATION_ACTIVITY))
-                                .setValue(activity)
-                        }
+        if (lastActivityId?.isEmpty() == true) {
+            Timber.d("No last location found")
+            firebaseDatabase.getReference(activitiesPath(activity.familyId, activity.id, LOCATION_ACTIVITY)).setValue(activity)
+            updateLastUserActivityUseCase(activity.id)
+        } else {
+            firebaseDatabase.getReference(activitiesPath(userData.familyId, lastActivityId?: "", LOCATION_ACTIVITY))
+                .get()
+                .await()
+                .getValue<LocationActivity>()
+                ?.let { lastActivity ->
+                    val timeDifferenceInMins = (activity.createdAt - lastActivity.createdAt).milliseconds.inWholeMinutes
+                    Timber.d("Time difference: $timeDifferenceInMins")
+                    if (timeDifferenceInMins >= 5 && lastActivity.locationName.equals(activity.locationName, true).not()) {
+                        firebaseDatabase.getReference(activitiesPath(activity.familyId, activity.id, LOCATION_ACTIVITY)).setValue(activity)
+                        updateLastUserActivityUseCase(activity.id)
                     }
                 }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Timber.e(error.toException())
-                }
-            })
+        }
     }
 
     override fun getActivities(): Flow<List<LocationActivity>> = callbackFlow {
@@ -76,5 +79,5 @@ class DefaultActivityRepository @Inject constructor(
         awaitClose()
     }.flowOn(Dispatchers.Default)
 
-    private fun activitiesPath(activity: LocationActivity, type: String) = "activities/${activity.familyId}/$type/${activity.id}"
+    private fun activitiesPath(familyId: String, activityId: String, type: String) = "activities/${familyId}/$type/${activityId}"
 }

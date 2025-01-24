@@ -9,5 +9,6 @@ data class UserData(
     val email: String = "",
     val profilePictureUrl: String = "",
     val familyRole: FamilyRole = FamilyRole.NONE,
-    val lastLocation: UserLocation? = null
+    val lastLocation: UserLocation? = null,
+    val lastActivityId: String = ""
 )
