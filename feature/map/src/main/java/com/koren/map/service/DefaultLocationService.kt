@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -137,15 +138,16 @@ class DefaultLocationService @Inject constructor(
         } ?: Double.MAX_VALUE
 
         return if (distance > 300) {
-            val placeFields: List<Place.Field> = listOf(Place.Field.DISPLAY_NAME)
-            val request: FindCurrentPlaceRequest = FindCurrentPlaceRequest.newInstance(placeFields)
-
-            placesClient.findCurrentPlace(request)
-                .await()
-                .placeLikelihoods
-                .first()
-                .place
-                .displayName?: ""
+//            val placeFields: List<Place.Field> = listOf(Place.Field.DISPLAY_NAME)
+//            val request: FindCurrentPlaceRequest = FindCurrentPlaceRequest.newInstance(placeFields)
+//
+//            placesClient.findCurrentPlace(request)
+//                .await()
+//                .placeLikelihoods
+//                .first()
+//                .place
+//                .displayName?: ""
+            "Cut cost test location + ${UUID.randomUUID().toString().take(4)}"
         } else {
             closestLocation?.name ?: ""
         }
