@@ -25,29 +25,24 @@ import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.getValue
 import com.google.maps.android.SphericalUtil
-import com.koren.common.models.activity.LocationActivity
 import com.koren.common.models.family.SavedLocation
 import com.koren.common.models.suggestion.SuggestionResponse
 import com.koren.common.services.LocationService
 import com.koren.common.services.UserSession
-import com.koren.data.repository.ActivityRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
 class DefaultLocationService @Inject constructor(
     private val context: Context,
-    private val activityRepository: ActivityRepository,
     private val userSession: UserSession,
     private val placesClient: PlacesClient,
     private val firebaseDatabase: FirebaseDatabase,
@@ -78,25 +73,7 @@ class DefaultLocationService @Inject constructor(
 
             awaitClose { fusedLocationClient.removeLocationUpdates(locationCallback) }
         }
-    }
-        .onEach { location ->
-            withContext(Dispatchers.IO) {
-                val userData = userSession.currentUser.first()
-
-                Timber.d("Location name: ${getLocationName(location)}")
-
-                val locationActivity = LocationActivity(
-                    id = UUID.randomUUID().toString(),
-                    userId = userData.id,
-                    familyId = userData.familyId,
-                    createdAt = System.currentTimeMillis(),
-                    locationName = "Location"
-                )
-
-                activityRepository.insertNewActivity(locationActivity)
-            }
-        }
-        .flowOn(Dispatchers.Default)
+    }.flowOn(Dispatchers.Default)
 
     override fun isLocationPermissionGranted(): Boolean {
         return checkSelfPermission(context, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED

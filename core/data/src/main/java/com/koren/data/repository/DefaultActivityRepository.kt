@@ -1,12 +1,10 @@
 package com.koren.data.repository
 
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
+import android.location.Location
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
 import com.koren.common.models.activity.LocationActivity
-import com.koren.common.models.user.UserLocation
+import com.koren.common.services.LocationService
 import com.koren.common.services.UserSession
 import com.koren.domain.UpdateLastUserActivityUseCase
 import kotlinx.coroutines.Dispatchers
@@ -17,20 +15,22 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
 class DefaultActivityRepository @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase,
     private val userSession: UserSession,
-    private val updateLastUserActivityUseCase: UpdateLastUserActivityUseCase
+    private val updateLastUserActivityUseCase: UpdateLastUserActivityUseCase,
+    private val locationService: LocationService
 ) : ActivityRepository {
 
     companion object {
         const val LOCATION_ACTIVITY = "location"
     }
 
-    override suspend fun insertNewActivity(activity: LocationActivity) {
+    override suspend fun insertNewActivity(location: Location) {
         val userData = userSession.currentUser.first()
         val lastActivityIdRef = firebaseDatabase.reference.child("users/${userData.id}/lastActivityId")
         val lastActivityId = lastActivityIdRef
@@ -39,10 +39,29 @@ class DefaultActivityRepository @Inject constructor(
             .getValue<String>()
 
         if (lastActivityId?.isEmpty() == true) {
+            val activity = LocationActivity(
+                id = UUID.randomUUID().toString(),
+                userId = userData.id,
+                userDisplayName = userData.displayName,
+                familyId = userData.familyId,
+                createdAt = System.currentTimeMillis(),
+                locationName = locationService.getLocationName(location),
+                inTransit = location.speed * 3.6 >= 5
+            )
             Timber.d("No last location found")
             firebaseDatabase.getReference(activitiesPath(activity.familyId, activity.id, LOCATION_ACTIVITY)).setValue(activity)
             updateLastUserActivityUseCase(activity.id)
         } else {
+            val activity = LocationActivity(
+                id = UUID.randomUUID().toString(),
+                userId = userData.id,
+                userDisplayName = userData.displayName,
+                familyId = userData.familyId,
+                createdAt = System.currentTimeMillis(),
+                locationName = locationService.getLocationName(location),
+                inTransit = location.speed * 3.6 >= 5
+            )
+
             firebaseDatabase.getReference(activitiesPath(userData.familyId, lastActivityId?: "", LOCATION_ACTIVITY))
                 .get()
                 .await()
@@ -58,23 +77,16 @@ class DefaultActivityRepository @Inject constructor(
         }
     }
 
-    override fun getActivities(): Flow<List<LocationActivity>> = callbackFlow {
+    override fun getLocationActivities(): Flow<List<LocationActivity>> = callbackFlow {
         val userData = userSession.currentUser.first()
 
-        firebaseDatabase.reference.child("activities/${userData.familyId}")
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val locationResponse = snapshot.child(LOCATION_ACTIVITY).children.map {
-                        it.getValue<LocationActivity>()
-                    }.filterNotNull()
+        val usernameLocation = firebaseDatabase.reference.child("activities/${userData.familyId}/location")
+            .get()
+            .await()
+            .children
+            .mapNotNull { it.getValue<LocationActivity>() }
 
-                    trySend(locationResponse).isSuccess
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    close(error.toException())
-                }
-            })
+        trySend(usernameLocation).isSuccess
 
         awaitClose()
     }.flowOn(Dispatchers.Default)

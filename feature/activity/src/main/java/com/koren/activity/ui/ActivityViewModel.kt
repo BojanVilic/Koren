@@ -17,7 +17,7 @@ class ActivityViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            activityRepository.getActivities().collect { activities ->
+            activityRepository.getLocationActivities().collect { activities ->
                 _uiState.update { ActivityUiState.Shown(
                     activities = activities,
                     eventSink = ::handleEvent

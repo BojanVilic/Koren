@@ -7,7 +7,6 @@ import com.google.firebase.database.FirebaseDatabase
 import com.koren.common.services.LocationService
 import com.koren.common.services.ResourceProvider
 import com.koren.common.services.UserSession
-import com.koren.data.repository.ActivityRepository
 import com.koren.map.R
 import com.koren.map.service.DefaultLocationService
 import dagger.Module
@@ -25,14 +24,12 @@ object SingletonModule {
     @Provides
     fun provideLocationService(
         @ApplicationContext context: Context,
-        activityRepository: ActivityRepository,
         userSession: UserSession,
         placesClient: PlacesClient,
         firebaseDatabase: FirebaseDatabase
     ): LocationService {
         return DefaultLocationService(
             context,
-            activityRepository,
             userSession,
             placesClient,
             firebaseDatabase

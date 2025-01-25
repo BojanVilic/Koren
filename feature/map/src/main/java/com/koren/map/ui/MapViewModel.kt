@@ -7,12 +7,12 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
-import com.google.maps.android.compose.MarkerState
 import com.koren.common.models.family.SavedLocation
 import com.koren.common.models.suggestion.SuggestionResponse
 import com.koren.common.services.LocationService
 import com.koren.common.services.UserSession
 import com.koren.common.util.StateViewModel
+import com.koren.data.repository.ActivityRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
 import com.koren.domain.GetFamilyLocations
 import com.koren.domain.SaveLocationUseCase
@@ -44,7 +44,8 @@ class MapViewModel @Inject constructor(
     private val getAllFamilyMembersUseCase: GetAllFamilyMembersUseCase,
     private val saveLocationUseCase: SaveLocationUseCase,
     private val getFamilyLocations: GetFamilyLocations,
-    private val userSession: UserSession
+    private val userSession: UserSession,
+    private val activityRepository: ActivityRepository
 ): StateViewModel<MapEvent, MapUiState, MapSideEffect>() {
 
     override fun setInitialState(): MapUiState = MapUiState.Loading
@@ -192,6 +193,7 @@ class MapViewModel @Inject constructor(
             locationService.requestLocationUpdates().collect { location ->
                 try {
                     updateUserLocationUseCase(location)
+                    activityRepository.insertNewActivity(location)
                 } catch (e: Exception) {
                     Timber.d("Failed to update user location: $e")
                 }
