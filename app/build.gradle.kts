@@ -67,6 +67,7 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -74,4 +75,6 @@ dependencies {
     implementation(libs.timber)
     implementation(libs.kotlin.serialization)
     implementation(libs.androidx.core.splashscreen)
+
+    implementation(libs.androidx.work.runtime.ktx)
 }

@@ -1,4 +1,5 @@
 [versions]
+androidMapsUtils = "2.2.5"
 minSdkVersion = "28"
 targetSdkVersion = "35"
 
@@ -36,12 +37,17 @@ playServicesPlaces = "17.1.0"
 places = "4.1.0"
 playServicesFitness = "21.2.0"
 firebaseDatabaseKtx = "21.0.0"
+workRuntimeKtx = "2.10.0"
+hiltCommon = "1.2.0"
+hiltWork = "1.2.0"
 
 [libraries]
+android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version.ref = "androidMapsUtils" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 firebase-database = { module = "com.google.firebase:firebase-database", version.ref = "firebaseDatabase" }
 firebase-storage = { module = "com.google.firebase:firebase-storage", version.ref = "firebaseDatabase" }
@@ -89,6 +95,8 @@ play-services-places = { group = "com.google.android.gms", name = "play-services
 places = { group = "com.google.android.libraries.places", name = "places", version.ref = "places" }
 play-services-fitness = { group = "com.google.android.gms", name = "play-services-fitness", version.ref = "playServicesFitness" }
 firebase-database-ktx = { group = "com.google.firebase", name = "firebase-database-ktx", version.ref = "firebaseDatabaseKtx" }
+androidx-hilt-common = { group = "androidx.hilt", name = "hilt-common", version.ref = "hiltCommon" }
+androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltWork" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

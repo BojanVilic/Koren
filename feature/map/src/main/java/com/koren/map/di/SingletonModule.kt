@@ -9,6 +9,7 @@ import com.koren.common.services.ResourceProvider
 import com.koren.common.services.UserSession
 import com.koren.map.R
 import com.koren.map.service.DefaultLocationService
+import com.koren.map.service.LocationWorker
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

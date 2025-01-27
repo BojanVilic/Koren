@@ -1,5 +1,9 @@
+@file:OptIn(ExperimentalPermissionsApi::class)
+
 package com.koren.home.ui.home
 
+import android.Manifest.permission.POST_NOTIFICATIONS
+import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,6 +42,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,6 +62,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.InvitationStatus
 import com.koren.common.models.user.UserData
@@ -128,6 +136,15 @@ private fun HomeContent(
 private fun ShownContent(
     state: HomeUiState.Shown
 ) {
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val notificationsPermission = rememberPermissionState(POST_NOTIFICATIONS)
+
+        LaunchedEffect(notificationsPermission.status.isGranted) {
+            if (notificationsPermission.status.isGranted.not())
+                notificationsPermission.launchPermissionRequest()
+        }
+    }
 
     val actions = listOf(
         ActionItem(

@@ -6,4 +6,7 @@
     <string name="map_label">Map</string>
     <string name="activity_label">Activity</string>
     <string name="account_label">Account</string>
+
+    <string name="notification_channel_name">Location Updates</string>
+    <string name="notification_channel_description">Notifications for location updates</string>
 </resources>

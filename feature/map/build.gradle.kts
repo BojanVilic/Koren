@@ -20,7 +20,10 @@ dependencies {
     implementation(libs.places)
     implementation(libs.play.services.fitness)
 
-    implementation("com.google.maps.android:android-maps-utils:2.2.5")
+    implementation(libs.android.maps.utils)
     implementation(libs.firebase.database.ktx)
 
+
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.common)
 }

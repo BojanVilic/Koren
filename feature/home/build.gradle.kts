@@ -17,4 +17,6 @@ dependencies {
 
     implementation(libs.lottie.compose)
 
+    implementation(libs.accompanist.permissions)
+
 }
