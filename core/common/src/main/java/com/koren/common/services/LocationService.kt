@@ -5,7 +5,7 @@ import com.koren.common.models.suggestion.SuggestionResponse
 import kotlinx.coroutines.flow.Flow
 
 interface LocationService {
-    suspend fun getLocation(result: (Result<Location>) -> Unit)
+    suspend fun updateLocationOnce(): Location
     fun requestLocationUpdates(): Flow<Location>
     fun isLocationPermissionGranted(): Boolean
 

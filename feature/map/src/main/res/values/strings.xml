@@ -13,4 +13,6 @@
     <string name="grocery_store">Grocery Store</string>
     <string name="park">Park</string>
 
+    <string name="notification_location_update_title">Location Sync in Progress</string>
+    <string name="notification_location_update_message">Updating your location for your family\'s view</string>
 </resources>

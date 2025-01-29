@@ -1,6 +1,5 @@
 package com.koren.map.service
 
-import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.POST_NOTIFICATIONS
 import android.content.Context
 import android.os.Build
@@ -8,39 +7,54 @@ import androidx.core.app.ActivityCompat.checkSelfPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorker
+import androidx.work.CoroutineWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.koren.common.models.invitation.toRelativeTime
+import com.koren.common.services.LocationService
+import com.koren.common.services.ResourceProvider
+import com.koren.data.repository.ActivityRepository
+import com.koren.domain.UpdateUserLocationUseCase
 import com.koren.map.R
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @HiltWorker
 class LocationWorker @AssistedInject constructor(
-    @Assisted appContext: Context,
-    @Assisted workerParams: WorkerParameters
-): Worker(appContext, workerParams) {
+    @Assisted private val appContext: Context,
+    @Assisted workerParams: WorkerParameters,
+    private val resourceProvider: ResourceProvider,
+//    private val locationService: LocationService,
+//    private val updateUserLocationUseCase: UpdateUserLocationUseCase,
+//    private val activityRepository: ActivityRepository
+) : Worker(appContext, workerParams) {
 
     override fun doWork(): Result {
-        Timber.d("PROBAVANJE: LocationWorker pozvan at ${System.currentTimeMillis().toRelativeTime()}")
-
-        displayNotification("Location Update", "LocationWorker is running")
-
-
-        return Result.success()
+        try {
+            Timber.d("PROBAVANJE: worker successfully started")
+//            val location = locationService.updateLocationOnce()
+//            updateUserLocationUseCase(location)
+//            activityRepository.insertNewActivity(location)
+            displayNotification()
+            return Result.success()
+        } catch (e: Exception) {
+            Timber.d("PROBAVANJE: worker failed")
+            return Result.failure()
+        }
     }
 
-    private fun displayNotification(title: String, message: String) {
-        val builder = NotificationCompat.Builder(applicationContext, "location_updates")
+    private fun displayNotification() {
+        val builder = NotificationCompat.Builder(appContext, "location_updates")
             .setSmallIcon(R.drawable.koren_icon)
-            .setContentTitle(title)
-            .setContentText(message)
+            .setContentTitle(resourceProvider[R.string.notification_location_update_title])
+            .setContentText(resourceProvider[R.string.notification_location_update_message])
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
-        with(NotificationManagerCompat.from(applicationContext)) {
+        with(NotificationManagerCompat.from(appContext)) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                checkSelfPermission(applicationContext, POST_NOTIFICATIONS)
+                checkSelfPermission(appContext, POST_NOTIFICATIONS)
             }
             notify(1, builder.build())
         }

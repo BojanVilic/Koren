@@ -6,6 +6,7 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.location.Location
 import android.os.Looper
 import androidx.core.app.ActivityCompat.checkSelfPermission
+import coil.util.CoilUtils.result
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -54,11 +55,10 @@ class DefaultLocationService @Inject constructor(
 
     private val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
 
-    override suspend fun getLocation(result: (Result<Location>) -> Unit) {
-        if (checkSelfPermission(context, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED) result(Result.failure(IllegalStateException("Location permission not granted")))
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { result(Result.success(it)) }
-            .addOnFailureListener { result(Result.failure(it)) }
+    override suspend fun updateLocationOnce(): Location {
+        if (checkSelfPermission(context, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED) throw IllegalStateException("Location permission not granted")
+        return fusedLocationClient.getCurrentLocation(locationRequest.priority, null)
+            .await()
     }
 
     override fun requestLocationUpdates(): Flow<Location> = callbackFlow<Location> {
