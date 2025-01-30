@@ -59,13 +59,6 @@ class MainActivity : ComponentActivity() {
 
         locationUpdateScheduler.schedulePeriodicUpdates()
 
-        WorkManager.getInstance(applicationContext).getWorkInfosForUniqueWorkLiveData("locationUpdateWork").observe(this) {
-            it.forEach { workInfo ->
-                Timber.d("PROBAVANJE: ${workInfo.state}")
-                Timber.d("PROBAVANJE: ${workInfo}")
-            }
-        }
-
         setContent {
             KorenTheme {
 
@@ -117,16 +110,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun createNotificationChannel() {
-        val name = getString(R.string.notification_channel_name)
-        val descriptionText = getString(R.string.notification_channel_description)
-        val importance = NotificationManager.IMPORTANCE_DEFAULT
-        val channel = NotificationChannel("location_updates", name, importance).apply {
-            description = descriptionText
-        }
-        val notificationManager: NotificationManager = getSystemService(NotificationManager::class.java)
-        notificationManager.createNotificationChannel(channel)
     }
 }

@@ -11,30 +11,34 @@ import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import com.koren.common.services.LocationService
 import com.koren.common.services.ResourceProvider
+import com.koren.data.repository.ActivityRepository
+import com.koren.domain.UpdateUserLocationUseCase
 import com.koren.map.R
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import timber.log.Timber
 import javax.inject.Inject
 
 @HiltWorker
 class LocationWorker @AssistedInject constructor(
     @Assisted private val appContext: Context,
     @Assisted workerParams: WorkerParameters,
-    private val resourceProvider: ResourceProvider,
+    @Assisted private val resourceProvider: ResourceProvider,
     @Assisted private val locationService: LocationService,
-//    private val updateUserLocationUseCase: UpdateUserLocationUseCase,
-//    private val activityRepository: ActivityRepository
+    @Assisted private val updateUserLocationUseCase: UpdateUserLocationUseCase,
+    @Assisted private val activityRepository: ActivityRepository
 ) : CoroutineWorker(appContext, workerParams) {
 
 
     override suspend fun doWork(): Result {
         return try {
-            Timber.d("PROBAVANJE lokacija ukljucena: ${locationService.isLocationPermissionGranted()}")
+            locationService.updateLocationOnce().let { location ->
+                updateUserLocationUseCase(location)
+                activityRepository.insertNewActivity(location)
+            }
             showNotification()
             Result.success()
         } catch (e: Exception) {
-            Result.failure()
+            Result.retry()
         }
     }
 
@@ -70,8 +74,10 @@ class LocationWorker @AssistedInject constructor(
 }
 
 class LocationWorkerFactory @Inject constructor(
+    private val resourceProvider: ResourceProvider,
     private val locationService: LocationService,
-    private val resourceProvider: ResourceProvider
+    private val updateUserLocationUseCase: UpdateUserLocationUseCase,
+    private val activityRepository: ActivityRepository
 ): WorkerFactory() {
     override fun createWorker(
         appContext: Context,
@@ -81,6 +87,8 @@ class LocationWorkerFactory @Inject constructor(
         appContext = appContext,
         workerParams = workerParameters,
         resourceProvider = resourceProvider,
-        locationService = locationService
+        locationService = locationService,
+        updateUserLocationUseCase = updateUserLocationUseCase,
+        activityRepository = activityRepository
     )
 }
