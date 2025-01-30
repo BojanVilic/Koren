@@ -1,6 +1,7 @@
 package com.koren.map.di
 
 import android.content.Context
+import androidx.work.WorkManager
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.firebase.database.FirebaseDatabase
@@ -44,5 +45,12 @@ object SingletonModule {
     ): PlacesClient {
         Places.initialize(context, resourceProvider[R.string.google_maps_key])
         return Places.createClient(context)
+    }
+
+    @Provides
+    fun provideWorkManager(
+        @ApplicationContext context: Context
+    ): WorkManager {
+        return WorkManager.getInstance(context)
     }
 }

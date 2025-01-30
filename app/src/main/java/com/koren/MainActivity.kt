@@ -2,7 +2,6 @@ package com.koren
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,55 +24,47 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.hilt.work.HiltWorkerFactory
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.work.Configuration
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequest
-import androidx.work.PeriodicWorkRequest.Companion.MIN_PERIODIC_INTERVAL_MILLIS
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.LocalSnackbarHostState
-import com.koren.map.service.LocationWorker
+import com.koren.map.service.LocationUpdateScheduler
 import com.koren.navigation.BottomNavigationBar
 import com.koren.navigation.KorenNavHost
 import com.koren.navigation.topLevelRoutes
 import dagger.hilt.android.AndroidEntryPoint
-import java.time.Duration
-import java.util.concurrent.TimeUnit
+import timber.log.Timber
 import javax.inject.Inject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @AndroidEntryPoint
-class MainActivity : ComponentActivity(), Configuration.Provider {
-
-    @Inject
-    lateinit var workerFactory: HiltWorkerFactory
+class MainActivity : ComponentActivity() {
 
     private val viewModel: MainActivityViewModel by viewModels()
+
+    @Inject
+    lateinit var locationUpdateScheduler: LocationUpdateScheduler
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        createNotificationChannel()
-
         enableEdgeToEdge()
 
         splashScreen.setKeepOnScreenCondition { viewModel.uiState.value.shouldKeepSplashScreen() }
 
-        val locationWorkRequest: PeriodicWorkRequest = PeriodicWorkRequestBuilder<LocationWorker>(repeatInterval = Duration.ofMinutes(15))
-            .build()
+        locationUpdateScheduler.schedulePeriodicUpdates()
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "LocationWorker",
-            ExistingPeriodicWorkPolicy.UPDATE,
-            locationWorkRequest
-        )
+        WorkManager.getInstance(applicationContext).getWorkInfosForUniqueWorkLiveData("locationUpdateWork").observe(this) {
+            it.forEach { workInfo ->
+                Timber.d("PROBAVANJE: ${workInfo.state}")
+                Timber.d("PROBAVANJE: ${workInfo}")
+            }
+        }
 
         setContent {
             KorenTheme {
@@ -138,9 +129,4 @@ class MainActivity : ComponentActivity(), Configuration.Provider {
         val notificationManager: NotificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.createNotificationChannel(channel)
     }
-
-    override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
 }
