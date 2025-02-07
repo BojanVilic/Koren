@@ -9,25 +9,47 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.rounded.AccountBox
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -38,8 +60,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects
-import com.koren.designsystem.components.SimpleSnackbar
+import com.koren.designsystem.icon.ActivitySelected
+import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
 import kotlinx.serialization.Serializable
@@ -87,7 +111,6 @@ private fun AccountScreenContent(
 private fun AccountScreenShownContent(
     uiState: AccountUiState.Shown
 ) {
-
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
@@ -96,7 +119,9 @@ private fun AccountScreenShownContent(
     )
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -156,13 +181,132 @@ private fun AccountScreenShownContent(
             )
         }
 
-        Button(
+        Text(
             modifier = Modifier.padding(top = 16.dp),
-            onClick = {
-                uiState.eventSink(AccountUiEvent.LogOut)
-            }
+            text = uiState.userData?.displayName?: "",
+            style = MaterialTheme.typography.displayMedium,
+            fontWeight = FontWeight.Medium
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Text(text = "Log out")
+            FeaturedOptions(
+                title = "Feedback",
+                icon = Icons.AutoMirrored.Filled.Send,
+                onClick = { uiState.eventSink(AccountUiEvent.SendFeedback) }
+            )
+
+            FeaturedOptions(
+                title = "Premium",
+                icon = Icons.Filled.Star,
+                onClick = { uiState.eventSink(AccountUiEvent.SendFeedback) }
+            )
+
+            FeaturedOptions(
+                title = "Activity",
+                icon = KorenIcons.ActivitySelected,
+                onClick = { uiState.eventSink(AccountUiEvent.SendFeedback) }
+            )
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(16.dp))
+
+        options.forEach { option ->
+            AccountOptionItem(
+                option = option,
+                onClick = { uiState.eventSink(option.event) }
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Text(
+            modifier = Modifier.padding(16.dp),
+            text = uiState.appVersion,
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun RowScope.FeaturedOptions(
+    title: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .padding(vertical = 16.dp, horizontal = 8.dp)
+            .fillMaxHeight()
+            .weight(1f),
+        onClick = { onClick() },
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                modifier = Modifier.size(24.dp),
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = title
+            )
+        }
+    }
+}
+
+@Composable
+fun AccountOptionItem(
+    option: AccountOption,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 4.dp)
+            .padding(vertical = 8.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        option.icon?.let {
+            Icon(
+                modifier = Modifier.size(24.dp),
+                imageVector = it,
+                contentDescription = null,
+                tint = if (option.isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        Column(
+            modifier = Modifier.padding(start = 16.dp),
+        ) {
+            Text(
+                text = option.text,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (option.isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            option.subText?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -173,7 +317,8 @@ fun AccountScreenPreview() {
     KorenTheme {
         AccountScreenContent(
             uiState = AccountUiState.Shown(
-                userData = null,
+                userData = UserData(),
+                appVersion = "1.0.0",
                 eventSink = {}
             )
         )

@@ -3,9 +3,8 @@ package com.koren.account.ui
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.koren.common.services.UserSession
+import com.koren.common.services.app_info.AppInfoProvider
 import com.koren.common.util.StateViewModel
-import com.koren.common.util.UiSideEffect
-import com.koren.common.util.UiState
 import com.koren.common.util.orUnknownError
 import com.koren.data.services.AuthService
 import com.koren.domain.UploadProfilePictureUseCase
@@ -19,7 +18,8 @@ import javax.inject.Inject
 class AccountViewModel @Inject constructor(
     private val uploadProfilePictureUseCase: UploadProfilePictureUseCase,
     private val userSession: UserSession,
-    private val authService: AuthService
+    private val authService: AuthService,
+    private val appInfoProvider: AppInfoProvider
 ): StateViewModel<AccountUiEvent, AccountUiState, AccountUiSideEffect>() {
 
     override fun setInitialState(): AccountUiState = AccountUiState.Loading
@@ -27,7 +27,13 @@ class AccountViewModel @Inject constructor(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             userSession.currentUser.collect { user ->
-                _uiState.update { AccountUiState.Shown(userData = user, eventSink = ::handleEvent) }
+                _uiState.update {
+                    AccountUiState.Shown(
+                        userData = user,
+                        appVersion = appInfoProvider.getAppVersion(),
+                        eventSink = ::handleEvent
+                    )
+                }
             }
         }
     }
@@ -37,6 +43,14 @@ class AccountViewModel @Inject constructor(
             when (event) {
                 is AccountUiEvent.UploadNewProfilePicture -> uploadProfilePicture(currentState, event.uri)
                 is AccountUiEvent.LogOut -> signOut()
+                is AccountUiEvent.DeleteAccount -> Unit
+                is AccountUiEvent.LeaveFamily -> Unit
+                is AccountUiEvent.SendFeedback -> Unit
+                is AccountUiEvent.ChangePassword -> Unit
+                is AccountUiEvent.EditProfile -> Unit
+                is AccountUiEvent.Notifications -> Unit
+                is AccountUiEvent.TermsOfService -> Unit
+                is AccountUiEvent.Privacy -> Unit
             }
         }
     }
