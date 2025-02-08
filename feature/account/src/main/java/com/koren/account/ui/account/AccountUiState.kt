@@ -27,10 +27,13 @@ sealed interface AccountUiEvent : UiEvent {
     data object LeaveFamily : AccountUiEvent
     data object DeleteAccount : AccountUiEvent
     data object SendFeedback : AccountUiEvent
+    data object Premium : AccountUiEvent
+    data object Activity : AccountUiEvent
 }
 
 sealed interface AccountUiSideEffect : UiSideEffect {
     data object LogOut : AccountUiSideEffect
     data class ShowError(val message: String) : AccountUiSideEffect
     data object NavigateToEditProfile : AccountUiSideEffect
+    data object NavigateToActivity : AccountUiSideEffect
 }

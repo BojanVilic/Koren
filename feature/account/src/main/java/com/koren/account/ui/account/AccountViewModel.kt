@@ -51,6 +51,8 @@ class AccountViewModel @Inject constructor(
                 is AccountUiEvent.Notifications -> Unit
                 is AccountUiEvent.TermsOfService -> Unit
                 is AccountUiEvent.Privacy -> Unit
+                is AccountUiEvent.Activity -> _sideEffects.emitSuspended(AccountUiSideEffect.NavigateToActivity)
+                is AccountUiEvent.Premium -> Unit
             }
         }
     }

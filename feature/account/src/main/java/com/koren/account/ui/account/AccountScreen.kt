@@ -71,7 +71,8 @@ fun AccountScreen(
     viewModel: AccountViewModel = hiltViewModel(),
     onLogOut: () -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit,
-    navigateToEditProfile: () -> Unit
+    navigateToEditProfile: () -> Unit,
+    navigateToActivity: () -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(ScaffoldState(isTopBarVisible = false))
@@ -89,6 +90,7 @@ fun AccountScreen(
             is AccountUiSideEffect.LogOut -> onLogOut()
             is AccountUiSideEffect.ShowError -> onShowSnackbar(uiSideEffect.message)
             is AccountUiSideEffect.NavigateToEditProfile -> navigateToEditProfile()
+            is AccountUiSideEffect.NavigateToActivity -> navigateToActivity()
         }
     }
 
@@ -204,13 +206,13 @@ private fun AccountScreenShownContent(
             FeaturedOptions(
                 title = "Premium",
                 icon = Icons.Filled.Star,
-                onClick = { uiState.eventSink(AccountUiEvent.SendFeedback) }
+                onClick = { uiState.eventSink(AccountUiEvent.Premium) }
             )
 
             FeaturedOptions(
                 title = "Activity",
                 icon = KorenIcons.ActivitySelected,
-                onClick = { uiState.eventSink(AccountUiEvent.SendFeedback) }
+                onClick = { uiState.eventSink(AccountUiEvent.Activity) }
             )
         }
 
