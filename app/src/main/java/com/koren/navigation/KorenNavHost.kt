@@ -7,7 +7,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.koren.MainActivityUiState
 import com.koren.MainActivityViewModel
-import com.koren.account.ui.accountScreen
+import com.koren.account.ui.navigation.accountScreen
 import com.koren.activity.ui.activityScreen
 import com.koren.auth.navigation.AuthGraph
 import com.koren.auth.navigation.authScreen

@@ -1,4 +1,4 @@
-package com.koren.account.ui
+package com.koren.account.ui.account
 
 import android.net.Uri
 import com.koren.common.models.user.UserData
@@ -32,4 +32,5 @@ sealed interface AccountUiEvent : UiEvent {
 sealed interface AccountUiSideEffect : UiSideEffect {
     data object LogOut : AccountUiSideEffect
     data class ShowError(val message: String) : AccountUiSideEffect
+    data object NavigateToEditProfile : AccountUiSideEffect
 }

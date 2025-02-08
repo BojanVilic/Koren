@@ -3,7 +3,7 @@ package com.koren.navigation
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.koren.R
-import com.koren.account.ui.AccountDestination
+import com.koren.account.ui.account.AccountDestination
 import com.koren.activity.ui.ActivityDestination
 import com.koren.home.ui.home.HomeDestination
 import com.koren.map.ui.MapDestination

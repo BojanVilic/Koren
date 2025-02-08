@@ -1,9 +1,13 @@
-package com.koren.account.ui
+package com.koren.account.ui.navigation
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import com.koren.account.ui.account.AccountDestination
+import com.koren.account.ui.account.AccountScreen
+import com.koren.account.ui.edit_profile.EditProfileDestination
+import com.koren.account.ui.edit_profile.EditProfileScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -20,6 +24,12 @@ fun NavGraphBuilder.accountScreen(
         composable<AccountDestination> {
             AccountScreen(
                 onLogOut = onLogOut,
+                onShowSnackbar = onShowSnackbar,
+                navigateToEditProfile = { navController.navigate(EditProfileDestination) }
+            )
+        }
+        composable<EditProfileDestination> {
+            EditProfileScreen(
                 onShowSnackbar = onShowSnackbar
             )
         }

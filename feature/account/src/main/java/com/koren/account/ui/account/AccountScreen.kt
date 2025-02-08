@@ -1,4 +1,6 @@
-package com.koren.account.ui
+@file:OptIn(ExperimentalMaterial3Api::class)
+
+package com.koren.account.ui.account
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -20,29 +22,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.automirrored.rounded.Send
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.rounded.AccountBox
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Send
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,6 +58,8 @@ import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.icon.ActivitySelected
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.theme.KorenTheme
+import com.koren.designsystem.theme.LocalScaffoldStateProvider
+import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import kotlinx.serialization.Serializable
 
@@ -75,8 +70,15 @@ object AccountDestination
 fun AccountScreen(
     viewModel: AccountViewModel = hiltViewModel(),
     onLogOut: () -> Unit,
-    onShowSnackbar: suspend (message: String) -> Unit
+    onShowSnackbar: suspend (message: String) -> Unit,
+    navigateToEditProfile: () -> Unit
 ) {
+
+    LocalScaffoldStateProvider.current.setScaffoldState(ScaffoldState(isTopBarVisible = false))
+
+    LaunchedEffect(Unit) {
+        viewModel.init()
+    }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -86,6 +88,7 @@ fun AccountScreen(
         when (uiSideEffect) {
             is AccountUiSideEffect.LogOut -> onLogOut()
             is AccountUiSideEffect.ShowError -> onShowSnackbar(uiSideEffect.message)
+            is AccountUiSideEffect.NavigateToEditProfile -> navigateToEditProfile()
         }
     }
 
@@ -101,9 +104,7 @@ private fun AccountScreenContent(
 
     when (uiState) {
         is AccountUiState.Loading -> CircularProgressIndicator()
-        is AccountUiState.Shown -> AccountScreenShownContent(
-            uiState = uiState
-        )
+        is AccountUiState.Shown -> AccountScreenShownContent(uiState = uiState)
     }
 }
 
@@ -150,9 +151,9 @@ private fun AccountScreenShownContent(
 
                 Icon(
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(36.dp)
                         .offset {
-                            IntOffset(-16, -16)
+                            IntOffset(-8, -8)
                         }
                         .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
                         .clip(CircleShape)

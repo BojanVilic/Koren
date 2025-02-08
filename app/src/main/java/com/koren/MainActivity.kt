@@ -1,7 +1,5 @@
 package com.koren
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,7 +25,6 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.work.WorkManager
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.LocalSnackbarHostState
@@ -36,7 +33,6 @@ import com.koren.navigation.BottomNavigationBar
 import com.koren.navigation.KorenNavHost
 import com.koren.navigation.topLevelRoutes
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
 import javax.inject.Inject
 
 @OptIn(ExperimentalMaterial3Api::class)

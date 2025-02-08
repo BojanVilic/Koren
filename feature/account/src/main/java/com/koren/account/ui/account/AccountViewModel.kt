@@ -1,4 +1,4 @@
-package com.koren.account.ui
+package com.koren.account.ui.account
 
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
@@ -24,7 +24,7 @@ class AccountViewModel @Inject constructor(
 
     override fun setInitialState(): AccountUiState = AccountUiState.Loading
 
-    init {
+    fun init() {
         viewModelScope.launch(Dispatchers.IO) {
             userSession.currentUser.collect { user ->
                 _uiState.update {
@@ -42,12 +42,12 @@ class AccountViewModel @Inject constructor(
         withEventfulState<AccountUiState.Shown> { currentState ->
             when (event) {
                 is AccountUiEvent.UploadNewProfilePicture -> uploadProfilePicture(currentState, event.uri)
+                is AccountUiEvent.EditProfile -> _sideEffects.emitSuspended(AccountUiSideEffect.NavigateToEditProfile)
                 is AccountUiEvent.LogOut -> signOut()
                 is AccountUiEvent.DeleteAccount -> Unit
                 is AccountUiEvent.LeaveFamily -> Unit
                 is AccountUiEvent.SendFeedback -> Unit
                 is AccountUiEvent.ChangePassword -> Unit
-                is AccountUiEvent.EditProfile -> Unit
                 is AccountUiEvent.Notifications -> Unit
                 is AccountUiEvent.TermsOfService -> Unit
                 is AccountUiEvent.Privacy -> Unit
@@ -59,7 +59,11 @@ class AccountViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             authService.signOut()
                 .onSuccess { _sideEffects.emitSuspended(AccountUiSideEffect.LogOut) }
-                .onFailure { error -> _sideEffects.emitSuspended(AccountUiSideEffect.ShowError(message = error.message.orUnknownError())) }
+                .onFailure { error -> _sideEffects.emitSuspended(
+                    AccountUiSideEffect.ShowError(
+                        message = error.message.orUnknownError()
+                    )
+                ) }
         }
     }
 
