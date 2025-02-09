@@ -9,7 +9,7 @@ import com.koren.common.util.UiState
 sealed interface ActivityUiState : UiState {
     data object Loading : ActivityUiState
     data object Error : ActivityUiState
-    data object Empty : ActivityUiState
+    data object NoFamily : ActivityUiState
     data class Shown(
         val activities: List<LocationActivity>,
         override val eventSink: (ActivityEvent) -> Unit

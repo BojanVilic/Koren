@@ -36,6 +36,9 @@ class DefaultActivityRepository @Inject constructor(
 
     override suspend fun insertNewActivity(location: Location) {
         val userData = userSession.currentUser.first()
+
+        if (userData.familyId.isEmpty()) return
+
         val lastActivityIdRef = firebaseDatabase.reference.child("users/${userData.id}/lastActivityId")
         val lastActivityId = lastActivityIdRef
             .get()

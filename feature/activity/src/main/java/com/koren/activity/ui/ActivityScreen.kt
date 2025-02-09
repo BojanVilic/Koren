@@ -68,11 +68,16 @@ private fun ActivityScreenContent(
     uiState: ActivityUiState
 ) {
     when (uiState) {
-        is ActivityUiState.Empty -> Unit
+        is ActivityUiState.NoFamily -> NoFamilyContent()
         is ActivityUiState.Error -> Unit
         is ActivityUiState.Loading -> LoadingContent()
         is ActivityUiState.Shown -> ShownContent(uiState = uiState)
     }
+}
+
+@Composable
+private fun NoFamilyContent() {
+    Text(text = "No family")
 }
 
 @Composable

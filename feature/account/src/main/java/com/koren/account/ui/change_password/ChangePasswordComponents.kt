@@ -78,7 +78,7 @@ private fun ShownContent(
             .padding(16.dp)
     ) {
         Text(
-            text = "Oops! Forgot Your Password?",
+            text = "Forgot Your Password?",
             style = MaterialTheme.typography.titleLarge
         )
 
