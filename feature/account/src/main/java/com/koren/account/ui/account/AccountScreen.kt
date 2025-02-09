@@ -2,6 +2,8 @@
 
 package com.koren.account.ui.account
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,7 +37,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -81,6 +86,11 @@ fun AccountScreen(
         viewModel.init()
     }
 
+    val settingsIntent: Intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        .putExtra(Settings.EXTRA_APP_PACKAGE, LocalContext.current.packageName)
+    val context = LocalContext.current
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     CollectSideEffects(
@@ -91,6 +101,7 @@ fun AccountScreen(
             is AccountUiSideEffect.ShowError -> onShowSnackbar(uiSideEffect.message)
             is AccountUiSideEffect.NavigateToEditProfile -> navigateToEditProfile()
             is AccountUiSideEffect.NavigateToActivity -> navigateToActivity()
+            is AccountUiSideEffect.NavigateToNotifications -> startActivity(context, settingsIntent, null)
         }
     }
 
@@ -120,6 +131,17 @@ private fun AccountScreenShownContent(
             uiState.eventSink(AccountUiEvent.UploadNewProfilePicture(uri))
         }
     )
+
+    uiState.optionContent?.let { bottomSheetContent ->
+        ModalBottomSheet(
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            onDismissRequest = {
+                uiState.eventSink(AccountUiEvent.CloseOption)
+            }
+        ) {
+            bottomSheetContent()
+        }
+    }
 
     Column(
         modifier = Modifier

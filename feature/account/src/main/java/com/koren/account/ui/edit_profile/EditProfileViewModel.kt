@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class EditAccountViewModel @Inject constructor(
+class EditProfileViewModel @Inject constructor(
     private val updateUserProfile: UpdateUserProfile,
     private val userSession: UserSession
 ): StateViewModel<EditProfileUiEvent, EditProfileUiState, EditProfileSideEffect>() {

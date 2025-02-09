@@ -63,7 +63,8 @@ object SingletonModule {
         credentialManager: CredentialManager,
         auth: FirebaseAuth,
         googleAuthService: GoogleAuthService,
-        emailAuthService: EmailAuthService
+        emailAuthService: EmailAuthService,
+        userSession: UserSession
     ): AuthService {
         return DefaultAuthService(
             credentialManager,

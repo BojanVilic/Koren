@@ -2,6 +2,7 @@ package com.koren.account.ui.account
 
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
+import com.koren.account.ui.change_password.ChangePasswordScreen
 import com.koren.common.services.UserSession
 import com.koren.common.services.app_info.AppInfoProvider
 import com.koren.common.util.StateViewModel
@@ -43,16 +44,17 @@ class AccountViewModel @Inject constructor(
             when (event) {
                 is AccountUiEvent.UploadNewProfilePicture -> uploadProfilePicture(currentState, event.uri)
                 is AccountUiEvent.EditProfile -> _sideEffects.emitSuspended(AccountUiSideEffect.NavigateToEditProfile)
+                is AccountUiEvent.ChangePassword -> _uiState.update { currentState.copy(optionContent = { ChangePasswordScreen(onDismissRequest = { currentState.eventSink(AccountUiEvent.CloseOption) }) }) }
                 is AccountUiEvent.LogOut -> signOut()
                 is AccountUiEvent.DeleteAccount -> Unit
                 is AccountUiEvent.LeaveFamily -> Unit
                 is AccountUiEvent.SendFeedback -> Unit
-                is AccountUiEvent.ChangePassword -> Unit
-                is AccountUiEvent.Notifications -> Unit
+                is AccountUiEvent.Notifications -> _sideEffects.emitSuspended(AccountUiSideEffect.NavigateToNotifications)
                 is AccountUiEvent.TermsOfService -> Unit
                 is AccountUiEvent.Privacy -> Unit
                 is AccountUiEvent.Activity -> _sideEffects.emitSuspended(AccountUiSideEffect.NavigateToActivity)
                 is AccountUiEvent.Premium -> Unit
+                is AccountUiEvent.CloseOption -> _uiState.update { currentState.copy(optionContent = null) }
             }
         }
     }

@@ -35,4 +35,8 @@ class DefaultAuthService @Inject constructor(
             return Result.failure(e)
         }
     }
+
+    override suspend fun resetPassword(email: String) {
+        auth.sendPasswordResetEmail(email)
+    }
 }
