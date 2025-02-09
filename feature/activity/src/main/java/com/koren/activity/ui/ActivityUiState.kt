@@ -21,5 +21,4 @@ sealed interface ActivityEvent : UiEvent {
 }
 
 sealed interface ActivitySideEffect : UiSideEffect {
-    data class NavigateTo(val destination: ActivityDestination) : ActivitySideEffect
 }

@@ -1,10 +1,10 @@
 package com.koren.activity.ui
 
+import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,12 +14,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,9 +32,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.activity.R
 import com.koren.common.models.activity.LocationActivity
-import com.koren.common.models.invitation.InvitationStatus
-import com.koren.common.models.invitation.getExpiryText
-import com.koren.common.models.invitation.toHumanReadableDateTime
 import com.koren.common.models.invitation.toRelativeTime
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.theme.KorenTheme
@@ -45,7 +39,9 @@ import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import kotlinx.serialization.Serializable
-import org.w3c.dom.Text
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Serializable
 object ActivityDestination
@@ -81,19 +77,55 @@ private fun ActivityScreenContent(
 
 @Composable
 fun ShownContent(uiState: ActivityUiState.Shown) {
+    val groupedActivities = groupActivitiesByDay(uiState.activities)
+
     Column {
         LazyColumn {
-            items(uiState.activities) { activity ->
-                Card(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 4.dp)
-                        .fillMaxWidth()
-                ) {
-                    LocationActivityListItem(locationActivity = activity)
+            groupedActivities.forEach { (date, activities) ->
+                item {
+                    DateHeader(date)
+                }
+                items(activities) { activity ->
+                    Card(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                            .fillMaxWidth()
+                    ) {
+                        LocationActivityListItem(locationActivity = activity)
+                    }
                 }
             }
         }
     }
+}
+
+fun groupActivitiesByDay(activities: List<LocationActivity>): Map<String, List<LocationActivity>> {
+    val grouped = mutableMapOf<String, MutableList<LocationActivity>>()
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+    for (activity in activities) {
+        val date = dateFormat.format(Date(activity.createdAt))
+        grouped.getOrPut(date) { mutableListOf() }.add(activity)
+    }
+    return grouped
+}
+
+
+@Composable
+fun DateHeader(date: String) {
+    val dateLong = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(date)?.time ?: 0
+    val relativeDate = DateUtils.getRelativeTimeSpanString(
+        dateLong,
+        System.currentTimeMillis(),
+        DateUtils.DAY_IN_MILLIS,
+        DateUtils.FORMAT_ABBREV_ALL
+    ).toString()
+    Text(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth(),
+        text = relativeDate
+    )
 }
 
 @Composable

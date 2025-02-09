@@ -1,12 +1,11 @@
 package com.koren.common.models.invitation
 
+import android.text.format.DateUtils
 import java.time.Duration
 import java.time.Instant
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.util.Locale
 
 data class Invitation(
@@ -40,30 +39,14 @@ fun Long.toHumanReadableDateTime(
     }
 }
 
-fun Long.toRelativeTime(
-    locale: Locale = Locale.getDefault(),
-    zoneId: ZoneId = ZoneId.systemDefault()
-): String {
-    val now = LocalDate.now(zoneId)
-    val date = Instant.ofEpochMilli(this).atZone(zoneId).toLocalDate()
-    val time = Instant.ofEpochMilli(this).atZone(zoneId).toLocalTime()
-
-    val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
-
-    return when {
-        date.isEqual(now) -> {
-            "Today at ${time.format(timeFormatter)}"
-        }
-        date.isEqual(now.minusDays(1)) -> {
-            "Yesterday at ${time.format(timeFormatter)}"
-        }
-        else -> {
-            val dayOfWeek = date.dayOfWeek.toString().lowercase().replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(locale) else it.toString()
-            }
-            "$dayOfWeek at ${time.format(timeFormatter)}"
-        }
-    }
+fun Long.toRelativeTime(): String {
+    val nowMillis = System.currentTimeMillis()
+    return DateUtils.getRelativeTimeSpanString(
+        this,
+        nowMillis,
+        DateUtils.MINUTE_IN_MILLIS,
+        DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME
+    ).toString()
 }
 
 fun Invitation.getExpiryText(): String {
