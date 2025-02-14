@@ -10,13 +10,18 @@ import kotlinx.serialization.Serializable
 object ActivityGraph
 
 fun NavGraphBuilder.activityScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    navigateToCalendar: () -> Unit
 ) {
     navigation<ActivityGraph>(
         startDestination = ActivityDestination
     ) {
         composable<ActivityDestination> {
-            ActivityScreen()
+            ActivityScreen(
+                navigateToCalendar = {
+                    navigateToCalendar()
+                }
+            )
         }
     }
 }

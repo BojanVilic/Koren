@@ -4,15 +4,19 @@ import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Card
@@ -33,7 +37,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.activity.R
 import com.koren.common.models.activity.LocationActivity
 import com.koren.common.models.invitation.toRelativeTime
+import com.koren.common.util.CollectSideEffects
+import com.koren.designsystem.components.ActionButton
 import com.koren.designsystem.components.LoadingContent
+import com.koren.designsystem.icon.Event
+import com.koren.designsystem.icon.KorenIcons
+import com.koren.designsystem.models.ActionItem
+import com.koren.designsystem.models.IconResource
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -48,7 +58,8 @@ object ActivityDestination
 
 @Composable
 fun ActivityScreen(
-    viewModel: ActivityViewModel = hiltViewModel()
+    viewModel: ActivityViewModel = hiltViewModel(),
+    navigateToCalendar: () -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
@@ -59,6 +70,14 @@ fun ActivityScreen(
     )
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    CollectSideEffects(
+        viewModel = viewModel
+    ) { sideEffect ->
+        when (sideEffect) {
+            is ActivitySideEffect.NavigateToCalendar -> navigateToCalendar()
+        }
+    }
 
     ActivityScreenContent(uiState = uiState)
 }
@@ -84,7 +103,30 @@ private fun NoFamilyContent() {
 fun ShownContent(uiState: ActivityUiState.Shown) {
     val groupedActivities = groupActivitiesByDay(uiState.activities)
 
+    val actions = listOf(
+        ActionItem(
+            icon = IconResource.Vector(KorenIcons.Event),
+            text = "Calendar",
+            onClick = { uiState.eventSink(ActivityEvent.NavigateToCalendar) }
+        )
+    )
+
     Column {
+
+        Card {
+            Row(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .height(IntrinsicSize.Max)
+                    .horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                actions.forEach { action ->
+                    ActionButton(actionItem = action)
+                }
+            }
+        }
+
         LazyColumn {
             groupedActivities.forEach { (date, activities) ->
                 item {

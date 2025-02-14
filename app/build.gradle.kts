@@ -64,6 +64,7 @@ dependencies {
     implementation(projects.feature.activity)
     implementation(projects.feature.account)
     implementation(projects.feature.invitation)
+    implementation(projects.feature.calendar)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

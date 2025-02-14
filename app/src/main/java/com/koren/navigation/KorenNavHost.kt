@@ -15,6 +15,9 @@ import com.koren.activity.ui.ActivityDestination
 import com.koren.activity.ui.activityScreen
 import com.koren.auth.navigation.AuthGraph
 import com.koren.auth.navigation.authScreen
+import com.koren.calendar.navigation.CalendarGraph
+import com.koren.calendar.navigation.calendarScreen
+import com.koren.calendar.ui.CalendarDestination
 import com.koren.home.navigation.HomeGraph
 import com.koren.home.navigation.homeScreen
 import com.koren.home.ui.home.HomeDestination
@@ -69,7 +72,10 @@ fun KorenNavHost(
                 navController = navController,
                 onShowSnackbar = onShowSnackbar
             )
-            activityScreen(navController = navController)
+            activityScreen(
+                navController = navController,
+                navigateToCalendar = { navController.navigate(CalendarDestination) }
+            )
             accountScreen(
                 navController = navController,
                 onLogOut = {
@@ -83,6 +89,7 @@ fun KorenNavHost(
                 }
             )
             invitationScreen(navController = navController)
+            calendarScreen(navController = navController, onShowSnackbar = onShowSnackbar)
         }
     }
 }

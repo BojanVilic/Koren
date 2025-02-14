@@ -14,8 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ActivityViewModel @Inject constructor(
-    private val activityRepository: ActivityRepository,
-    private val userSession: UserSession
+    activityRepository: ActivityRepository,
+    userSession: UserSession
 ): StateViewModel<ActivityEvent, ActivityUiState, ActivitySideEffect>() {
 
     override fun setInitialState(): ActivityUiState = ActivityUiState.Loading
@@ -38,7 +38,7 @@ class ActivityViewModel @Inject constructor(
     override fun handleEvent(event: ActivityEvent) {
         withEventfulState<ActivityUiState.Shown> {
             when (event) {
-                ActivityEvent.OnClick -> Unit
+                ActivityEvent.NavigateToCalendar -> _sideEffects.emitSuspended(ActivitySideEffect.NavigateToCalendar)
             }
         }
     }

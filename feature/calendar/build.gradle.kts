@@ -4,18 +4,14 @@ plugins {
     alias(libs.plugins.koren.feature)
 }
 
+
 android {
-    namespace = "com.koren.home"
+    namespace = "com.koren.calendar"
 }
 
 dependencies {
-    implementation(projects.core.data)
     implementation(projects.core.domain)
-
-    implementation(libs.firebase.database)
-    implementation(libs.firebase.storage)
+    implementation(projects.core.data)
 
     implementation(libs.lottie.compose)
-
-    implementation(libs.accompanist.permissions)
 }
