@@ -16,6 +16,7 @@ import com.koren.domain.UpdateUserLocationUseCase
 import com.koren.map.R
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 @HiltWorker
@@ -28,14 +29,14 @@ class LocationWorker @AssistedInject constructor(
     @Assisted private val activityRepository: ActivityRepository
 ) : CoroutineWorker(appContext, workerParams) {
 
-
     override suspend fun doWork(): Result {
         return try {
             locationService.updateLocationOnce().let { location ->
+                showNotification()
                 updateUserLocationUseCase(location)
                 activityRepository.insertNewActivity(location)
+                dismissNotification()
             }
-            showNotification()
             Result.success()
         } catch (e: Exception) {
             Result.retry()
@@ -43,8 +44,7 @@ class LocationWorker @AssistedInject constructor(
     }
 
     private fun showNotification() {
-        val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE)
-                as NotificationManager
+        val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         createNotificationChannel(notificationManager)
 
@@ -52,7 +52,8 @@ class LocationWorker @AssistedInject constructor(
             .setContentTitle(resourceProvider[R.string.notification_location_update_title])
             .setContentText(resourceProvider[R.string.notification_location_update_message])
             .setSmallIcon(R.drawable.koren_icon)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setAutoCancel(true)
             .build()
 
         notificationManager.notify(NOTIFICATION_ID, notification)
@@ -62,9 +63,15 @@ class LocationWorker @AssistedInject constructor(
         val channel = NotificationChannel(
             CHANNEL_ID,
             "Location Updates",
-            NotificationManager.IMPORTANCE_DEFAULT
+            NotificationManager.IMPORTANCE_LOW
         )
         notificationManager.createNotificationChannel(channel)
+    }
+
+    private suspend fun dismissNotification() {
+        delay(1000L)
+        val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(NOTIFICATION_ID)
     }
 
     companion object {

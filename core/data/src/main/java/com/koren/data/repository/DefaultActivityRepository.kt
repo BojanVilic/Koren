@@ -78,6 +78,7 @@ class DefaultActivityRepository @Inject constructor(
                     Timber.d("Time difference: $timeDifferenceInMins")
                     if (timeDifferenceInMins >= 5 && lastActivity.locationName.equals(activity.locationName, true).not()) {
                         if (lastActivity.inTransit) {
+                            firebaseDatabase.getReference("users/${lastActivity.userId}/lastActivityId").removeValue()
                             firebaseDatabase.getReference(activitiesPath(lastActivity.familyId, lastActivity.id, LOCATION_ACTIVITY)).removeValue()
                         }
                         firebaseDatabase.getReference(activitiesPath(activity.familyId, activity.id, LOCATION_ACTIVITY)).setValue(activity)
