@@ -89,9 +89,15 @@ fun KorenTheme(
         else -> LightColors
     }
 
+    val extendedColors = when {
+        darkTheme -> DarkExtendedColors
+        else -> LightExtendedColors
+    }
+
     val snackbarHostState = remember { SnackbarHostState() }
 
     CompositionLocalProvider(
+        LocalCustomColors provides extendedColors,
         LocalScaffoldStateProvider provides ScaffoldStateProvider(),
         LocalSnackbarHostState provides snackbarHostState
     ) {
