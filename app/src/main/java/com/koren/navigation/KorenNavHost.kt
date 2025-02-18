@@ -15,9 +15,8 @@ import com.koren.activity.ui.ActivityDestination
 import com.koren.activity.ui.activityScreen
 import com.koren.auth.navigation.AuthGraph
 import com.koren.auth.navigation.authScreen
-import com.koren.calendar.navigation.CalendarGraph
 import com.koren.calendar.navigation.calendarScreen
-import com.koren.calendar.ui.CalendarDestination
+import com.koren.calendar.ui.calendar.CalendarDestination
 import com.koren.home.navigation.HomeGraph
 import com.koren.home.navigation.homeScreen
 import com.koren.home.ui.home.HomeDestination

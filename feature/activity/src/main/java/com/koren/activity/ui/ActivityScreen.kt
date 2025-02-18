@@ -6,10 +6,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -103,27 +105,30 @@ private fun NoFamilyContent() {
 fun ShownContent(uiState: ActivityUiState.Shown) {
     val groupedActivities = groupActivitiesByDay(uiState.activities)
 
-    val actions = listOf(
-        ActionItem(
-            icon = IconResource.Vector(KorenIcons.Event),
-            text = "Calendar",
-            onClick = { uiState.eventSink(ActivityEvent.NavigateToCalendar) }
-        )
-    )
-
     Column {
 
-        Card {
-            Row(
+        Card(
+            modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
+            onClick = { uiState.eventSink(ActivityEvent.NavigateToCalendar) },
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Column(
                 modifier = Modifier
-                    .padding(8.dp)
-                    .height(IntrinsicSize.Max)
-                    .horizontalScroll(rememberScrollState()),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(16.dp)
+                    .fillMaxWidth(0.3f),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                actions.forEach { action ->
-                    ActionButton(actionItem = action)
-                }
+                Icon(
+                    modifier = Modifier.size(24.dp),
+                    imageVector = KorenIcons.Event,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Calendar",
+                )
             }
         }
 

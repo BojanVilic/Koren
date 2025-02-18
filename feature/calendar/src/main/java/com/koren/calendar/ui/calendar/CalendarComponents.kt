@@ -1,7 +1,8 @@
-package com.koren.calendar.ui
+package com.koren.calendar.ui.calendar
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +20,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -34,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.koren.calendar.ui.Day
 import com.koren.designsystem.theme.ExtendedTheme
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
@@ -43,7 +46,9 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
-fun CalendarUI() {
+fun CalendarUI(
+    dayClicked: (Day) -> Unit
+) {
     val currentMonth = remember { YearMonth.now() }
     val pagerState = rememberPagerState(
         initialPage = Int.MAX_VALUE / 2,
@@ -65,7 +70,11 @@ fun CalendarUI() {
             HeaderSection(currentMonth = displayedMonth.value)
             DaysOfWeekRow()
         }
-        MonthPager(pagerState = pagerState, currentMonth = currentMonth)
+        MonthPager(
+            pagerState = pagerState,
+            currentMonth = currentMonth,
+            dayClicked = dayClicked
+        )
     }
 }
 
@@ -137,19 +146,29 @@ fun DaysOfWeekRow() {
 
 
 @Composable
-fun MonthPager(pagerState: PagerState, currentMonth: YearMonth) {
+fun MonthPager(
+    pagerState: PagerState,
+    currentMonth: YearMonth,
+    dayClicked: (Day) -> Unit
+) {
     HorizontalPager(
         modifier = Modifier.fillMaxWidth(),
         state = pagerState
     ) { page ->
         val monthToDisplay = currentMonth.plusMonths((page - (Int.MAX_VALUE / 2)).toLong())
-        CalendarGrid(month = monthToDisplay)
+        CalendarGrid(
+            month = monthToDisplay,
+            dayClicked = dayClicked
+        )
     }
 }
 
 
 @Composable
-fun CalendarGrid(month: YearMonth) {
+fun CalendarGrid(
+    month: YearMonth,
+    dayClicked: (Day) -> Unit
+) {
     val days = remember(month) { getDaysForMonth(month) }
 
     LazyVerticalGrid(
@@ -159,7 +178,10 @@ fun CalendarGrid(month: YearMonth) {
         columns = GridCells.Fixed(7)
     ) {
         items(days) { day ->
-            DayCell(day = day)
+            DayCell(
+                day = day,
+                dayClicked = dayClicked
+            )
         }
     }
 }
@@ -171,22 +193,26 @@ fun getDaysForMonth(yearMonth: YearMonth): List<Day> {
     val daysInMonth = yearMonth.lengthOfMonth()
 
     for (i in 1 until firstDayOfWeek.value) {
-        daysList.add(Day(dayOfMonth = null))
+        daysList.add(Day(dayOfMonth = null, localDate = null))
     }
     for (dayOfMonth in 1..daysInMonth) {
-        daysList.add(Day(dayOfMonth = dayOfMonth))
+        daysList.add(Day(dayOfMonth = dayOfMonth, localDate = yearMonth.atDay(dayOfMonth)))
     }
 
     val totalDays = daysList.size
     val remainingDays = 6 * 7 - totalDays
     for (i in 0 until remainingDays) {
-        daysList.add(Day(dayOfMonth = null))
+        daysList.add(Day(dayOfMonth = null, localDate = null))
     }
     return daysList
 }
 
 @Composable
-fun DayCell(day: Day) {
+fun DayCell(
+    day: Day,
+    dayClicked: (Day) -> Unit
+) {
+
     Card(
         modifier = Modifier
             .aspectRatio(1f)
@@ -197,13 +223,13 @@ fun DayCell(day: Day) {
                 MaterialTheme.colorScheme.surfaceContainerHighest
             else
                 Color.Transparent
-        ),
-        onClick = {}
+        )
     ) {
         day.dayOfMonth?.let { dayOfMonth ->
             Box(
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .clickable { dayClicked(day) },
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Text(
@@ -221,6 +247,8 @@ fun DayCell(day: Day) {
 @Composable
 fun CalendarUIPreview() {
     KorenTheme {
-        CalendarUI()
+        CalendarUI(
+            dayClicked = {}
+        )
     }
 }

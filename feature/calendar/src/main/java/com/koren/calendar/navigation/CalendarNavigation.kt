@@ -4,8 +4,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.koren.calendar.ui.CalendarDestination
-import com.koren.calendar.ui.CalendarScreen
+import com.koren.calendar.ui.calendar.CalendarDestination
+import com.koren.calendar.ui.calendar.CalendarScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
