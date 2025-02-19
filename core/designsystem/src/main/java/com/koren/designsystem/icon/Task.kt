@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.dp
 val KorenIcons.Task: ImageVector by lazy(LazyThreadSafetyMode.NONE) {
     ImageVector.Builder(
         name = "Task",
-        defaultWidth = 800.dp,
-        defaultHeight = 800.dp,
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
         viewportWidth = 24f,
         viewportHeight = 24f
     ).apply {

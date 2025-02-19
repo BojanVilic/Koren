@@ -26,16 +26,22 @@ enum class InvitationStatus {
     PENDING, ACCEPTED, DECLINED, EXPIRED
 }
 
-fun Long.toHumanReadableDateTime(
+fun Long?.toHumanReadableDate(
     locale: Locale = Locale.getDefault()
 ): String {
+    if (this == null) return ""
+
     return try {
         val instant = Instant.ofEpochMilli(this)
-        val localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
-        val formatter = DateTimeFormatter.ofPattern("HH:mm:ss d-MMM-yyyy", locale)
-        localDateTime.format(formatter)
+        val zonedDateTime = instant.atZone(ZoneId.of("UTC"))
+
+        val localDate = zonedDateTime.toLocalDate()
+
+        val formatter = DateTimeFormatter.ofPattern("EEE, d-MMM", locale)
+        localDate.format(formatter)
     } catch (e: Exception) {
-        "Invalid Date"
+        println("Error formatting date: ${e.message}")
+        ""
     }
 }
 

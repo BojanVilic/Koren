@@ -1,8 +1,10 @@
 package com.koren.calendar.ui.add_entry
 
+import com.koren.calendar.ui.Day
 import com.koren.common.util.StateViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.update
+import java.time.ZoneOffset
 import javax.inject.Inject
 
 @HiltViewModel
@@ -11,9 +13,11 @@ class AddEntryViewModel @Inject constructor(
 
     override fun setInitialState(): AddEntryUiState = AddEntryUiState.Loading
 
-    init {
+    fun init(day: Day) {
         _uiState.update {
             AddEntryUiState.Shown.AddEvent(
+                startDate = day.localDate?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
+                endDate = day.localDate?.atTime(23, 59)?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
                 eventSink = { event -> handleEvent(event) }
             )
         }
@@ -26,6 +30,12 @@ class AddEntryViewModel @Inject constructor(
                 is AddEntryUiEvent.TabChanged -> handleTabChangedEvent(event, currentState)
                 is AddEntryUiEvent.CancelClicked -> handleCancelClickedEvent()
                 is AddEntryUiEvent.SaveClicked -> handleSaveClickedEvent()
+                is AddEntryUiEvent.DescriptionChanged -> _uiState.update { currentState.copy(description = event.description) }
+                is AddEntryUiEvent.IsAllDayChanged -> _uiState.update { currentState.copy(isAllDay = event.isAllDay) }
+                is AddEntryUiEvent.StartDateChanged -> _uiState.update { currentState.copy(startDate = event.startDate) }
+                is AddEntryUiEvent.EndDateChanged -> _uiState.update { currentState.copy(endDate = event.endDate) }
+                is AddEntryUiEvent.StartTimeChanged -> _uiState.update { currentState.copy(startTime = event.startTime) }
+                is AddEntryUiEvent.EndTimeChanged -> _uiState.update { currentState.copy(endTime = event.endTime) }
             }
         }
     }
@@ -37,6 +47,7 @@ class AddEntryViewModel @Inject constructor(
                 is AddEntryUiEvent.TabChanged -> handleTabChangedEvent(event, currentState)
                 is AddEntryUiEvent.CancelClicked -> handleCancelClickedEvent()
                 is AddEntryUiEvent.SaveClicked -> handleSaveClickedEvent()
+                else -> Unit
             }
         }
     }

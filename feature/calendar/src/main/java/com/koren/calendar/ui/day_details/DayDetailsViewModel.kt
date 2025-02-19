@@ -44,7 +44,10 @@ class DayDetailsViewModel @Inject constructor(
                     _uiState.update {
                         DayDetailsUiState.Shown.AddEntry(
                             day = event.day,
-                            content = { AddEntryScreen(onDismiss = { _sideEffects.emitSuspended(DayDetailsUiSideEffect.Dismiss) }) },
+                            content = { AddEntryScreen(
+                                day = event.day,
+                                onDismiss = { _sideEffects.emitSuspended(DayDetailsUiSideEffect.Dismiss) }
+                            ) },
                             eventSink = { event -> handleEvent(event) }
                         )
                     }

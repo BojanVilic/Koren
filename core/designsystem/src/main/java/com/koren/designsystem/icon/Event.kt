@@ -16,8 +16,8 @@ import androidx.compose.ui.unit.dp
 val KorenIcons.Event: ImageVector by lazy(LazyThreadSafetyMode.NONE) {
     ImageVector.Builder(
         name = "Event",
-        defaultWidth = 800.dp,
-        defaultHeight = 800.dp,
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
         viewportWidth = 24f,
         viewportHeight = 24f
     ).apply {
