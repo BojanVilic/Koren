@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.calendar.ui.Day
+import com.koren.calendar.ui.add_entry.AddEntryScreen
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.util.CollectSideEffects
@@ -54,18 +55,19 @@ fun DayDetailsScreen(
     ) { uiSideEffect ->
         when (uiSideEffect) {
             is DayDetailsUiSideEffect.ShowSnackbar -> snackbarHost.showSnackbar(uiSideEffect.message)
-            is DayDetailsUiSideEffect.Dismiss -> onDismiss()
         }
     }
 
     DayDetailsScreenContent(
-        uiState = uiState
+        uiState = uiState,
+        onDismiss = onDismiss
     )
 }
 
 @Composable
 private fun DayDetailsScreenContent(
-    uiState: DayDetailsUiState
+    uiState: DayDetailsUiState,
+    onDismiss: () -> Unit
 ) {
     Column(
         modifier = Modifier.animateContentSize(
@@ -78,7 +80,10 @@ private fun DayDetailsScreenContent(
             is DayDetailsUiState.Loading -> CircularProgressIndicator()
             is DayDetailsUiState.Shown.Idle -> DayDetailsScreenShownContent(uiState = uiState)
             is DayDetailsUiState.Shown.Empty -> EmptyDayDetailsContent(uiState = uiState)
-            is DayDetailsUiState.Shown.AddEntry -> uiState.content?.invoke()
+            is DayDetailsUiState.Shown.AddEntry -> AddEntryScreen(
+                day = uiState.day,
+                onDismiss = { onDismiss() }
+            )
         }
     }
 }
@@ -183,7 +188,8 @@ fun DayDetailsScreenPreview() {
                     )
                 ),
                 eventSink = {}
-            )
+            ),
+            onDismiss = {}
         )
     }
 }

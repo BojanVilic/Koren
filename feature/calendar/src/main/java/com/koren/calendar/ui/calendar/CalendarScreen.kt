@@ -11,17 +11,21 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.koren.calendar.ui.day_details.DayDetailsScreen
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -43,14 +47,23 @@ fun CalendarScreen(
         )
     )
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = {
+            if (it == SheetValue.Hidden) {
+                (uiState as? CalendarUiState.Shown)?.let { state ->
+                    state.eventSink(CalendarUiEvent.ResetCalendarBottomSheetContent)
+                }
+                true
+            } else true
+        }
+    )
 
     CollectSideEffects(
         viewModel = viewModel
     ) { uiSideEffect ->
         when (uiSideEffect) {
             is CalendarUiSideEffect.ShowSnackbar -> onShowSnackbar(uiSideEffect.message)
-            is CalendarUiSideEffect.Dismiss -> sheetState.hide()
         }
     }
 
@@ -80,7 +93,9 @@ private fun CalendarScreenShownContent(
     sheetState: SheetState
 ) {
 
-    uiState.dayDetailsContent?.let { content ->
+    val coroutineScope = rememberCoroutineScope()
+
+    if (uiState.calendarBottomSheetContent !is CalendarBottomSheetContent.None) {
         ModalBottomSheet(
             modifier = Modifier.windowInsetsPadding(
                 WindowInsets.safeDrawing.only(
@@ -89,10 +104,22 @@ private fun CalendarScreenShownContent(
             ),
             sheetState = sheetState,
             onDismissRequest = {
-                uiState.eventSink(CalendarUiEvent.DismissBottomSheet)
+                coroutineScope.launch {
+                    sheetState.hide()
+                }
             }
         ) {
-            content.invoke()
+            when (uiState.calendarBottomSheetContent) {
+                is CalendarBottomSheetContent.DayDetails -> DayDetailsScreen(
+                    day = uiState.calendarBottomSheetContent.day,
+                    onDismiss = {
+                        coroutineScope.launch {
+                            sheetState.hide()
+                        }
+                    }
+                )
+                else -> Unit
+            }
         }
     }
 

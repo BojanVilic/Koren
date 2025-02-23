@@ -1,6 +1,5 @@
 package com.koren.calendar.ui.day_details
 
-import androidx.compose.runtime.Composable
 import com.koren.calendar.ui.Day
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
@@ -15,9 +14,9 @@ sealed interface DayDetailsUiState : UiState {
 
         data class AddEntry(
             override val day: Day,
-            val content: @Composable (() -> Unit)? = null,
             override val eventSink: (DayDetailsUiEvent) -> Unit
         ) : Shown
+
         data class Empty(
             override val day: Day,
             override val eventSink: (DayDetailsUiEvent) -> Unit
@@ -36,5 +35,4 @@ sealed interface DayDetailsUiEvent : UiEvent {
 
 sealed interface DayDetailsUiSideEffect : UiSideEffect {
     data class ShowSnackbar(val message: String) : DayDetailsUiSideEffect
-    data object Dismiss : DayDetailsUiSideEffect
 }

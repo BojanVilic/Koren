@@ -2,7 +2,6 @@
 
 package com.koren.calendar.ui.add_entry
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -181,7 +180,18 @@ private fun AddEntryScreenShownContent(
 private fun AddEventContent(
     uiState: AddEntryUiState.Shown.AddEvent
 ) {
-    TimeSelectionRow(uiState = uiState)
+    TimeSelectionRow(
+        startDate = uiState.startDate,
+        endDate = uiState.endDate,
+        startTime = uiState.startTime,
+        endTime = uiState.endTime,
+        isAllDay = uiState.isAllDay,
+        isAllDayChanged = { uiState.eventSink(AddEntryUiEvent.IsAllDayChanged(it)) },
+        onStartDateChanged = { uiState.eventSink(AddEntryUiEvent.StartDateChanged(it)) },
+        onEndDateChanged = { uiState.eventSink(AddEntryUiEvent.EndDateChanged(it)) },
+        onStartTimeChanged = { uiState.eventSink(AddEntryUiEvent.StartTimeChanged(it)) },
+        onEndTimeChanged = { uiState.eventSink(AddEntryUiEvent.EndTimeChanged(it)) }
+    )
     HorizontalDivider()
     DescriptionRow(
         description = uiState.description,
@@ -195,7 +205,16 @@ enum class PickerType {
 
 @Composable
 private fun TimeSelectionRow(
-    uiState: AddEntryUiState.Shown.AddEvent
+    startDate: Long,
+    endDate: Long,
+    startTime: String,
+    endTime: String,
+    isAllDay: Boolean,
+    isAllDayChanged: (Boolean) -> Unit,
+    onStartDateChanged: (Long) -> Unit,
+    onEndDateChanged: (Long) -> Unit,
+    onStartTimeChanged: (String) -> Unit,
+    onEndTimeChanged: (String) -> Unit
 ) {
 
     var currentPicker by remember { mutableStateOf(PickerType.NONE) }
@@ -219,8 +238,8 @@ private fun TimeSelectionRow(
             )
             Spacer(modifier = Modifier.weight(1f))
             Switch(
-                checked = uiState.isAllDay,
-                onCheckedChange = { uiState.eventSink(AddEntryUiEvent.IsAllDayChanged(it)) }
+                checked = isAllDay,
+                onCheckedChange = { isAllDayChanged(it) }
             )
         }
 
@@ -235,10 +254,10 @@ private fun TimeSelectionRow(
                     .clickable {
                         currentPicker = PickerType.START_DATE
                     },
-                text = if (uiState.startDate == 0L) "Start date" else uiState.startDate.toHumanReadableDate(),
+                text = if (startDate == 0L) "Start date" else startDate.toHumanReadableDate(),
                 style = MaterialTheme.typography.bodyLarge
             )
-            if (!uiState.isAllDay) {
+            if (!isAllDay) {
                 Spacer(modifier = Modifier.weight(1f))
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -250,7 +269,7 @@ private fun TimeSelectionRow(
                             .clickable {
                                 currentPicker = PickerType.START_TIME
                             },
-                        text = uiState.startTime.ifEmpty { "Start time" },
+                        text = startTime.ifEmpty { "Start time" },
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
@@ -268,11 +287,11 @@ private fun TimeSelectionRow(
                     .clickable {
                         currentPicker = PickerType.END_DATE
                     },
-                text = if (uiState.endDate == 0L) "End date" else uiState.endDate.toHumanReadableDate(),
+                text = if (endDate == 0L) "End date" else endDate.toHumanReadableDate(),
                 style = MaterialTheme.typography.bodyLarge
             )
             Spacer(modifier = Modifier.weight(1f))
-            if (!uiState.isAllDay) {
+            if (!isAllDay) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -283,7 +302,7 @@ private fun TimeSelectionRow(
                             .clickable {
                                 currentPicker = PickerType.END_TIME
                             },
-                        text = uiState.endTime.ifEmpty { "End time" },
+                        text = endTime.ifEmpty { "End time" },
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
@@ -294,44 +313,44 @@ private fun TimeSelectionRow(
     when (currentPicker) {
         PickerType.START_DATE -> DatePickerModal(
             onDateSelected = { selectedDate ->
-                if ((selectedDate?: 0) > uiState.endDate) {
-                    uiState.eventSink(AddEntryUiEvent.EndDateChanged(selectedDate ?: 0L))
+                if ((selectedDate?: 0) > endDate) {
+                    onEndDateChanged(selectedDate?: 0L)
                 }
-                uiState.eventSink(AddEntryUiEvent.StartDateChanged(selectedDate ?: 0L))
+                onStartDateChanged(selectedDate ?: 0L)
                 currentPicker = PickerType.NONE
             },
             onDismiss = { currentPicker = PickerType.NONE }
         )
         PickerType.END_DATE -> DatePickerModal(
             onDateSelected = { selectedDate ->
-                if ((selectedDate?: 0) < uiState.startDate) {
-                    uiState.eventSink(AddEntryUiEvent.StartDateChanged(selectedDate ?: 0L))
+                if ((selectedDate?: 0) < startDate) {
+                    onStartDateChanged(selectedDate?: 0L)
                 }
-                uiState.eventSink(AddEntryUiEvent.EndDateChanged(selectedDate ?: 0L))
+                onEndDateChanged(selectedDate ?: 0L)
                 currentPicker = PickerType.NONE
             },
             onDismiss = { currentPicker = PickerType.NONE }
         )
         PickerType.START_TIME -> TimePickerModal(
-            initialHour = uiState.startTime.substringBefore(":").toIntOrNull()?: 0,
-            initialMinute = uiState.startTime.substringAfter(":").toIntOrNull()?: 0,
+            initialHour = startTime.substringBefore(":").toIntOrNull()?: 0,
+            initialMinute = startTime.substringAfter(":").toIntOrNull()?: 0,
             onTimeSelected = { selectedTime ->
-                if ((selectedTime ?: "") > uiState.endTime) {
-                    uiState.eventSink(AddEntryUiEvent.EndTimeChanged(selectedTime ?: ""))
+                if ((selectedTime ?: "") > endTime) {
+                    onEndTimeChanged(selectedTime ?: "")
                 }
-                uiState.eventSink(AddEntryUiEvent.StartTimeChanged(selectedTime ?: ""))
+                onStartTimeChanged(selectedTime ?: "")
                 currentPicker = PickerType.NONE
             },
             onDismiss = { currentPicker = PickerType.NONE }
         )
         PickerType.END_TIME -> TimePickerModal(
-            initialHour = uiState.endTime.substringBefore(":").toIntOrNull()?: 0,
-            initialMinute = uiState.endTime.substringAfter(":").toIntOrNull()?: 0,
+            initialHour = endTime.substringBefore(":").toIntOrNull()?: 0,
+            initialMinute = endTime.substringAfter(":").toIntOrNull()?: 0,
             onTimeSelected = { selectedTime ->
-                if ((selectedTime ?: "") < uiState.startTime) {
-                    uiState.eventSink(AddEntryUiEvent.StartTimeChanged(selectedTime ?: ""))
+                if ((selectedTime ?: "") < startTime) {
+                    onStartTimeChanged(selectedTime ?: "")
                 }
-                uiState.eventSink(AddEntryUiEvent.EndTimeChanged(selectedTime ?: ""))
+                onEndTimeChanged(selectedTime ?: "")
                 currentPicker = PickerType.NONE
             },
             onDismiss = { currentPicker = PickerType.NONE }
@@ -374,7 +393,6 @@ private fun DescriptionRow(
     }
 }
 
-@SuppressLint("DefaultLocale")
 @Composable
 fun TimePickerModal(
     initialHour: Int = 0,
@@ -450,7 +468,24 @@ fun DatePickerModal(
 private fun AddTaskContent(
     uiState: AddEntryUiState.Shown.AddTask
 ) {
-    Text(text = "Add task content")
+//    TimeSelectionRow(
+//        startDate = uiState.startDate,
+//        endDate = uiState.endDate,
+//        startTime = uiState.startTime,
+//        endTime = uiState.endTime,
+//        isAllDay = uiState.isAllDay,
+//        isAllDayChanged = { uiState.eventSink(AddEntryUiEvent.IsAllDayChanged(it)) },
+//        onStartDateChanged = { uiState.eventSink(AddEntryUiEvent.StartDateChanged(it)) },
+//        onEndDateChanged = { uiState.eventSink(AddEntryUiEvent.EndDateChanged(it)) },
+//        onStartTimeChanged = { uiState.eventSink(AddEntryUiEvent.StartTimeChanged(it)) },
+//        onEndTimeChanged = { uiState.eventSink(AddEntryUiEvent.EndTimeChanged(it)) }
+//    )
+    HorizontalDivider()
+    DescriptionRow(
+        description = uiState.description,
+        onDescriptionChanged = { uiState.eventSink(AddEntryUiEvent.DescriptionChanged(it)) }
+    )
+    HorizontalDivider()
 }
 
 @ThemePreview

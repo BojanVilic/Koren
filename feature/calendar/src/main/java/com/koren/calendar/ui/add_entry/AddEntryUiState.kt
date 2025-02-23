@@ -23,6 +23,10 @@ sealed interface AddEntryUiState : UiState {
 
         data class AddTask(
             override val title: String = "",
+            val description: String = "",
+            val date: Long = 0L,
+            val time: String = "",
+            val assigneeUserId: String = "",
             override val eventSink: (AddEntryUiEvent) -> Unit
         ) : Shown
     }

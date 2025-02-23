@@ -2,7 +2,6 @@ package com.koren.calendar.ui.calendar
 
 import androidx.lifecycle.viewModelScope
 import com.koren.calendar.ui.Day
-import com.koren.calendar.ui.day_details.DayDetailsScreen
 import com.koren.common.util.StateViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -26,27 +25,23 @@ class CalendarViewModel @Inject constructor(
     override fun handleEvent(event: CalendarUiEvent) {
         withEventfulState<CalendarUiState.Shown> { currentState ->
             when (event) {
-                is CalendarUiEvent.DayClicked -> initDayDetails(event.day, currentState)
-                is CalendarUiEvent.DismissBottomSheet -> _uiState.update { currentState.copy(dayDetailsContent = null) }
+                is CalendarUiEvent.DayClicked -> initDayDetails(event.day)
+                is CalendarUiEvent.ResetCalendarBottomSheetContent -> dismissBottomSheet(currentState)
             }
         }
     }
 
-    private fun initDayDetails(day: Day, currentState: CalendarUiState.Shown) {
+    private fun dismissBottomSheet(currentState: CalendarUiState.Shown) {
+        viewModelScope.launch {
+            delay(200)
+            _uiState.update { currentState.copy(calendarBottomSheetContent = CalendarBottomSheetContent.None) }
+        }
+    }
+
+    private fun initDayDetails(day: Day) {
         _uiState.update {
             CalendarUiState.Shown(
-                dayDetailsContent = {
-                    DayDetailsScreen(
-                        day = day,
-                        onDismiss = {
-                            _sideEffects.emitSuspended(CalendarUiSideEffect.Dismiss)
-                            viewModelScope.launch {
-                                delay(300)
-                                _uiState.update { currentState.copy(dayDetailsContent = null) }
-                            }
-                        }
-                    )
-                },
+                calendarBottomSheetContent = CalendarBottomSheetContent.DayDetails(day),
                 eventSink = { event -> handleEvent(event) }
             )
         }

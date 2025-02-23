@@ -1,7 +1,6 @@
 package com.koren.calendar.ui.day_details
 
 import com.koren.calendar.ui.Day
-import com.koren.calendar.ui.add_entry.AddEntryScreen
 import com.koren.common.util.StateViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.update
@@ -44,10 +43,6 @@ class DayDetailsViewModel @Inject constructor(
                     _uiState.update {
                         DayDetailsUiState.Shown.AddEntry(
                             day = event.day,
-                            content = { AddEntryScreen(
-                                day = event.day,
-                                onDismiss = { _sideEffects.emitSuspended(DayDetailsUiSideEffect.Dismiss) }
-                            ) },
                             eventSink = { event -> handleEvent(event) }
                         )
                     }
