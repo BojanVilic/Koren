@@ -36,55 +36,52 @@ class DefaultActivityRepository @Inject constructor(
 
     override suspend fun insertNewActivity(location: Location) {
         val userData = userSession.currentUser.first()
-
         if (userData.familyId.isEmpty()) return
 
         val lastActivityIdRef = firebaseDatabase.reference.child("users/${userData.id}/lastActivityId")
-        val lastActivityId = lastActivityIdRef
-            .get()
-            .await()
-            .getValue<String>()
+        val lastActivityId = lastActivityIdRef.get().await().getValue<String>()
 
-        if (lastActivityId?.isEmpty() == true) {
-            val activity = LocationActivity(
-                id = UUID.randomUUID().toString(),
-                userId = userData.id,
-                userDisplayName = userData.displayName,
-                familyId = userData.familyId,
-                createdAt = System.currentTimeMillis(),
-                locationName = locationService.getLocationName(location),
-                inTransit = location.speed * 3.6 >= 5
-            )
-            Timber.d("No last location found")
-            firebaseDatabase.getReference(activitiesPath(activity.familyId, activity.id, LOCATION_ACTIVITY)).setValue(activity)
-            updateLastUserActivityUseCase(activity.id)
+        val newActivity = LocationActivity(
+            id = UUID.randomUUID().toString(),
+            userId = userData.id,
+            userDisplayName = userData.displayName,
+            familyId = userData.familyId,
+            createdAt = System.currentTimeMillis(),
+            locationName = locationService.getLocationName(location),
+            inTransit = location.speed * 3.6 >= 5
+        )
+
+        if (lastActivityId.isNullOrEmpty()) {
+            firebaseDatabase.getReference(activitiesPath(newActivity.familyId, newActivity.id, LOCATION_ACTIVITY))
+                .setValue(newActivity)
+            updateLastUserActivityUseCase(newActivity.id)
+            Timber.d("No last location found, created new activity.")
         } else {
-            val activity = LocationActivity(
-                id = UUID.randomUUID().toString(),
-                userId = userData.id,
-                userDisplayName = userData.displayName,
-                familyId = userData.familyId,
-                createdAt = System.currentTimeMillis(),
-                locationName = locationService.getLocationName(location),
-                inTransit = location.speed * 3.6 >= 5
-            )
-
-            firebaseDatabase.getReference(activitiesPath(userData.familyId, lastActivityId?: "", LOCATION_ACTIVITY))
+            val lastActivity = firebaseDatabase
+                .getReference(activitiesPath(userData.familyId, lastActivityId, LOCATION_ACTIVITY))
                 .get()
                 .await()
-                .getValue<LocationActivity>()
-                ?.let { lastActivity ->
-                    val timeDifferenceInMins = (activity.createdAt - lastActivity.createdAt).milliseconds.inWholeMinutes
-                    Timber.d("Time difference: $timeDifferenceInMins")
-                    if (timeDifferenceInMins >= 5 && lastActivity.locationName.equals(activity.locationName, true).not()) {
-                        if (lastActivity.inTransit) {
-                            firebaseDatabase.getReference("users/${lastActivity.userId}/lastActivityId").removeValue()
-                            firebaseDatabase.getReference(activitiesPath(lastActivity.familyId, lastActivity.id, LOCATION_ACTIVITY)).removeValue()
-                        }
-                        firebaseDatabase.getReference(activitiesPath(activity.familyId, activity.id, LOCATION_ACTIVITY)).setValue(activity)
-                        updateLastUserActivityUseCase(activity.id)
-                    }
-                }
+                .getValue<LocationActivity>() ?: return
+
+            val timeDifferenceInMins = (newActivity.createdAt - lastActivity.createdAt).milliseconds.inWholeMinutes
+
+            // 1) Same name -> do not update
+            if (lastActivity.locationName.equals(newActivity.locationName, ignoreCase = true)) return
+
+            // 2) Less than 5 minutes -> do not update
+            if (timeDifferenceInMins < 5) return
+
+            // 3) If both in transit -> remove old transit entry
+            if (lastActivity.inTransit && newActivity.inTransit) {
+                firebaseDatabase.getReference("users/${lastActivity.userId}/lastActivityId").removeValue()
+                firebaseDatabase.getReference(activitiesPath(lastActivity.familyId, lastActivity.id, LOCATION_ACTIVITY))
+                    .removeValue()
+            }
+
+            firebaseDatabase.getReference(activitiesPath(newActivity.familyId, newActivity.id, LOCATION_ACTIVITY))
+                .setValue(newActivity)
+            updateLastUserActivityUseCase(newActivity.id)
+            Timber.d("Activity updated: ${newActivity.id}")
         }
     }
 
