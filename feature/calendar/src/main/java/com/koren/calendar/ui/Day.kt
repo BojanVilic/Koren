@@ -6,7 +6,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 
 data class Day(
-    val dayOfMonth: Int?,
+    val dayOfMonth: Int? = null,
     val dayOfWeek: DayOfWeek? = null,
     val localDate: LocalDate? = null,
     val tasks: List<Task> = emptyList(),

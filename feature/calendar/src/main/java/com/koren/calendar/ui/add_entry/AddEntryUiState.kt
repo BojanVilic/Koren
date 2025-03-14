@@ -1,5 +1,6 @@
 package com.koren.calendar.ui.add_entry
 
+import com.koren.calendar.ui.Day
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
@@ -9,9 +10,11 @@ sealed interface AddEntryUiState : UiState {
     data object Loading : AddEntryUiState
     sealed interface Shown : AddEntryUiState, EventHandler<AddEntryUiEvent> {
         val title: String
+        val selectedDay: Day
 
         data class AddEvent(
             override val title: String = "",
+            override val selectedDay: Day = Day(),
             val description: String = "",
             val isAllDay: Boolean = true,
             val startDate: Long = 0L,
@@ -23,8 +26,8 @@ sealed interface AddEntryUiState : UiState {
 
         data class AddTask(
             override val title: String = "",
+            override val selectedDay: Day = Day(),
             val description: String = "",
-            val date: Long = 0L,
             val time: String = "",
             val assigneeUserId: String = "",
             override val eventSink: (AddEntryUiEvent) -> Unit

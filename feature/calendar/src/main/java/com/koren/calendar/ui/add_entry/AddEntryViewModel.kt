@@ -16,6 +16,7 @@ class AddEntryViewModel @Inject constructor(
     fun init(day: Day) {
         _uiState.update {
             AddEntryUiState.Shown.AddEvent(
+                selectedDay = day,
                 startDate = day.localDate?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
                 endDate = day.localDate?.atTime(23, 59)?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
                 eventSink = { event -> handleEvent(event) }
@@ -47,6 +48,7 @@ class AddEntryViewModel @Inject constructor(
                 is AddEntryUiEvent.TabChanged -> handleTabChangedEvent(event, currentState)
                 is AddEntryUiEvent.CancelClicked -> handleCancelClickedEvent()
                 is AddEntryUiEvent.SaveClicked -> handleSaveClickedEvent()
+                is AddEntryUiEvent.StartTimeChanged -> _uiState.update { currentState.copy(time = event.startTime) }
                 else -> Unit
             }
         }
@@ -60,10 +62,14 @@ class AddEntryViewModel @Inject constructor(
             when (event.tabIndex) {
                 0 -> AddEntryUiState.Shown.AddEvent(
                     title = currentState.title,
+                    selectedDay = currentState.selectedDay,
+                    startDate = currentState.selectedDay.localDate?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
+                    endDate = currentState.selectedDay.localDate?.atTime(23, 59)?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
                     eventSink = { event -> handleEvent(event) }
                 )
                 1 -> AddEntryUiState.Shown.AddTask(
                     title = currentState.title,
+                    selectedDay = currentState.selectedDay,
                     eventSink = { event -> handleAddTaskEvent(event) }
                 )
                 else -> it
