@@ -12,6 +12,9 @@ sealed interface AddEntryUiState : UiState {
     sealed interface Shown : AddEntryUiState, EventHandler<AddEntryUiEvent> {
         val title: String
         val selectedDay: Day
+        val showErrors: Boolean
+        val titleError: Boolean
+            get() = showErrors && title.isBlank()
 
         data class AddEvent(
             override val title: String = "",
@@ -22,8 +25,16 @@ sealed interface AddEntryUiState : UiState {
             val endDate: Long = 0L,
             val startTime: String = "",
             val endTime: String = "",
+            override val showErrors: Boolean = false,
             override val eventSink: (AddEntryUiEvent) -> Unit
-        ) : Shown
+        ) : Shown {
+
+            val startTimeError: Boolean
+                get() = showErrors && isAllDay.not() && startTime.isBlank()
+
+            val endTimeError: Boolean
+                get() = showErrors && isAllDay.not() && endTime.isBlank()
+        }
 
         data class AddTask(
             override val title: String = "",
@@ -35,8 +46,16 @@ sealed interface AddEntryUiState : UiState {
             val assigneeDropdownExpanded: Boolean = false,
             val filteredAssignees: List<UserData> = emptyList(),
             val allFamilyMembers: List<UserData> = emptyList(),
+            override val showErrors: Boolean = false,
             override val eventSink: (AddEntryUiEvent) -> Unit
-        ) : Shown
+        ) : Shown {
+
+            val timeError: Boolean
+                get() = showErrors && time.isBlank()
+
+            val assigneeError: Boolean
+                get() = showErrors && selectedAssignee == null
+        }
     }
 }
 

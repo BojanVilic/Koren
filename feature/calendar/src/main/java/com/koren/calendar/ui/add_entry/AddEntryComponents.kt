@@ -2,8 +2,8 @@
 
 package com.koren.calendar.ui.add_entry
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
@@ -20,7 +21,6 @@ import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -29,9 +29,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -41,14 +39,15 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -61,7 +60,6 @@ import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.TabItem
 import com.koren.designsystem.components.Tabs
-import com.koren.designsystem.icon.Clock
 import com.koren.designsystem.icon.Content
 import com.koren.designsystem.icon.Event
 import com.koren.designsystem.icon.KorenIcons
@@ -132,7 +130,9 @@ private fun AddEntryScreenShownContent(
             Spacer(modifier = Modifier.weight(1f))
 
             TextButton(
-                onClick = {}
+                onClick = {
+                    uiState.eventSink(AddEntryUiEvent.SaveClicked)
+                }
             ) {
                 Text(
                     text = "Save",
@@ -165,7 +165,13 @@ private fun AddEntryScreenShownContent(
                     unfocusedBorderColor = BottomSheetDefaults.ContainerColor
                 ),
                 textStyle = MaterialTheme.typography.titleLarge.copy(textAlign = TextAlign.Center),
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done,
+                    capitalization = KeyboardCapitalization.Sentences
+                ),
+                isError = uiState.titleError
             )
 
             val tabIndex = remember { mutableIntStateOf(0) }
@@ -204,6 +210,8 @@ private fun AddEventContent(
         startTime = uiState.startTime,
         endTime = uiState.endTime,
         isAllDay = uiState.isAllDay,
+        startTimeError = uiState.startTimeError,
+        endTimeError = uiState.endTimeError,
         isAllDayChanged = { uiState.eventSink(AddEntryUiEvent.IsAllDayChanged(it)) },
         onStartDateChanged = { uiState.eventSink(AddEntryUiEvent.StartDateChanged(it)) },
         onEndDateChanged = { uiState.eventSink(AddEntryUiEvent.EndDateChanged(it)) },
@@ -247,11 +255,17 @@ private fun DescriptionRow(
                 focusedBorderColor = BottomSheetDefaults.ContainerColor,
                 unfocusedBorderColor = BottomSheetDefaults.ContainerColor
             ),
-            textStyle = MaterialTheme.typography.bodyLarge
+            textStyle = MaterialTheme.typography.bodyLarge,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Done,
+                capitalization = KeyboardCapitalization.Sentences
+            )
         )
     }
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun TimePickerModal(
     initialHour: Int = 0,
@@ -330,6 +344,7 @@ private fun AddTaskContent(
     TimeSelection(
         date = (uiState.selectedDay.localDate?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L).toHumanReadableDate(),
         time = uiState.time,
+        timeError = uiState.timeError,
         onTimeChanged = { uiState.eventSink(AddEntryUiEvent.StartTimeChanged(it)) }
     )
     Spacer(modifier = Modifier.height(8.dp))
@@ -386,7 +401,13 @@ fun AssigneeSelection(uiState: AddEntryUiState.Shown.AddTask) {
                     focusedBorderColor = BottomSheetDefaults.ContainerColor,
                     unfocusedBorderColor = BottomSheetDefaults.ContainerColor
                 ),
-                singleLine = false
+                singleLine = false,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done,
+                    capitalization = KeyboardCapitalization.Words
+                ),
+                isError = uiState.assigneeError
             )
             ExposedDropdownMenu(
                 expanded = uiState.assigneeDropdownExpanded,

@@ -35,7 +35,7 @@ class AddEntryViewModel @Inject constructor(
                 is AddEntryUiEvent.TitleChanged -> _uiState.update { currentState.copy(title = event.title) }
                 is AddEntryUiEvent.TabChanged -> handleTabChangedEvent(event, currentState)
                 is AddEntryUiEvent.CancelClicked -> handleCancelClickedEvent()
-                is AddEntryUiEvent.SaveClicked -> handleSaveClickedEvent()
+                is AddEntryUiEvent.SaveClicked -> handleSaveClickedEvent(currentState)
                 is AddEntryUiEvent.DescriptionChanged -> _uiState.update { currentState.copy(description = event.description) }
                 is AddEntryUiEvent.IsAllDayChanged -> _uiState.update { currentState.copy(isAllDay = event.isAllDay) }
                 is AddEntryUiEvent.StartDateChanged -> _uiState.update { currentState.copy(startDate = event.startDate) }
@@ -53,7 +53,7 @@ class AddEntryViewModel @Inject constructor(
                 is AddEntryUiEvent.TitleChanged -> _uiState.update { currentState.copy(title = event.title) }
                 is AddEntryUiEvent.TabChanged -> handleTabChangedEvent(event, currentState)
                 is AddEntryUiEvent.CancelClicked -> handleCancelClickedEvent()
-                is AddEntryUiEvent.SaveClicked -> handleSaveClickedEvent()
+                is AddEntryUiEvent.SaveClicked -> handleSaveClickedEvent(currentState)
                 is AddEntryUiEvent.StartTimeChanged -> _uiState.update { currentState.copy(time = event.startTime) }
                 is AddEntryUiEvent.DescriptionChanged -> _uiState.update { currentState.copy(description = event.description) }
                 is AddEntryUiEvent.AssigneeSearchQueryChanged -> {
@@ -116,7 +116,14 @@ class AddEntryViewModel @Inject constructor(
         _sideEffects.emitSuspended(AddEntryUiSideEffect.Dismiss)
     }
 
-    private fun handleSaveClickedEvent() {
-
+    private fun handleSaveClickedEvent(currentState: AddEntryUiState.Shown) {
+        when (currentState) {
+            is AddEntryUiState.Shown.AddEvent -> {
+                _uiState.update { currentState.copy(showErrors = true) }
+            }
+            is AddEntryUiState.Shown.AddTask -> {
+                _uiState.update { currentState.copy(showErrors = true) }
+            }
+        }
     }
 }

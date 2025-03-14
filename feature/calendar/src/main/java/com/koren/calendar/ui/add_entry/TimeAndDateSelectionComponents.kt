@@ -1,11 +1,15 @@
 package com.koren.calendar.ui.add_entry
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -30,6 +34,7 @@ enum class PickerType {
 fun TimeSelection(
     date: String,
     time: String,
+    timeError: Boolean,
     onTimeChanged: (String) -> Unit
 ) {
     var currentPicker by remember { mutableStateOf(PickerType.NONE) }
@@ -57,6 +62,19 @@ fun TimeSelection(
                 text = time.ifEmpty { "Time" },
                 style = MaterialTheme.typography.bodyLarge
             )
+
+            AnimatedVisibility(timeError) {
+                Text(
+                    modifier = Modifier
+                        .padding(start = 16.dp)
+                        .clickable {
+                            currentPicker = PickerType.START_TIME
+                        },
+                    text = "Time is required",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 
@@ -147,6 +165,8 @@ fun TimeAndDateSelection(
     startTime: String,
     endTime: String,
     isAllDay: Boolean,
+    startTimeError: Boolean,
+    endTimeError: Boolean,
     isAllDayChanged: (Boolean) -> Unit,
     onStartDateChanged: (Long) -> Unit,
     onEndDateChanged: (Long) -> Unit,
@@ -208,6 +228,19 @@ fun TimeAndDateSelection(
                         text = startTime.ifEmpty { "Start time" },
                         style = MaterialTheme.typography.bodyLarge
                     )
+
+                    AnimatedVisibility(startTimeError) {
+                        Text(
+                            modifier = Modifier
+                                .padding(start = 16.dp)
+                                .clickable {
+                                    currentPicker = PickerType.START_TIME
+                                },
+                            text = "Time is required",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }
@@ -241,6 +274,19 @@ fun TimeAndDateSelection(
                         text = endTime.ifEmpty { "End time" },
                         style = MaterialTheme.typography.bodyLarge
                     )
+
+                    AnimatedVisibility(endTimeError) {
+                        Text(
+                            modifier = Modifier
+                                .padding(start = 16.dp)
+                                .clickable {
+                                    currentPicker = PickerType.END_TIME
+                                },
+                            text = "Time is required",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }
