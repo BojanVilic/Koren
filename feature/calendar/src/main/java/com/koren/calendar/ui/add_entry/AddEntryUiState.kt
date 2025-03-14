@@ -1,6 +1,7 @@
 package com.koren.calendar.ui.add_entry
 
 import com.koren.calendar.ui.Day
+import com.koren.common.models.user.UserData
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
@@ -29,7 +30,11 @@ sealed interface AddEntryUiState : UiState {
             override val selectedDay: Day = Day(),
             val description: String = "",
             val time: String = "",
-            val assigneeUserId: String = "",
+            val selectedAssignee: UserData? = null,
+            val assigneeSearchQuery: String = "",
+            val assigneeDropdownExpanded: Boolean = false,
+            val filteredAssignees: List<UserData> = emptyList(),
+            val allFamilyMembers: List<UserData> = emptyList(),
             override val eventSink: (AddEntryUiEvent) -> Unit
         ) : Shown
     }
@@ -44,6 +49,12 @@ sealed interface AddEntryUiEvent : UiEvent {
     data class EndDateChanged(val endDate: Long) : AddEntryUiEvent
     data class StartTimeChanged(val startTime: String) : AddEntryUiEvent
     data class EndTimeChanged(val endTime: String) : AddEntryUiEvent
+
+    data class AssigneeSearchQueryChanged(val query: String) : AddEntryUiEvent
+    data class AssigneeDropdownExpandedChanged(val expanded: Boolean) : AddEntryUiEvent
+    data class AssigneeSelected(val assignee: UserData) : AddEntryUiEvent
+    data object RemoveSelectedAssignee : AddEntryUiEvent
+
     data object SaveClicked : AddEntryUiEvent
     data object CancelClicked : AddEntryUiEvent
 }

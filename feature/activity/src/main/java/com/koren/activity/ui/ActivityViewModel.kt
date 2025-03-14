@@ -49,7 +49,6 @@ class ActivityViewModel @Inject constructor(
         _uiState.update { currentState.copy(fetchingMore = true) }
         activityRepository.getMoreLocationActivities(lastTime)
             .onEach { (newItems, hasMore) ->
-                delay(3000L)
                 _uiState.update {
                     currentState.copy(
                         activities = currentState.activities + newItems,

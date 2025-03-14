@@ -1,14 +1,19 @@
 package com.koren.calendar.ui.add_entry
 
+import androidx.lifecycle.viewModelScope
 import com.koren.calendar.ui.Day
 import com.koren.common.util.StateViewModel
+import com.koren.domain.GetAllFamilyMembersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.ZoneOffset
 import javax.inject.Inject
 
 @HiltViewModel
 class AddEntryViewModel @Inject constructor(
+    private val getAllFamilyMembersUseCase: GetAllFamilyMembersUseCase
 ): StateViewModel<AddEntryUiEvent, AddEntryUiState, AddEntryUiSideEffect>() {
 
     override fun setInitialState(): AddEntryUiState = AddEntryUiState.Loading
@@ -37,6 +42,7 @@ class AddEntryViewModel @Inject constructor(
                 is AddEntryUiEvent.EndDateChanged -> _uiState.update { currentState.copy(endDate = event.endDate) }
                 is AddEntryUiEvent.StartTimeChanged -> _uiState.update { currentState.copy(startTime = event.startTime) }
                 is AddEntryUiEvent.EndTimeChanged -> _uiState.update { currentState.copy(endTime = event.endTime) }
+                else -> Unit
             }
         }
     }
@@ -49,6 +55,27 @@ class AddEntryViewModel @Inject constructor(
                 is AddEntryUiEvent.CancelClicked -> handleCancelClickedEvent()
                 is AddEntryUiEvent.SaveClicked -> handleSaveClickedEvent()
                 is AddEntryUiEvent.StartTimeChanged -> _uiState.update { currentState.copy(time = event.startTime) }
+                is AddEntryUiEvent.DescriptionChanged -> _uiState.update { currentState.copy(description = event.description) }
+                is AddEntryUiEvent.AssigneeSearchQueryChanged -> {
+                    val filtered = currentState.allFamilyMembers.filter {
+                        it.displayName.contains(event.query, ignoreCase = true)
+                    }
+                    _uiState.update {
+                        currentState.copy(
+                            assigneeSearchQuery = event.query,
+                            filteredAssignees = filtered
+                        )
+                    }
+                }
+                is AddEntryUiEvent.AssigneeDropdownExpandedChanged -> _uiState.update { currentState.copy(assigneeDropdownExpanded = event.expanded) }
+                is AddEntryUiEvent.AssigneeSelected -> _uiState.update { currentState.copy(
+                    assigneeSearchQuery = event.assignee.displayName,
+                    selectedAssignee = event.assignee
+                ) }
+                is AddEntryUiEvent.RemoveSelectedAssignee -> _uiState.update { currentState.copy(
+                    assigneeSearchQuery = "",
+                    selectedAssignee = null
+                ) }
                 else -> Unit
             }
         }
@@ -58,21 +85,29 @@ class AddEntryViewModel @Inject constructor(
         event: AddEntryUiEvent.TabChanged,
         currentState: AddEntryUiState.Shown
     ) {
-        _uiState.update {
-            when (event.tabIndex) {
-                0 -> AddEntryUiState.Shown.AddEvent(
-                    title = currentState.title,
-                    selectedDay = currentState.selectedDay,
-                    startDate = currentState.selectedDay.localDate?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
-                    endDate = currentState.selectedDay.localDate?.atTime(23, 59)?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
-                    eventSink = { event -> handleEvent(event) }
-                )
-                1 -> AddEntryUiState.Shown.AddTask(
-                    title = currentState.title,
-                    selectedDay = currentState.selectedDay,
-                    eventSink = { event -> handleAddTaskEvent(event) }
-                )
-                else -> it
+        viewModelScope.launch {
+            _uiState.update {
+                when (event.tabIndex) {
+                    0 -> AddEntryUiState.Shown.AddEvent(
+                        title = currentState.title,
+                        selectedDay = currentState.selectedDay,
+                        startDate = currentState.selectedDay.localDate?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
+                        endDate = currentState.selectedDay.localDate?.atTime(23, 59)?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
+                        eventSink = { event -> handleEvent(event) }
+                    )
+                    1 -> {
+                        val allFamilyMembers = getAllFamilyMembersUseCase().first()
+
+                        AddEntryUiState.Shown.AddTask(
+                            title = currentState.title,
+                            selectedDay = currentState.selectedDay,
+                            eventSink = { event -> handleAddTaskEvent(event) },
+                            filteredAssignees = allFamilyMembers,
+                            allFamilyMembers = allFamilyMembers
+                        )
+                    }
+                    else -> it
+                }
             }
         }
     }

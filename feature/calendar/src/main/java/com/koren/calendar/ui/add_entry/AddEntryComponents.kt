@@ -2,6 +2,7 @@
 
 package com.koren.calendar.ui.add_entry
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,15 +12,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -36,10 +46,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.koren.calendar.ui.Day
 import com.koren.common.models.invitation.toHumanReadableDate
 import com.koren.common.util.CollectSideEffects
@@ -50,6 +65,7 @@ import com.koren.designsystem.icon.Clock
 import com.koren.designsystem.icon.Content
 import com.koren.designsystem.icon.Event
 import com.koren.designsystem.icon.KorenIcons
+import com.koren.designsystem.icon.RemovePerson
 import com.koren.designsystem.icon.Task
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalSnackbarHostState
@@ -323,6 +339,106 @@ private fun AddTaskContent(
         onDescriptionChanged = { uiState.eventSink(AddEntryUiEvent.DescriptionChanged(it)) }
     )
     HorizontalDivider()
+    AssigneeSelection(uiState = uiState)
+}
+
+
+@Composable
+fun AssigneeSelection(uiState: AddEntryUiState.Shown.AddTask) {
+
+    Row(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        AsyncImage(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape),
+            model = ImageRequest.Builder(LocalContext.current)
+                .crossfade(true)
+                .data(uiState.selectedAssignee?.profilePictureUrl)
+                .build(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop
+        )
+
+        ExposedDropdownMenuBox(
+            modifier = Modifier.weight(1f),
+            expanded = uiState.assigneeDropdownExpanded,
+            onExpandedChange = {
+                uiState.eventSink(AddEntryUiEvent.AssigneeDropdownExpandedChanged(it))
+            }
+        ) {
+            TextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(MenuAnchorType.PrimaryEditable, true),
+                value = uiState.assigneeSearchQuery,
+                onValueChange = { uiState.eventSink(AddEntryUiEvent.AssigneeSearchQueryChanged(it)) },
+                label = { Text("Assignee") },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(
+                        expanded = uiState.assigneeDropdownExpanded
+                    )
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = BottomSheetDefaults.ContainerColor,
+                    unfocusedBorderColor = BottomSheetDefaults.ContainerColor
+                ),
+                singleLine = false
+            )
+            ExposedDropdownMenu(
+                expanded = uiState.assigneeDropdownExpanded,
+                onDismissRequest = {
+                    uiState.eventSink(AddEntryUiEvent.AssigneeDropdownExpandedChanged(false))
+                }
+            ) {
+                uiState.filteredAssignees.forEach { selectionOption ->
+                    DropdownMenuItem(
+                        onClick = {
+                            uiState.eventSink(AddEntryUiEvent.AssigneeSelected(selectionOption))
+                        },
+                        text = { Text(text = selectionOption.displayName) },
+                        leadingIcon = {
+                            AsyncImage(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape),
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .crossfade(true)
+                                    .data(selectionOption.profilePictureUrl)
+                                    .build(),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop
+                            )
+                        },
+                        trailingIcon = if (selectionOption.id == uiState.selectedAssignee?.id) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null
+                                )
+                            }
+                        } else null
+                    )
+                }
+            }
+        }
+
+        AnimatedVisibility(uiState.selectedAssignee != null) {
+            TextButton(
+                onClick = {
+                    uiState.eventSink(AddEntryUiEvent.RemoveSelectedAssignee)
+                }
+            ) {
+                Icon(
+                    imageVector = KorenIcons.RemovePerson,
+                    contentDescription = "Remove assignee"
+                )
+            }
+        }
+    }
 }
 
 @ThemePreview
