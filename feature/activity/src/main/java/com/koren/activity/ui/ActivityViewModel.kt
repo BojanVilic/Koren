@@ -4,17 +4,17 @@ import androidx.lifecycle.viewModelScope
 import com.koren.common.services.UserSession
 import com.koren.common.util.StateViewModel
 import com.koren.data.repository.ActivityRepository
-import com.koren.domain.GetFamilyUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ActivityViewModel @Inject constructor(
-    activityRepository: ActivityRepository,
+    private val activityRepository: ActivityRepository,
     userSession: UserSession
 ): StateViewModel<ActivityEvent, ActivityUiState, ActivitySideEffect>() {
 
@@ -36,10 +36,28 @@ class ActivityViewModel @Inject constructor(
     }
 
     override fun handleEvent(event: ActivityEvent) {
-        withEventfulState<ActivityUiState.Shown> {
+        withEventfulState<ActivityUiState.Shown> { currentState ->
             when (event) {
-                ActivityEvent.NavigateToCalendar -> _sideEffects.emitSuspended(ActivitySideEffect.NavigateToCalendar)
+                is ActivityEvent.NavigateToCalendar -> _sideEffects.emitSuspended(ActivitySideEffect.NavigateToCalendar)
+                is ActivityEvent.FetchMoreActivities -> fetchMoreActivities(currentState)
             }
         }
+    }
+
+    private fun fetchMoreActivities(currentState: ActivityUiState.Shown) {
+        val lastTime = currentState.activities.lastOrNull()?.createdAt ?: return
+        _uiState.update { currentState.copy(fetchingMore = true) }
+        activityRepository.getMoreLocationActivities(lastTime)
+            .onEach { (newItems, hasMore) ->
+                delay(3000L)
+                _uiState.update {
+                    currentState.copy(
+                        activities = currentState.activities + newItems,
+                        fetchingMore = false,
+                        canFetchMore = hasMore
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
     }
 }
