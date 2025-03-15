@@ -2,18 +2,22 @@ package com.koren.calendar.ui.add_entry
 
 import androidx.lifecycle.viewModelScope
 import com.koren.calendar.ui.Day
+import com.koren.common.models.calendar.Event
 import com.koren.common.util.StateViewModel
+import com.koren.data.repository.CalendarRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.ZoneId
 import java.time.ZoneOffset
 import javax.inject.Inject
 
 @HiltViewModel
 class AddEntryViewModel @Inject constructor(
-    private val getAllFamilyMembersUseCase: GetAllFamilyMembersUseCase
+    private val getAllFamilyMembersUseCase: GetAllFamilyMembersUseCase,
+    private val calendarRepository: CalendarRepository
 ): StateViewModel<AddEntryUiEvent, AddEntryUiState, AddEntryUiSideEffect>() {
 
     override fun setInitialState(): AddEntryUiState = AddEntryUiState.Loading
@@ -35,7 +39,13 @@ class AddEntryViewModel @Inject constructor(
                 is AddEntryUiEvent.TitleChanged -> _uiState.update { currentState.copy(title = event.title) }
                 is AddEntryUiEvent.TabChanged -> handleTabChangedEvent(event, currentState)
                 is AddEntryUiEvent.CancelClicked -> handleCancelClickedEvent()
-                is AddEntryUiEvent.SaveClicked -> handleSaveClickedEvent(currentState)
+                is AddEntryUiEvent.SaveClicked -> {
+                    _uiState.update {
+                        val newState = currentState.copy(showErrors = true)
+                        handleSaveClickedEvent(newState)
+                        currentState.copy(showErrors = true)
+                    }
+                }
                 is AddEntryUiEvent.DescriptionChanged -> _uiState.update { currentState.copy(description = event.description) }
                 is AddEntryUiEvent.IsAllDayChanged -> _uiState.update { currentState.copy(isAllDay = event.isAllDay) }
                 is AddEntryUiEvent.StartDateChanged -> _uiState.update { currentState.copy(startDate = event.startDate) }
@@ -53,7 +63,13 @@ class AddEntryViewModel @Inject constructor(
                 is AddEntryUiEvent.TitleChanged -> _uiState.update { currentState.copy(title = event.title) }
                 is AddEntryUiEvent.TabChanged -> handleTabChangedEvent(event, currentState)
                 is AddEntryUiEvent.CancelClicked -> handleCancelClickedEvent()
-                is AddEntryUiEvent.SaveClicked -> handleSaveClickedEvent(currentState)
+                is AddEntryUiEvent.SaveClicked -> {
+                    _uiState.update {
+                        val newState = currentState.copy(showErrors = true)
+                        handleSaveClickedEvent(newState)
+                        currentState.copy(showErrors = true)
+                    }
+                }
                 is AddEntryUiEvent.StartTimeChanged -> _uiState.update { currentState.copy(time = event.startTime) }
                 is AddEntryUiEvent.DescriptionChanged -> _uiState.update { currentState.copy(description = event.description) }
                 is AddEntryUiEvent.AssigneeSearchQueryChanged -> {
@@ -117,12 +133,33 @@ class AddEntryViewModel @Inject constructor(
     }
 
     private fun handleSaveClickedEvent(currentState: AddEntryUiState.Shown) {
+        if (currentState.hasErrors) return
         when (currentState) {
             is AddEntryUiState.Shown.AddEvent -> {
-                _uiState.update { currentState.copy(showErrors = true) }
+                viewModelScope.launch {
+                    calendarRepository.saveEvent(
+                        title = currentState.title,
+                        description = currentState.description,
+                        isAllDay = currentState.isAllDay,
+                        startDate = currentState.startDate,
+                        endDate = currentState.endDate,
+                        startTime = currentState.startTime,
+                        endTime = currentState.endTime
+                    )
+                    _sideEffects.emitSuspended(AddEntryUiSideEffect.Dismiss)
+                }
             }
             is AddEntryUiState.Shown.AddTask -> {
-                _uiState.update { currentState.copy(showErrors = true) }
+                viewModelScope.launch {
+                    calendarRepository.saveTask(
+                        title = currentState.title,
+                        description = currentState.description,
+                        taskDate = currentState.selectedDay.localDate?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli() ?: 0L,
+                        taskTime = currentState.time,
+                        assigneeUserId = currentState.selectedAssignee?.id ?: ""
+                    )
+                    _sideEffects.emitSuspended(AddEntryUiSideEffect.Dismiss)
+                }
             }
         }
     }

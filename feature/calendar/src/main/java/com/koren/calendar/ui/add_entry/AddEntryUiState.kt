@@ -15,6 +15,7 @@ sealed interface AddEntryUiState : UiState {
         val showErrors: Boolean
         val titleError: Boolean
             get() = showErrors && title.isBlank()
+        val hasErrors: Boolean
 
         data class AddEvent(
             override val title: String = "",
@@ -34,6 +35,9 @@ sealed interface AddEntryUiState : UiState {
 
             val endTimeError: Boolean
                 get() = showErrors && isAllDay.not() && endTime.isBlank()
+
+            override val hasErrors: Boolean
+                get() = titleError || startTimeError || endTimeError
         }
 
         data class AddTask(
@@ -55,6 +59,9 @@ sealed interface AddEntryUiState : UiState {
 
             val assigneeError: Boolean
                 get() = showErrors && selectedAssignee == null
+
+            override val hasErrors: Boolean
+                get() = titleError || timeError || assigneeError
         }
     }
 }
