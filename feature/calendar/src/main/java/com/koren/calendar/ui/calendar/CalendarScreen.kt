@@ -124,9 +124,7 @@ private fun CalendarScreenShownContent(
     }
 
     CalendarUI(
-        dayClicked = { day ->
-            uiState.eventSink(CalendarUiEvent.DayClicked(day))
-        }
+        uiState = uiState
     )
 }
 

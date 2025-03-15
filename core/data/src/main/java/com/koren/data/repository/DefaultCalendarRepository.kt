@@ -1,12 +1,23 @@
 package com.koren.data.repository
 
 import com.google.firebase.Firebase
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
+import com.google.firebase.database.getValue
+import com.google.firebase.database.values
+import com.google.firebase.storage.internal.Util.parseDateTime
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.services.UserSession
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -79,6 +90,43 @@ class DefaultCalendarRepository @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun getEvents(): Flow<List<Event>> = callbackFlow {
+        val familyId = userSession.currentUser.first().familyId
+        val ref = database.child("families/$familyId/events")
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val events = snapshot.children
+                    .mapNotNull { it.getValue<Event>() }
+                trySend(events).isSuccess
+            }
+            override fun onCancelled(error: DatabaseError) {
+                Timber.e(error.message)
+            }
+        }
+
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    override suspend fun getTasks(): Flow<List<Task>> = callbackFlow {
+        val familyId = userSession.currentUser.first().familyId
+        val ref = database.child("families/$familyId/tasks")
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val tasks = snapshot.children
+                    .mapNotNull { it.getValue<Task>() }
+                trySend(tasks).isSuccess
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Timber.e(error.message)
+            }
+        }
+
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
     }
 
     private fun parseDateTime(dateInMillis: Long, time: String): Long {

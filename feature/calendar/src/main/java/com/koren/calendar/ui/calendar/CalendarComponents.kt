@@ -37,17 +37,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.koren.calendar.ui.Day
+import com.koren.common.models.calendar.Event
+import com.koren.common.models.calendar.Task
+import com.koren.common.util.toLocalDate
 import com.koren.designsystem.theme.ExtendedTheme
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
+import timber.log.Timber
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
 fun CalendarUI(
-    dayClicked: (Day) -> Unit
+    uiState: CalendarUiState.Shown
 ) {
     val currentMonth = remember { YearMonth.now() }
     val pagerState = rememberPagerState(
@@ -73,7 +78,11 @@ fun CalendarUI(
         MonthPager(
             pagerState = pagerState,
             currentMonth = currentMonth,
-            dayClicked = dayClicked
+            groupedTasks = uiState.groupedTasks,
+            groupedEvents = uiState.groupedEvents,
+            dayClicked =  { day ->
+                uiState.eventSink(CalendarUiEvent.DayClicked(day))
+            }
         )
     }
 }
@@ -149,6 +158,8 @@ fun DaysOfWeekRow() {
 fun MonthPager(
     pagerState: PagerState,
     currentMonth: YearMonth,
+    groupedTasks: Map<LocalDate, List<Task>>,
+    groupedEvents: Map<LocalDate, List<Event>>,
     dayClicked: (Day) -> Unit
 ) {
     HorizontalPager(
@@ -158,6 +169,8 @@ fun MonthPager(
         val monthToDisplay = currentMonth.plusMonths((page - (Int.MAX_VALUE / 2)).toLong())
         CalendarGrid(
             month = monthToDisplay,
+            groupedTasks = groupedTasks,
+            groupedEvents = groupedEvents,
             dayClicked = dayClicked
         )
     }
@@ -167,9 +180,11 @@ fun MonthPager(
 @Composable
 fun CalendarGrid(
     month: YearMonth,
+    groupedTasks: Map<LocalDate, List<Task>>,
+    groupedEvents: Map<LocalDate, List<Event>>,
     dayClicked: (Day) -> Unit
 ) {
-    val days = remember(month) { getDaysForMonth(month) }
+    val days = remember(month) { getDaysForMonth(month, groupedTasks, groupedEvents) }
 
     LazyVerticalGrid(
         modifier = Modifier
@@ -186,25 +201,59 @@ fun CalendarGrid(
     }
 }
 
-fun getDaysForMonth(yearMonth: YearMonth): List<Day> {
+fun getDaysForMonth(
+    yearMonth: YearMonth,
+    groupedTasks: Map<LocalDate, List<Task>>,
+    groupedEvents: Map<LocalDate, List<Event>>
+): List<Day> {
     val daysList = mutableListOf<Day>()
     val firstDayOfMonth = yearMonth.atDay(1)
     val firstDayOfWeek = firstDayOfMonth.dayOfWeek
     val daysInMonth = yearMonth.lengthOfMonth()
 
+    // Add empty days for the leading days of the week
     for (i in 1 until firstDayOfWeek.value) {
-        daysList.add(Day(dayOfMonth = null, localDate = null))
-    }
-    for (dayOfMonth in 1..daysInMonth) {
-        daysList.add(Day(dayOfMonth = dayOfMonth, localDate = yearMonth.atDay(dayOfMonth)))
+        daysList.add(Day())
     }
 
+    for (dayOfMonth in 1..daysInMonth) {
+        val currentDate = yearMonth.atDay(dayOfMonth)
+        val tasksForDay = groupedTasks[currentDate] ?: emptyList()
+        val eventsForDay = groupedEvents[currentDate] ?: emptyList()
+
+        daysList.add(
+            Day(
+                dayOfMonth = dayOfMonth,
+                dayOfWeek = currentDate.dayOfWeek,
+                localDate = currentDate,
+                tasks = tasksForDay,
+                events = eventsForDay
+            )
+        )
+    }
+
+    // Add empty days for the trailing days of the week
     val totalDays = daysList.size
     val remainingDays = 6 * 7 - totalDays
     for (i in 0 until remainingDays) {
-        daysList.add(Day(dayOfMonth = null, localDate = null))
+        daysList.add(Day())
     }
     return daysList
+}
+
+private fun isEventOnDate(
+    event: Event,
+    date: LocalDate
+): Boolean {
+    val eventStartDate = event.eventStartTime.toLocalDate()
+    val eventEndDate = event.eventEndTime.toLocalDate()
+    return if (event.isAllDay) {
+        !date.isBefore(eventStartDate) && !date.isAfter(eventEndDate)
+    } else {
+        val eventStartTimeLocalDate = event.eventStartTime.toLocalDate()
+        val eventEndTimeLocalDate = event.eventEndTime.toLocalDate()
+        !date.isBefore(eventStartTimeLocalDate) && !date.isAfter(eventEndTimeLocalDate)
+    }
 }
 
 @Composable
@@ -212,32 +261,68 @@ fun DayCell(
     day: Day,
     dayClicked: (Day) -> Unit
 ) {
-
     Card(
         modifier = Modifier
             .aspectRatio(1f)
             .padding(2.dp),
         colors = CardDefaults.cardColors(
             containerColor =
-            if (day.dayOfMonth != null)
-                MaterialTheme.colorScheme.surfaceContainerHighest
-            else
-                Color.Transparent
+                if (day.dayOfMonth != null)
+                    MaterialTheme.colorScheme.surfaceContainerHighest
+                else
+                    Color.Transparent
         )
     ) {
         day.dayOfMonth?.let { dayOfMonth ->
+
+            if (day.events.isNotEmpty() || day.tasks.isNotEmpty()) {
+                Timber.d("PROBAVANJE: $dayOfMonth, events: ${day.events.size}, tasks: ${day.tasks.size}")
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .clickable { dayClicked(day) },
-                contentAlignment = Alignment.BottomCenter
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    modifier = Modifier.padding(bottom = 4.dp),
-                    text = dayOfMonth.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (day.events.isNotEmpty() || day.tasks.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .padding(bottom = 4.dp)
+                        ) {
+                            if (day.events.isNotEmpty()) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(ExtendedTheme.colors.event)
+                                )
+                            }
+
+                            if (day.events.isNotEmpty() && day.tasks.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(2.dp))
+                            }
+
+                            if (day.tasks.isNotEmpty()) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(ExtendedTheme.colors.task)
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = dayOfMonth.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
@@ -248,7 +333,9 @@ fun DayCell(
 fun CalendarUIPreview() {
     KorenTheme {
         CalendarUI(
-            dayClicked = {}
+            uiState = CalendarUiState.Shown(
+                eventSink = {}
+            )
         )
     }
 }
