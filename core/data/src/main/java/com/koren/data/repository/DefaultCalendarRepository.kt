@@ -141,19 +141,20 @@ class DefaultCalendarRepository @Inject constructor(
 
     override fun getEventsForDay(date: LocalDate): Flow<List<Event>> = callbackFlow {
         val familyId = userSession.currentUser.first().familyId
-
         val startOfDay = date.toEpochMilliDayStart()
         val endOfDay = date.toEpochMilliDayEnd()
 
         val ref = database.child("families/$familyId/events")
-            .orderByChild("eventStartTime")
+            .orderByChild("eventEndTime")
             .startAt(startOfDay.toDouble())
-            .endAt(endOfDay.toDouble())
 
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val events = snapshot.children.mapNotNull { it.getValue<Event>() }
-                trySend(events).isSuccess
+                val allEvents = snapshot.children.mapNotNull { it.getValue<Event>() }
+                val eventsForDay = allEvents.filter {
+                    it.eventStartTime <= endOfDay
+                }
+                trySend(eventsForDay).isSuccess
             }
 
             override fun onCancelled(error: DatabaseError) {

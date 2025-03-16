@@ -2,6 +2,7 @@ package com.koren.calendar.ui.calendar
 
 import androidx.lifecycle.viewModelScope
 import com.koren.calendar.ui.Day
+import com.koren.common.models.calendar.Event
 import com.koren.common.util.DateUtils.toLocalDate
 import com.koren.common.util.StateViewModel
 import com.koren.data.repository.CalendarRepository
@@ -11,6 +12,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,7 +37,7 @@ class CalendarViewModel @Inject constructor(
                 calendarRepository.getEvents()
             ) { tasks, events ->
                 val groupedTasks = tasks.groupBy { it.taskTimestamp.toLocalDate() }
-                val groupedEvents = events.groupBy { it.eventStartTime.toLocalDate() }
+                val groupedEvents = events.expandEventsByDay()
 
                 (_uiState.value as? CalendarUiState.Shown)?.let {
                     it.copy(
@@ -76,5 +80,18 @@ class CalendarViewModel @Inject constructor(
                 eventSink = { event -> handleEvent(event) }
             )
         }
+    }
+
+    private fun List<Event>.expandEventsByDay(): Map<LocalDate, List<Event>> {
+        return this
+            .flatMap { event ->
+                val start = Instant.ofEpochMilli(event.eventStartTime).atZone(ZoneOffset.UTC).toLocalDate()
+                val end = Instant.ofEpochMilli(event.eventEndTime).atZone(ZoneOffset.UTC).toLocalDate()
+                val daysInRange = generateSequence(start) { it.plusDays(1) }
+                    .takeWhile { !it.isAfter(end) }
+
+                daysInRange.map { date -> date to event }
+            }
+            .groupBy({ it.first }, { it.second })
     }
 }
