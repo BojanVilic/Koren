@@ -31,8 +31,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.getExpiryText
-import com.koren.common.models.invitation.toRelativeTime
 import com.koren.common.util.CollectSideEffects
+import com.koren.common.util.DateUtils.toRelativeTime
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState

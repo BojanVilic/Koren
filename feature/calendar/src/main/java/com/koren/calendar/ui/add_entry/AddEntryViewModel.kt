@@ -2,6 +2,8 @@ package com.koren.calendar.ui.add_entry
 
 import androidx.lifecycle.viewModelScope
 import com.koren.calendar.ui.Day
+import com.koren.common.util.DateUtils.toEpochMilliDayEnd
+import com.koren.common.util.DateUtils.toEpochMilliDayStart
 import com.koren.common.util.StateViewModel
 import com.koren.data.repository.CalendarRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
@@ -24,8 +26,8 @@ class AddEntryViewModel @Inject constructor(
         _uiState.update {
             AddEntryUiState.Shown.AddEvent(
                 selectedDay = day,
-                startDate = day.localDate?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
-                endDate = day.localDate?.atTime(23, 59)?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
+                startDate = day.localDate.toEpochMilliDayStart(),
+                endDate = day.localDate.toEpochMilliDayEnd(),
                 eventSink = { event -> handleEvent(event) }
             )
         }
@@ -105,8 +107,8 @@ class AddEntryViewModel @Inject constructor(
                     0 -> AddEntryUiState.Shown.AddEvent(
                         title = currentState.title,
                         selectedDay = currentState.selectedDay,
-                        startDate = currentState.selectedDay.localDate?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
-                        endDate = currentState.selectedDay.localDate?.atTime(23, 59)?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L,
+                        startDate = currentState.selectedDay.localDate.toEpochMilliDayStart(),
+                        endDate = currentState.selectedDay.localDate.toEpochMilliDayEnd(),
                         eventSink = { event -> handleEvent(event) }
                     )
                     1 -> {

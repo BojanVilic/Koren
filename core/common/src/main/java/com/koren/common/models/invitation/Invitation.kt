@@ -26,33 +26,8 @@ enum class InvitationStatus {
     PENDING, ACCEPTED, DECLINED, EXPIRED
 }
 
-fun Long?.toHumanReadableDate(
-    locale: Locale = Locale.getDefault()
-): String {
-    if (this == null) return ""
-
-    return try {
-        val instant = Instant.ofEpochMilli(this)
-        val zonedDateTime = instant.atZone(ZoneId.of("UTC"))
-
-        val localDate = zonedDateTime.toLocalDate()
-
-        val formatter = DateTimeFormatter.ofPattern("EEE, d-MMM", locale)
-        localDate.format(formatter)
-    } catch (e: Exception) {
-        println("Error formatting date: ${e.message}")
-        ""
-    }
-}
-
-fun Long.toRelativeTime(): String {
-    val nowMillis = System.currentTimeMillis()
-    return DateUtils.getRelativeTimeSpanString(
-        this,
-        nowMillis,
-        DateUtils.MINUTE_IN_MILLIS,
-        DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME
-    ).toString()
+fun Invitation.isQRInvitation(): Boolean {
+    return recipientEmail.isBlank()
 }
 
 fun Invitation.getExpiryText(): String {
@@ -72,8 +47,4 @@ fun Invitation.getExpiryText(): String {
         val formattedHours = hours.toInt().toString()
         "Expires in $formattedHours hours"
     }
-}
-
-fun Invitation.isQRInvitation(): Boolean {
-    return recipientEmail.isBlank()
 }

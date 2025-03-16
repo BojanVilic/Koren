@@ -11,6 +11,9 @@ import com.google.firebase.storage.internal.Util.parseDateTime
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.services.UserSession
+import com.koren.common.util.DateUtils.toEpochMilliDayEnd
+import com.koren.common.util.DateUtils.toEpochMilliDayStart
+import com.koren.common.util.DateUtils.toLocalTimeZoneTimestamp
 import com.koren.common.util.HourMinute
 import com.koren.common.util.toLocalTime
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +30,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.util.UUID
 import javax.inject.Inject
 
@@ -138,9 +142,8 @@ class DefaultCalendarRepository @Inject constructor(
     override fun getEventsForDay(date: LocalDate): Flow<List<Event>> = callbackFlow {
         val familyId = userSession.currentUser.first().familyId
 
-        val startOfDay = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val endOfDay = date.atTime(23, 59, 59, 999_999_999)
-            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val startOfDay = date.toEpochMilliDayStart()
+        val endOfDay = date.toEpochMilliDayEnd()
 
         val ref = database.child("families/$familyId/events")
             .orderByChild("eventStartTime")
@@ -165,9 +168,8 @@ class DefaultCalendarRepository @Inject constructor(
     override fun getTasksForDay(date: LocalDate): Flow<List<Task>> = callbackFlow {
         val familyId = userSession.currentUser.first().familyId
 
-        val startOfDay = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val endOfDay = date.atTime(23, 59, 59, 999_999_999)
-            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val startOfDay = date.toEpochMilliDayStart()
+        val endOfDay = date.toEpochMilliDayEnd()
 
         val ref = database.child("families/$familyId/tasks")
             .orderByChild("taskTimestamp")
@@ -192,11 +194,11 @@ class DefaultCalendarRepository @Inject constructor(
     private fun parseDateTime(dateInMillis: Long, time: HourMinute?): Long {
         if (time == null) return dateInMillis
         val localDate = Instant.ofEpochMilli(dateInMillis)
-            .atZone(ZoneId.systemDefault())
+            .atZone(ZoneOffset.UTC)
             .toLocalDate()
         val localTime = time.toLocalTime()
         val localDateTime = LocalDateTime.of(localDate, localTime)
-        return localDateTime.atZone(ZoneId.systemDefault())
+        return localDateTime.atZone(ZoneOffset.UTC)
             .toInstant()
             .toEpochMilli()
     }

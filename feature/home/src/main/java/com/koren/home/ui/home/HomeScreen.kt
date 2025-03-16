@@ -67,10 +67,10 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.InvitationStatus
-import com.koren.common.models.user.UserData
 import com.koren.common.models.invitation.getExpiryText
-import com.koren.common.models.invitation.toRelativeTime
+import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects
+import com.koren.common.util.DateUtils.toRelativeTime
 import com.koren.designsystem.components.ActionButton
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.LoadingContent

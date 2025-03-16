@@ -45,6 +45,9 @@ import com.koren.calendar.ui.add_entry.AddEntryScreen
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.util.CollectSideEffects
+import com.koren.common.util.DateUtils.toHumanReadableDate
+import com.koren.common.util.DateUtils.toHumanReadableDateTime
+import com.koren.common.util.DateUtils.toHumanReadableDateTimeRange
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.icon.Circle
 import com.koren.designsystem.icon.CircleCheck
@@ -285,16 +288,9 @@ private fun EventItem(event: Event) {
                 color = MaterialTheme.colorScheme.onSurface
             )
             if (!event.isAllDay) {
-                val startTime = LocalDateTime.ofInstant(
-                    Instant.ofEpochMilli(event.eventStartTime),
-                    ZoneId.systemDefault()
-                ).format(DateTimeFormatter.ofPattern("HH:mm"))
-                val endTime = LocalDateTime.ofInstant(
-                    Instant.ofEpochMilli(event.eventEndTime),
-                    ZoneId.systemDefault()
-                ).format(DateTimeFormatter.ofPattern("HH:mm"))
+                val timeRange = Pair(event.eventStartTime, event.eventEndTime).toHumanReadableDateTimeRange()
                 Text(
-                    text = "$startTime - $endTime",
+                    text = timeRange,
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )

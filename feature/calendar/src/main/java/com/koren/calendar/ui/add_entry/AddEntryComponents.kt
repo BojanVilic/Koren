@@ -49,7 +49,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.koren.calendar.ui.Day
 import com.koren.calendar.ui.toDayDateMonth
-import com.koren.common.models.invitation.toHumanReadableDate
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.TabItem

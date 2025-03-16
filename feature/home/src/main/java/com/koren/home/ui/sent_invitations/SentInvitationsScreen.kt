@@ -41,7 +41,7 @@ import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.InvitationStatus
 import com.koren.common.models.invitation.getExpiryText
 import com.koren.common.models.invitation.isQRInvitation
-import com.koren.common.models.invitation.toRelativeTime
+import com.koren.common.util.DateUtils.toRelativeTime
 import com.koren.designsystem.components.BrokenBranchErrorScreen
 import com.koren.designsystem.components.EmptyContent
 import com.koren.designsystem.components.LoadingContent

@@ -29,7 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.koren.common.models.invitation.toHumanReadableDate
+import com.koren.common.util.DateUtils.toHumanReadableDate
 import com.koren.common.util.HourMinute
 import com.koren.common.util.isAfter
 import com.koren.common.util.isBefore
@@ -94,71 +94,6 @@ fun TimeSelection(
             initialMinute = time?.minute ?: 0,
             onTimeSelected = { selectedTime ->
                 onTimeChanged(selectedTime)
-                currentPicker = PickerType.NONE
-            },
-            onDismiss = { currentPicker = PickerType.NONE }
-        )
-        PickerType.NONE -> Unit
-        else -> Unit
-    }
-}
-
-@Composable
-fun DateSelection(
-    startDate: Long,
-    endDate: Long,
-    onStartDateChanged: (Long) -> Unit,
-    onEndDateChanged: (Long) -> Unit
-) {
-    var currentPicker by remember { mutableStateOf(PickerType.NONE) }
-
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp),
-    ) {
-        Row(
-            modifier = Modifier.padding(top = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Spacer(modifier = Modifier.size(32.dp))
-            Text(
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .clickable {
-                        currentPicker = PickerType.START_DATE
-                    },
-                text = if (startDate == 0L) "Start date" else startDate.toHumanReadableDate(),
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .clickable {
-                        currentPicker = PickerType.END_DATE
-                    },
-                text = if (endDate == 0L) "End date" else endDate.toHumanReadableDate(),
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
-    }
-
-    when (currentPicker) {
-        PickerType.START_DATE -> DatePickerModal(
-            onDateSelected = { selectedDate ->
-                if ((selectedDate ?: 0) > endDate) {
-                    onEndDateChanged(selectedDate ?: 0L)
-                }
-                onStartDateChanged(selectedDate ?: 0L)
-                currentPicker = PickerType.NONE
-            },
-            onDismiss = { currentPicker = PickerType.NONE }
-        )
-        PickerType.END_DATE -> DatePickerModal(
-            onDateSelected = { selectedDate ->
-                if ((selectedDate ?: 0) < startDate) {
-                    onStartDateChanged(selectedDate ?: 0L)
-                }
-                onEndDateChanged(selectedDate ?: 0L)
                 currentPicker = PickerType.NONE
             },
             onDismiss = { currentPicker = PickerType.NONE }
