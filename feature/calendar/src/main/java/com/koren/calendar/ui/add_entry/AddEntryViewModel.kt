@@ -2,7 +2,6 @@ package com.koren.calendar.ui.add_entry
 
 import androidx.lifecycle.viewModelScope
 import com.koren.calendar.ui.Day
-import com.koren.common.models.calendar.Event
 import com.koren.common.util.StateViewModel
 import com.koren.data.repository.CalendarRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
@@ -10,7 +9,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.ZoneId
 import java.time.ZoneOffset
 import javax.inject.Inject
 

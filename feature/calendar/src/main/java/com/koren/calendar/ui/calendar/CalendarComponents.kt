@@ -1,5 +1,6 @@
 package com.koren.calendar.ui.calendar
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -37,11 +38,9 @@ import androidx.compose.ui.unit.dp
 import com.koren.calendar.ui.Day
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
-import com.koren.common.util.toLocalDate
 import com.koren.designsystem.theme.ExtendedTheme
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
-import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -93,11 +92,16 @@ fun HeaderSection(currentMonth: YearMonth) {
             .fillMaxWidth()
             .padding(vertical = 16.dp)
     ) {
-        Text(
+        Crossfade(
             modifier = Modifier.fillMaxWidth(),
-            text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())}, ${currentMonth.year}",
-            style = MaterialTheme.typography.titleLarge
-        )
+            targetState = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())}, ${currentMonth.year}"
+        ) {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = it,
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -237,21 +241,6 @@ fun getDaysForMonth(
         daysList.add(Day())
     }
     return daysList
-}
-
-private fun isEventOnDate(
-    event: Event,
-    date: LocalDate
-): Boolean {
-    val eventStartDate = event.eventStartTime.toLocalDate()
-    val eventEndDate = event.eventEndTime.toLocalDate()
-    return if (event.isAllDay) {
-        !date.isBefore(eventStartDate) && !date.isAfter(eventEndDate)
-    } else {
-        val eventStartTimeLocalDate = event.eventStartTime.toLocalDate()
-        val eventEndTimeLocalDate = event.eventEndTime.toLocalDate()
-        !date.isBefore(eventStartTimeLocalDate) && !date.isAfter(eventEndTimeLocalDate)
-    }
 }
 
 @Composable
