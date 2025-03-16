@@ -8,6 +8,7 @@ import com.koren.data.repository.CalendarRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -34,12 +35,16 @@ class CalendarViewModel @Inject constructor(
                 val groupedTasks = tasks.groupBy { it.taskTimestamp.toLocalDate() }
                 val groupedEvents = events.groupBy { it.eventStartTime.toLocalDate() }
 
-                CalendarUiState.Shown(
-                    groupedTasks = groupedTasks,
-                    groupedEvents = groupedEvents,
-                    eventSink = { event -> handleEvent(event) }
-                )
-            }.collect { state ->
+                (_uiState.value as? CalendarUiState.Shown)?.let {
+                    it.copy(
+                        groupedTasks = groupedTasks,
+                        groupedEvents = groupedEvents,
+                        eventSink = { event -> handleEvent(event) }
+                    )
+                }
+            }
+            .filterIsInstance<CalendarUiState.Shown>()
+            .collect { state ->
                 _uiState.update { state }
             }
         }

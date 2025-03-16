@@ -2,7 +2,6 @@ package com.koren.calendar.ui.calendar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,7 +19,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -184,7 +182,7 @@ fun CalendarGrid(
     groupedEvents: Map<LocalDate, List<Event>>,
     dayClicked: (Day) -> Unit
 ) {
-    val days = remember(month) { getDaysForMonth(month, groupedTasks, groupedEvents) }
+    val days = remember(month, groupedTasks, groupedEvents) { getDaysForMonth(month, groupedTasks, groupedEvents) }
 
     LazyVerticalGrid(
         modifier = Modifier
