@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.koren.calendar.ui.Day
+import com.koren.calendar.ui.toDayDateMonth
 import com.koren.common.models.invitation.toHumanReadableDate
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
@@ -263,7 +264,7 @@ private fun AddTaskContent(
     uiState: AddEntryUiState.Shown.AddTask
 ) {
     TimeSelection(
-        date = (uiState.selectedDay.localDate?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli()?: 0L).toHumanReadableDate(),
+        date = uiState.selectedDay.toDayDateMonth(),
         time = uiState.time,
         timeError = uiState.timeError,
         onTimeChanged = { uiState.eventSink(AddEntryUiEvent.StartTimeChanged(it)) }

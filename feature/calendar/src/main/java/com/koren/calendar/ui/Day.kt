@@ -4,6 +4,8 @@ import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
 
 data class Day(
     val dayOfMonth: Int? = null,
@@ -12,3 +14,7 @@ data class Day(
     val tasks: List<Task> = emptyList(),
     val events: List<Event> = emptyList()
 )
+
+fun Day.toDayDateMonth(): String {
+    return "${dayOfWeek?.getDisplayName(TextStyle.SHORT, Locale.getDefault())}, $dayOfMonth ${localDate?.month?.getDisplayName(TextStyle.FULL, Locale.getDefault())}"
+}
