@@ -11,14 +11,17 @@ import com.google.firebase.storage.internal.Util.parseDateTime
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.services.UserSession
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
@@ -92,7 +95,7 @@ class DefaultCalendarRepository @Inject constructor(
         }
     }
 
-    override suspend fun getEvents(): Flow<List<Event>> = callbackFlow {
+    override fun getEvents(): Flow<List<Event>> = callbackFlow {
         val familyId = userSession.currentUser.first().familyId
         val ref = database.child("families/$familyId/events")
         val listener = object : ValueEventListener {
@@ -108,9 +111,9 @@ class DefaultCalendarRepository @Inject constructor(
 
         ref.addValueEventListener(listener)
         awaitClose { ref.removeEventListener(listener) }
-    }
+    }.flowOn(Dispatchers.IO)
 
-    override suspend fun getTasks(): Flow<List<Task>> = callbackFlow {
+    override fun getTasks(): Flow<List<Task>> = callbackFlow {
         val familyId = userSession.currentUser.first().familyId
         val ref = database.child("families/$familyId/tasks")
         val listener = object : ValueEventListener {
@@ -127,7 +130,61 @@ class DefaultCalendarRepository @Inject constructor(
 
         ref.addValueEventListener(listener)
         awaitClose { ref.removeEventListener(listener) }
-    }
+    }.flowOn(Dispatchers.IO)
+
+    override fun getEventsForDay(date: LocalDate): Flow<List<Event>> = callbackFlow {
+        val familyId = userSession.currentUser.first().familyId
+
+        val startOfDay = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val endOfDay = date.atTime(23, 59, 59, 999_999_999)
+            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+        val ref = database.child("families/$familyId/events")
+            .orderByChild("eventStartTime")
+            .startAt(startOfDay.toDouble())
+            .endAt(endOfDay.toDouble())
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val events = snapshot.children.mapNotNull { it.getValue<Event>() }
+                trySend(events).isSuccess
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Timber.e(error.message)
+            }
+        }
+
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }.flowOn(Dispatchers.IO)
+
+    override fun getTasksForDay(date: LocalDate): Flow<List<Task>> = callbackFlow {
+        val familyId = userSession.currentUser.first().familyId
+
+        val startOfDay = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val endOfDay = date.atTime(23, 59, 59, 999_999_999)
+            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+        val ref = database.child("families/$familyId/tasks")
+            .orderByChild("taskTimestamp")
+            .startAt(startOfDay.toDouble())
+            .endAt(endOfDay.toDouble())
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val tasks = snapshot.children.mapNotNull { it.getValue<Task>() }
+                trySend(tasks).isSuccess
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Timber.e(error.message)
+            }
+        }
+
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }.flowOn(Dispatchers.IO)
 
     private fun parseDateTime(dateInMillis: Long, time: String): Long {
         if (time.isBlank()) {

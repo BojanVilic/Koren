@@ -1,6 +1,8 @@
 package com.koren.calendar.ui.day_details
 
 import com.koren.calendar.ui.Day
+import com.koren.common.models.calendar.Event
+import com.koren.common.models.calendar.Task
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
@@ -24,13 +26,15 @@ sealed interface DayDetailsUiState : UiState {
 
         data class Idle(
             override val day: Day,
+            val tasks: List<Task> = emptyList(),
+            val events: List<Event> = emptyList(),
             override val eventSink: (DayDetailsUiEvent) -> Unit
         ) : Shown
     }
 }
 
 sealed interface DayDetailsUiEvent : UiEvent {
-    data class AddClicked(val day: Day) : DayDetailsUiEvent
+    data object AddClicked : DayDetailsUiEvent
 }
 
 sealed interface DayDetailsUiSideEffect : UiSideEffect {

@@ -272,11 +272,6 @@ fun DayCell(
         )
     ) {
         day.dayOfMonth?.let { dayOfMonth ->
-
-            if (day.events.isNotEmpty() || day.tasks.isNotEmpty()) {
-                Timber.d("PROBAVANJE: $dayOfMonth, events: ${day.events.size}, tasks: ${day.tasks.size}")
-            }
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()

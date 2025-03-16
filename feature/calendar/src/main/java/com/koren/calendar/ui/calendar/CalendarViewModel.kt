@@ -53,7 +53,7 @@ class CalendarViewModel @Inject constructor(
     override fun handleEvent(event: CalendarUiEvent) {
         withEventfulState<CalendarUiState.Shown> { currentState ->
             when (event) {
-                is CalendarUiEvent.DayClicked -> initDayDetails(event.day)
+                is CalendarUiEvent.DayClicked -> initDayDetails(currentState, event.day)
                 is CalendarUiEvent.ResetCalendarBottomSheetContent -> dismissBottomSheet(currentState)
             }
         }
@@ -66,9 +66,12 @@ class CalendarViewModel @Inject constructor(
         }
     }
 
-    private fun initDayDetails(day: Day) {
+    private fun initDayDetails(
+        currentState: CalendarUiState.Shown,
+        day: Day
+    ) {
         _uiState.update {
-            CalendarUiState.Shown(
+            currentState.copy(
                 calendarBottomSheetContent = CalendarBottomSheetContent.DayDetails(day),
                 eventSink = { event -> handleEvent(event) }
             )

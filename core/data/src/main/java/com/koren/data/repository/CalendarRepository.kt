@@ -3,6 +3,7 @@ package com.koren.data.repository
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 interface CalendarRepository {
     suspend fun saveEvent(
@@ -23,6 +24,9 @@ interface CalendarRepository {
         assigneeUserId: String = ""
     ): Result<Unit>
 
-    suspend fun getEvents(): Flow<List<Event>>
-    suspend fun getTasks(): Flow<List<Task>>
+    fun getEvents(): Flow<List<Event>>
+    fun getTasks(): Flow<List<Task>>
+
+    fun getEventsForDay(date: LocalDate): Flow<List<Event>>
+    fun getTasksForDay(date: LocalDate): Flow<List<Task>>
 }
