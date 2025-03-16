@@ -2,6 +2,7 @@ package com.koren.data.repository
 
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
+import com.koren.common.util.HourMinute
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -12,15 +13,15 @@ interface CalendarRepository {
         isAllDay: Boolean,
         startDate: Long,
         endDate: Long,
-        startTime: String,
-        endTime: String
+        startTime: HourMinute?,
+        endTime: HourMinute?
     ): Result<Unit>
 
     suspend fun saveTask(
         title: String = "",
         description: String = "",
         taskDate: Long,
-        taskTime: String,
+        taskTime: HourMinute?,
         assigneeUserId: String = ""
     ): Result<Unit>
 

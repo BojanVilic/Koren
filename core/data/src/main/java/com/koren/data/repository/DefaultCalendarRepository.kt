@@ -11,6 +11,8 @@ import com.google.firebase.storage.internal.Util.parseDateTime
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.services.UserSession
+import com.koren.common.util.HourMinute
+import com.koren.common.util.toLocalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -40,8 +42,8 @@ class DefaultCalendarRepository @Inject constructor(
         isAllDay: Boolean,
         startDate: Long,
         endDate: Long,
-        startTime: String,
-        endTime: String
+        startTime: HourMinute?,
+        endTime: HourMinute?
     ): Result<Unit> {
         return try {
             val user = userSession.currentUser.first()
@@ -71,9 +73,10 @@ class DefaultCalendarRepository @Inject constructor(
         title: String,
         description: String,
         taskDate: Long,
-        taskTime: String,
+        taskTime: HourMinute?,
         assigneeUserId: String
     ): Result<Unit> {
+        if (taskTime == null) return Result.failure(Exception("Task time is required"))
         return try {
             val user = userSession.currentUser.first()
             val familyId = user.familyId
@@ -186,14 +189,12 @@ class DefaultCalendarRepository @Inject constructor(
         awaitClose { ref.removeEventListener(listener) }
     }.flowOn(Dispatchers.IO)
 
-    private fun parseDateTime(dateInMillis: Long, time: String): Long {
-        if (time.isBlank()) {
-            return dateInMillis
-        }
+    private fun parseDateTime(dateInMillis: Long, time: HourMinute?): Long {
+        if (time == null) return dateInMillis
         val localDate = Instant.ofEpochMilli(dateInMillis)
             .atZone(ZoneId.systemDefault())
             .toLocalDate()
-        val localTime = LocalTime.parse(time)
+        val localTime = time.toLocalTime()
         val localDateTime = LocalDateTime.of(localDate, localTime)
         return localDateTime.atZone(ZoneId.systemDefault())
             .toInstant()

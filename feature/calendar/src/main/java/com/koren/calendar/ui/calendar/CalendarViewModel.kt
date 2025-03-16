@@ -2,8 +2,8 @@ package com.koren.calendar.ui.calendar
 
 import androidx.lifecycle.viewModelScope
 import com.koren.calendar.ui.Day
+import com.koren.common.util.DateUtils.toLocalDate
 import com.koren.common.util.StateViewModel
-import com.koren.common.util.toLocalDate
 import com.koren.data.repository.CalendarRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay

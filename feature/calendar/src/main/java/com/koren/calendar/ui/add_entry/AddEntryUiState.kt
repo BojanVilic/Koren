@@ -3,6 +3,7 @@ package com.koren.calendar.ui.add_entry
 import com.koren.calendar.ui.Day
 import com.koren.common.models.user.UserData
 import com.koren.common.util.EventHandler
+import com.koren.common.util.HourMinute
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
 import com.koren.common.util.UiState
@@ -24,17 +25,17 @@ sealed interface AddEntryUiState : UiState {
             val isAllDay: Boolean = true,
             val startDate: Long = 0L,
             val endDate: Long = 0L,
-            val startTime: String = "",
-            val endTime: String = "",
+            val startTime: HourMinute? = null,
+            val endTime: HourMinute? = null,
             override val showErrors: Boolean = false,
             override val eventSink: (AddEntryUiEvent) -> Unit
         ) : Shown {
 
             val startTimeError: Boolean
-                get() = showErrors && isAllDay.not() && startTime.isBlank()
+                get() = showErrors && isAllDay.not() && startTime == null
 
             val endTimeError: Boolean
-                get() = showErrors && isAllDay.not() && endTime.isBlank()
+                get() = showErrors && isAllDay.not() && endTime == null
 
             override val hasErrors: Boolean
                 get() = titleError || startTimeError || endTimeError
@@ -44,7 +45,7 @@ sealed interface AddEntryUiState : UiState {
             override val title: String = "",
             override val selectedDay: Day = Day(),
             val description: String = "",
-            val time: String = "",
+            val time: HourMinute? = null,
             val selectedAssignee: UserData? = null,
             val assigneeSearchQuery: String = "",
             val assigneeDropdownExpanded: Boolean = false,
@@ -55,7 +56,7 @@ sealed interface AddEntryUiState : UiState {
         ) : Shown {
 
             val timeError: Boolean
-                get() = showErrors && time.isBlank()
+                get() = showErrors && time == null
 
             val assigneeError: Boolean
                 get() = showErrors && selectedAssignee == null
@@ -73,8 +74,8 @@ sealed interface AddEntryUiEvent : UiEvent {
     data class IsAllDayChanged(val isAllDay: Boolean) : AddEntryUiEvent
     data class StartDateChanged(val startDate: Long) : AddEntryUiEvent
     data class EndDateChanged(val endDate: Long) : AddEntryUiEvent
-    data class StartTimeChanged(val startTime: String) : AddEntryUiEvent
-    data class EndTimeChanged(val endTime: String) : AddEntryUiEvent
+    data class StartTimeChanged(val startTime: HourMinute) : AddEntryUiEvent
+    data class EndTimeChanged(val endTime: HourMinute) : AddEntryUiEvent
 
     data class AssigneeSearchQueryChanged(val query: String) : AddEntryUiEvent
     data class AssigneeDropdownExpandedChanged(val expanded: Boolean) : AddEntryUiEvent

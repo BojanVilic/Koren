@@ -1,19 +1,26 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.koren.calendar.ui.add_entry
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +30,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.koren.common.models.invitation.toHumanReadableDate
+import com.koren.common.util.HourMinute
+import com.koren.common.util.isAfter
+import com.koren.common.util.isBefore
 import com.koren.designsystem.icon.Clock
 import com.koren.designsystem.icon.KorenIcons
 
@@ -33,9 +43,9 @@ enum class PickerType {
 @Composable
 fun TimeSelection(
     date: String,
-    time: String,
+    time: HourMinute?,
     timeError: Boolean,
-    onTimeChanged: (String) -> Unit
+    onTimeChanged: (HourMinute) -> Unit
 ) {
     var currentPicker by remember { mutableStateOf(PickerType.NONE) }
 
@@ -59,7 +69,7 @@ fun TimeSelection(
                     .clickable {
                         currentPicker = PickerType.START_TIME
                     },
-                text = time.ifEmpty { "Time" },
+                text = time?.toString()?: "Select time",
                 style = MaterialTheme.typography.bodyLarge
             )
 
@@ -80,10 +90,10 @@ fun TimeSelection(
 
     when (currentPicker) {
         PickerType.START_TIME -> TimePickerModal(
-            initialHour = time.substringBefore(":").toIntOrNull() ?: 0,
-            initialMinute = time.substringAfter(":").toIntOrNull() ?: 0,
+            initialHour = time?.hour ?: 0,
+            initialMinute = time?.minute ?: 0,
             onTimeSelected = { selectedTime ->
-                onTimeChanged(selectedTime ?: "")
+                onTimeChanged(selectedTime)
                 currentPicker = PickerType.NONE
             },
             onDismiss = { currentPicker = PickerType.NONE }
@@ -162,16 +172,16 @@ fun DateSelection(
 fun TimeAndDateSelection(
     startDate: Long,
     endDate: Long,
-    startTime: String,
-    endTime: String,
+    startTime: HourMinute?,
+    endTime: HourMinute?,
     isAllDay: Boolean,
     startTimeError: Boolean,
     endTimeError: Boolean,
     isAllDayChanged: (Boolean) -> Unit,
     onStartDateChanged: (Long) -> Unit,
     onEndDateChanged: (Long) -> Unit,
-    onStartTimeChanged: (String) -> Unit,
-    onEndTimeChanged: (String) -> Unit
+    onStartTimeChanged: (HourMinute) -> Unit,
+    onEndTimeChanged: (HourMinute) -> Unit
 ) {
     var currentPicker by remember { mutableStateOf(PickerType.NONE) }
 
@@ -225,7 +235,7 @@ fun TimeAndDateSelection(
                             .clickable {
                                 currentPicker = PickerType.START_TIME
                             },
-                        text = startTime.ifEmpty { "Start time" },
+                        text = startTime?.toString() ?: "Start time",
                         style = MaterialTheme.typography.bodyLarge
                     )
 
@@ -271,7 +281,7 @@ fun TimeAndDateSelection(
                             .clickable {
                                 currentPicker = PickerType.END_TIME
                             },
-                        text = endTime.ifEmpty { "End time" },
+                        text = endTime?.toString()?: "End time",
                         style = MaterialTheme.typography.bodyLarge
                     )
 
@@ -314,29 +324,97 @@ fun TimeAndDateSelection(
             onDismiss = { currentPicker = PickerType.NONE }
         )
         PickerType.START_TIME -> TimePickerModal(
-            initialHour = startTime.substringBefore(":").toIntOrNull() ?: 0,
-            initialMinute = startTime.substringAfter(":").toIntOrNull() ?: 0,
+            initialHour = startTime?.hour?: 0,
+            initialMinute = startTime?.minute ?: 0,
             onTimeSelected = { selectedTime ->
-                if ((selectedTime ?: "") > endTime) {
-                    onEndTimeChanged(selectedTime ?: "")
+                if (selectedTime.isAfter(endTime?: HourMinute(0, 0))) {
+                    onEndTimeChanged(selectedTime)
                 }
-                onStartTimeChanged(selectedTime ?: "")
+                onStartTimeChanged(selectedTime)
                 currentPicker = PickerType.NONE
             },
             onDismiss = { currentPicker = PickerType.NONE }
         )
         PickerType.END_TIME -> TimePickerModal(
-            initialHour = endTime.substringBefore(":").toIntOrNull() ?: 0,
-            initialMinute = endTime.substringAfter(":").toIntOrNull() ?: 0,
+            initialHour = endTime?.hour ?: 0,
+            initialMinute = endTime?.minute ?: 0,
             onTimeSelected = { selectedTime ->
-                if ((selectedTime ?: "") < startTime) {
-                    onStartTimeChanged(selectedTime ?: "")
+                if (selectedTime.isBefore(startTime?: HourMinute(0, 0))) {
+                    onStartTimeChanged(selectedTime)
                 }
-                onEndTimeChanged(selectedTime ?: "")
+                onEndTimeChanged(selectedTime)
                 currentPicker = PickerType.NONE
             },
             onDismiss = { currentPicker = PickerType.NONE }
         )
         PickerType.NONE -> Unit
+    }
+}
+
+@Composable
+fun TimePickerModal(
+    initialHour: Int = 0,
+    initialMinute: Int = 0,
+    onTimeSelected: (HourMinute) -> Unit,
+    onDismiss: () -> Unit
+) {
+
+    val timePickerState = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = true
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onTimeSelected(HourMinute(timePickerState.hour, timePickerState.minute))
+                    onDismiss()
+                }
+            ) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        text = {
+            TimePicker(
+                state = timePickerState
+            )
+        }
+    )
+}
+
+@Composable
+fun DatePickerModal(
+    onDateSelected: (Long?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val datePickerState = rememberDatePickerState()
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onDateSelected(datePickerState.selectedDateMillis)
+                    onDismiss()
+                }
+            ) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    ) {
+        DatePicker(state = datePickerState)
     }
 }
