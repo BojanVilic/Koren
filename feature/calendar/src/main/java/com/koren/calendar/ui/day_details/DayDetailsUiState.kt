@@ -1,6 +1,6 @@
 package com.koren.calendar.ui.day_details
 
-import com.koren.calendar.ui.Day
+import com.koren.common.models.calendar.Day
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.util.EventHandler

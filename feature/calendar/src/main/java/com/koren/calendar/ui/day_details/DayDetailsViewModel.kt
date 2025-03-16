@@ -1,7 +1,7 @@
 package com.koren.calendar.ui.day_details
 
 import androidx.lifecycle.viewModelScope
-import com.koren.calendar.ui.Day
+import com.koren.common.models.calendar.Day
 import com.koren.common.util.StateViewModel
 import com.koren.data.repository.CalendarRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel

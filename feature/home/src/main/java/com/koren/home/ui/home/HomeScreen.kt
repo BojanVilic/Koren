@@ -65,6 +65,7 @@ import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.koren.common.models.calendar.Day
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.InvitationStatus
 import com.koren.common.models.invitation.getExpiryText
@@ -83,6 +84,8 @@ import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.home.R
 import kotlinx.serialization.Serializable
+import java.time.DayOfWeek
+import java.time.LocalDate
 
 @Serializable
 object HomeDestination
@@ -93,7 +96,8 @@ fun HomeScreen(
     inviteFamilyMember: () -> Unit,
     createFamily: () -> Unit,
     sentInvitations: () -> Unit,
-    onShowSnackbar: suspend (message: String) -> Unit
+    onShowSnackbar: suspend (message: String) -> Unit,
+    openAddCalendarEntry: (Day) -> Unit
 ) {
 
     val scaffoldStateProvider = LocalScaffoldStateProvider.current
@@ -112,6 +116,15 @@ fun HomeScreen(
             is HomeSideEffect.NavigateToCreateFamily -> createFamily()
             is HomeSideEffect.NavigateToInviteFamilyMember -> inviteFamilyMember()
             is HomeSideEffect.NavigateToSentInvitations -> sentInvitations()
+            is HomeSideEffect.OpenAddCalendarEntry -> openAddCalendarEntry(
+                Day(
+                    dayOfMonth = 16,
+                    dayOfWeek = DayOfWeek.SUNDAY,
+                    localDate = LocalDate.now(),
+                    tasks = emptyList(),
+                    events = emptyList()
+                )
+            )
         }
     }
 
@@ -165,7 +178,7 @@ private fun ShownContent(
         ActionItem(
             icon = IconResource.Vector(Icons.Default.DateRange),
             text = "Schedule",
-            onClick = {}
+            onClick = { state.eventSink(HomeEvent.OpenAddCalendarEntry) }
         ),
         ActionItem(
             icon = IconResource.Vector(Icons.Default.Notifications),

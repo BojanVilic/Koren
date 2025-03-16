@@ -4,7 +4,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,12 +20,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,13 +36,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.koren.calendar.ui.Day
+import com.koren.common.models.calendar.Day
 import com.koren.calendar.ui.add_entry.AddEntryScreen
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.util.CollectSideEffects
-import com.koren.common.util.DateUtils.toHumanReadableDate
-import com.koren.common.util.DateUtils.toHumanReadableDateTime
 import com.koren.common.util.DateUtils.toHumanReadableDateTimeRange
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.icon.Circle

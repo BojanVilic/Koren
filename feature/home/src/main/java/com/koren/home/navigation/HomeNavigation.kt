@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
+import com.koren.common.models.calendar.Day
 import com.koren.home.ui.home.HomeDestination
 import com.koren.home.ui.home.HomeScreen
 import com.koren.home.ui.qr.QRAcceptInvitationDestination
@@ -21,7 +22,8 @@ fun NavGraphBuilder.homeScreen(
     navController: NavHostController,
     inviteFamilyMember: () -> Unit,
     createFamily: () -> Unit,
-    onShowSnackbar: suspend (message: String) -> Unit
+    onShowSnackbar: suspend (message: String) -> Unit,
+    openAddCalendarEntry: (Day) -> Unit
 ) {
     navigation<HomeGraph>(
         startDestination = HomeDestination
@@ -31,7 +33,8 @@ fun NavGraphBuilder.homeScreen(
                 inviteFamilyMember = inviteFamilyMember,
                 createFamily = createFamily,
                 sentInvitations = { navController.navigate(SentInvitationsDestination) },
-                onShowSnackbar = onShowSnackbar
+                onShowSnackbar = onShowSnackbar,
+                openAddCalendarEntry = openAddCalendarEntry
             )
         }
 

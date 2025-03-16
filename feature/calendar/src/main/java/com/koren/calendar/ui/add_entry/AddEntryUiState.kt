@@ -1,6 +1,6 @@
 package com.koren.calendar.ui.add_entry
 
-import com.koren.calendar.ui.Day
+import com.koren.common.models.calendar.Day
 import com.koren.common.models.user.UserData
 import com.koren.common.util.EventHandler
 import com.koren.common.util.HourMinute

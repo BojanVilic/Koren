@@ -54,6 +54,7 @@ class HomeViewModel @Inject constructor(
                 is HomeEvent.NavigateToCreateFamily -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToCreateFamily)
                 is HomeEvent.NavigateToInviteFamilyMember -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToInviteFamilyMember)
                 is HomeEvent.NavigateToSentInvitations -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToSentInvitations)
+                is HomeEvent.OpenAddCalendarEntry -> _sideEffects.emitSuspended(HomeSideEffect.OpenAddCalendarEntry)
             }
         }
     }

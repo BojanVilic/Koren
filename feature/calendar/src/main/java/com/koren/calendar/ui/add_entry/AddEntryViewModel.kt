@@ -1,7 +1,7 @@
 package com.koren.calendar.ui.add_entry
 
 import androidx.lifecycle.viewModelScope
-import com.koren.calendar.ui.Day
+import com.koren.common.models.calendar.Day
 import com.koren.common.util.DateUtils.toEpochMilliDayEnd
 import com.koren.common.util.DateUtils.toEpochMilliDayStart
 import com.koren.common.util.StateViewModel

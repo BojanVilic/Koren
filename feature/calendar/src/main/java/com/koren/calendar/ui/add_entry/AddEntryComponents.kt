@@ -47,8 +47,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.koren.calendar.ui.Day
-import com.koren.calendar.ui.toDayDateMonth
+import com.koren.common.models.calendar.Day
+import com.koren.common.models.calendar.toDayDateMonth
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.TabItem
@@ -61,7 +61,6 @@ import com.koren.designsystem.icon.Task
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalSnackbarHostState
 import com.koren.designsystem.theme.ThemePreview
-import java.time.ZoneOffset
 
 @Composable
 fun AddEntryScreen(

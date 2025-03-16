@@ -1,7 +1,7 @@
 package com.koren.calendar.ui.calendar
 
 import androidx.lifecycle.viewModelScope
-import com.koren.calendar.ui.Day
+import com.koren.common.models.calendar.Day
 import com.koren.common.models.calendar.Event
 import com.koren.common.util.DateUtils.toLocalDate
 import com.koren.common.util.StateViewModel

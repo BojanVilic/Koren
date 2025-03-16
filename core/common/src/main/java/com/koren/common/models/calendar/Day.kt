@@ -1,7 +1,5 @@
-package com.koren.calendar.ui
+package com.koren.common.models.calendar
 
-import com.koren.common.models.calendar.Event
-import com.koren.common.models.calendar.Task
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle

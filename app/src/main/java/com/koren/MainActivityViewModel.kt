@@ -1,34 +1,39 @@
 package com.koren
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.koren.common.models.user.UserData
 import com.koren.common.services.UserNotLoggedInException
 import com.koren.common.services.UserSession
+import com.koren.common.util.StateViewModel
 import com.koren.common.util.orUnknownError
+import com.koren.navigation.MainActivityBottomSheetContent
+import com.koren.navigation.MainActivityUiEvent
+import com.koren.navigation.MainActivityUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
     private val userSession: UserSession
-) : ViewModel() {
+) : StateViewModel<MainActivityUiEvent, MainActivityUiState, Nothing>() {
 
-    private val _uiState = MutableStateFlow<MainActivityUiState>(MainActivityUiState.Loading)
-    val uiState: StateFlow<MainActivityUiState> = _uiState.asStateFlow()
+    override fun setInitialState(): MainActivityUiState = MainActivityUiState.Loading
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
             if (!userSession.isLoggedIn) _uiState.value = MainActivityUiState.LoggedOut
             else {
-                userSession.currentUser.collect {
+                userSession.currentUser.collect { userData ->
                     try {
-                        _uiState.value = MainActivityUiState.Success(it)
+                        _uiState.update {
+                            MainActivityUiState.Success(
+                                bottomSheetContent = MainActivityBottomSheetContent.None,
+                                userData = userData,
+                                eventSink = ::handleEvent
+                            )
+                        }
                     }
                     catch (e: UserNotLoggedInException) {
                         _uiState.value = MainActivityUiState.LoggedOut
@@ -46,13 +51,13 @@ class MainActivityViewModel @Inject constructor(
             userSession.updateUserDataOnSignIn()
         }
     }
-}
 
-sealed interface MainActivityUiState {
-    data object Loading : MainActivityUiState
-    data class Success(val userData: UserData) : MainActivityUiState
-    data class Error(val message: String) : MainActivityUiState
-    data object LoggedOut : MainActivityUiState
-
-    fun shouldKeepSplashScreen() = this is Loading
+    override fun handleEvent(event: MainActivityUiEvent) {
+        withEventfulState<MainActivityUiState.Success> { currentState ->
+            when (event) {
+                is MainActivityUiEvent.DismissBottomSheet -> _uiState.update { currentState.copy(bottomSheetContent = MainActivityBottomSheetContent.None) }
+                is MainActivityUiEvent.SetBottomSheetContent -> _uiState.update { currentState.copy(bottomSheetContent = event.bottomSheetContent) }
+            }
+        }
+    }
 }

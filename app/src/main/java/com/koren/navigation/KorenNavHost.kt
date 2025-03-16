@@ -7,7 +7,6 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
-import com.koren.MainActivityUiState
 import com.koren.MainActivityViewModel
 import com.koren.account.ui.account.AccountDestination
 import com.koren.account.ui.navigation.accountScreen
@@ -32,7 +31,8 @@ fun KorenNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
     mainActivityViewModel: MainActivityViewModel,
-    onShowSnackbar: suspend (message: String) -> Unit
+    onShowSnackbar: suspend (message: String) -> Unit,
+    setMainActivityBottomSheetContent: (MainActivityBottomSheetContent) -> Unit
 ) {
     val uiState = mainActivityViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -61,7 +61,8 @@ fun KorenNavHost(
                     navController.navigate(InvitationDestination)
                 },
                 createFamily = { navController.navigate(OnboardingGraph) },
-                onShowSnackbar = onShowSnackbar
+                onShowSnackbar = onShowSnackbar,
+                openAddCalendarEntry = { setMainActivityBottomSheetContent(MainActivityBottomSheetContent.AddCalendarEntry(it)) }
             )
             onboardingScreen(
                 navController = navController,

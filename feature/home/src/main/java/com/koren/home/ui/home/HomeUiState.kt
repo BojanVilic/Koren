@@ -30,11 +30,13 @@ sealed interface HomeEvent : UiEvent {
     data object NavigateToInviteFamilyMember : HomeEvent
     data object NavigateToCreateFamily : HomeEvent
     data object NavigateToSentInvitations : HomeEvent
+    data object OpenAddCalendarEntry : HomeEvent
 }
 
 sealed interface HomeSideEffect : UiSideEffect {
     data object NavigateToInviteFamilyMember : HomeSideEffect
     data object NavigateToCreateFamily : HomeSideEffect
     data object NavigateToSentInvitations : HomeSideEffect
+    data object OpenAddCalendarEntry : HomeSideEffect
     data class ShowError(val message: String) : HomeSideEffect
 }
