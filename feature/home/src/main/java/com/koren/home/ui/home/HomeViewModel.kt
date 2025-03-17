@@ -32,32 +32,37 @@ class HomeViewModel @Inject constructor(
 
     override fun setInitialState(): HomeUiState = HomeUiState.Loading
 
+    private val calendarFlows = combine(
+        userSession.currentUser,
+        calendarRepository.getEventsForDay(LocalDate.now()),
+        calendarRepository.getTasksForDay(LocalDate.now())
+    ) { currentUser, events, tasks -> Triple(currentUser, events, tasks) }
+
+    private val invitationFlows = combine(
+        invitationRepository.getReceivedInvitations(),
+        invitationRepository.getSentInvitations()
+    ) { receivedInvitations, sentInvitations -> Pair(receivedInvitations, sentInvitations) }
+
+    private val familyFlows = combine(
+        getAllFamilyMembers(),
+        getFamilyUseCase.getFamilyFlow()
+    ) { familyMembers, family -> Pair(familyMembers, family) }
+
     init {
-
-        val calendarFlows = combine(
-            userSession.currentUser,
-            calendarRepository.getEventsForDay(LocalDate.now()),
-            calendarRepository.getTasksForDay(LocalDate.now())
-        ) {
-            currentUser, events, tasks -> Triple(currentUser, events, tasks)
-        }
-
         combine(
-            invitationRepository.getReceivedInvitations(),
-            invitationRepository.getSentInvitations(),
-            getAllFamilyMembers(),
-            getFamilyUseCase.getFamilyFlow(),
+            invitationFlows,
+            familyFlows,
             calendarFlows
-        ) { receivedInvitations, sentInvitations, familyMembers, family, calendar ->
+        ) { (receivedInvitations, sentInvitations), (familyMembers, family), (currentUser, events, tasks) ->
             _uiState.update {
                 HomeUiState.Shown(
-                    currentUser = calendar.first,
+                    currentUser = currentUser,
                     receivedInvitations = receivedInvitations.filter { it.status == InvitationStatus.PENDING },
                     sentInvitations = sentInvitations,
                     familyMembers = familyMembers,
                     family = family,
-                    events = calendar.second,
-                    tasks = calendar.third,
+                    events = events,
+                    tasks = tasks,
                     eventSink = ::handleEvent
                 )
             }
