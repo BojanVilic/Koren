@@ -11,7 +11,6 @@ import com.koren.common.models.activity.UserLocationActivity
 import com.koren.common.models.user.UserData
 import com.koren.common.services.LocationService
 import com.koren.common.services.UserSession
-import com.koren.domain.UpdateLastUserActivityUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +28,6 @@ import kotlin.time.Duration.Companion.milliseconds
 class DefaultActivityRepository @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase,
     private val userSession: UserSession,
-    private val updateLastUserActivityUseCase: UpdateLastUserActivityUseCase,
     private val locationService: LocationService
 ) : ActivityRepository {
 
@@ -56,7 +54,7 @@ class DefaultActivityRepository @Inject constructor(
         if (lastActivityId.isNullOrEmpty()) {
             firebaseDatabase.getReference(activitiesPath(newActivity.familyId, newActivity.id, LOCATION_ACTIVITY))
                 .setValue(newActivity)
-            updateLastUserActivityUseCase(newActivity.id)
+            updateUserLocation(newActivity.id)
             Timber.d("No last location found, created new activity.")
         } else {
             val lastActivity = firebaseDatabase
@@ -82,7 +80,7 @@ class DefaultActivityRepository @Inject constructor(
 
             firebaseDatabase.getReference(activitiesPath(newActivity.familyId, newActivity.id, LOCATION_ACTIVITY))
                 .setValue(newActivity)
-            updateLastUserActivityUseCase(newActivity.id)
+            updateUserLocation(newActivity.id)
             Timber.d("Activity updated: ${newActivity.id}")
         }
     }
@@ -180,4 +178,12 @@ class DefaultActivityRepository @Inject constructor(
     }.flowOn(Dispatchers.Default)
 
     private fun activitiesPath(familyId: String, activityId: String, type: String) = "activities/${familyId}/$type/${activityId}"
+
+    private suspend fun updateUserLocation(activityId: String) {
+        val user = userSession.currentUser.first()
+
+        firebaseDatabase.reference.child("users/${user.id}/lastActivityId")
+            .setValue(activityId)
+            .await()
+    }
 }

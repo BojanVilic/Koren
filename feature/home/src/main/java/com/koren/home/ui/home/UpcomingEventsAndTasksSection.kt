@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -180,7 +181,7 @@ fun FreeDay(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.Start
     ) {
         Text(
@@ -201,6 +202,8 @@ fun FreeDay(
                 style = MaterialTheme.typography.bodyLarge
             )
         }
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider()
 
         when (uiState.freeDayNextItem) {
             is NextItem.TaskItem -> UpcomingItemTask(uiState.freeDayNextItem)
@@ -234,7 +237,7 @@ private fun UpcomingItemEvent(
             text = eventItem.event.title,
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = "due/at ${eventItem.event.eventStartTime.toHumanReadableDateTime()}",
             style = MaterialTheme.typography.bodySmall,
@@ -268,7 +271,7 @@ private fun UpcomingItemTask(
             text = taskItem.task.title,
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = "due/at ${taskItem.task.taskTimestamp.toHumanReadableDateTime()}",
             style = MaterialTheme.typography.bodySmall,
@@ -286,6 +289,12 @@ fun FreeDayWithNextItem() {
                 uiState = HomeUiState.Shown(
                     currentUser = UserData(
                         displayName = "John Doe",
+                    ),
+                    freeDayNextItem = NextItem.TaskItem(
+                        Task(
+                            title = "Grocery Shopping",
+                            taskTimestamp = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }.timeInMillis
+                        )
                     ),
                     eventSink = {}
                 )

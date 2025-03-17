@@ -9,6 +9,7 @@ import com.koren.data.repository.CalendarRepository
 import com.koren.data.repository.InvitationRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
 import com.koren.domain.GetFamilyUseCase
+import com.koren.domain.GetNextCalendarItemUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
@@ -28,6 +29,7 @@ class HomeViewModel @Inject constructor(
     getFamilyUseCase: GetFamilyUseCase,
     calendarRepository: CalendarRepository,
     userSession: UserSession,
+    getNextCalendarItemUseCase: GetNextCalendarItemUseCase
 ): StateViewModel<HomeEvent, HomeUiState, HomeSideEffect>() {
 
     override fun setInitialState(): HomeUiState = HomeUiState.Loading
@@ -52,8 +54,9 @@ class HomeViewModel @Inject constructor(
         combine(
             invitationFlows,
             familyFlows,
-            calendarFlows
-        ) { (receivedInvitations, sentInvitations), (familyMembers, family), (currentUser, events, tasks) ->
+            calendarFlows,
+            getNextCalendarItemUseCase()
+        ) { (receivedInvitations, sentInvitations), (familyMembers, family), (currentUser, events, tasks), upcomingItem ->
             _uiState.update {
                 HomeUiState.Shown(
                     currentUser = currentUser,
@@ -63,6 +66,7 @@ class HomeViewModel @Inject constructor(
                     family = family,
                     events = events,
                     tasks = tasks,
+                    freeDayNextItem = upcomingItem.toNextItem(),
                     eventSink = ::handleEvent
                 )
             }

@@ -186,6 +186,50 @@ class DefaultCalendarRepository @Inject constructor(
         awaitClose { ref.removeEventListener(listener) }
     }.flowOn(Dispatchers.IO)
 
+    override fun getFirstUpcomingTask(): Flow<Task?> = callbackFlow {
+        val familyId = userSession.currentUser.first().familyId
+        val ref = database.child("families/$familyId/tasks")
+            .orderByChild("taskTimestamp")
+            .startAt(System.currentTimeMillis().toDouble())
+            .limitToFirst(1)
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val task = snapshot.children.firstOrNull()?.getValue<Task>()
+                trySend(task).isSuccess
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Timber.e(error.message)
+            }
+        }
+
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    override fun getFirstUpcomingEvent(): Flow<Event?> = callbackFlow {
+        val familyId = userSession.currentUser.first().familyId
+        val ref = database.child("families/$familyId/events")
+            .orderByChild("eventStartTime")
+            .startAt(System.currentTimeMillis().toDouble())
+            .limitToFirst(1)
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val event = snapshot.children.firstOrNull()?.getValue<Event>()
+                trySend(event).isSuccess
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Timber.e(error.message)
+            }
+        }
+
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
     private fun parseDateTime(dateInMillis: Long, time: HourMinute?): Long {
         if (time == null) return dateInMillis
         val localDate = Instant.ofEpochMilli(dateInMillis)

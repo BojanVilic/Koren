@@ -1,5 +1,6 @@
 package com.koren.home.ui.home
 
+import com.koren.common.models.calendar.CalendarItem
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.models.family.Family
@@ -53,4 +54,12 @@ sealed interface HomeSideEffect : UiSideEffect {
     data object NavigateToSentInvitations : HomeSideEffect
     data object OpenAddCalendarEntry : HomeSideEffect
     data class ShowError(val message: String) : HomeSideEffect
+}
+
+fun CalendarItem.toNextItem(): NextItem {
+    return when (this) {
+        is CalendarItem.EventItem -> NextItem.EventItem(event)
+        is CalendarItem.TaskItem -> NextItem.TaskItem(task)
+        CalendarItem.None -> NextItem.None
+    }
 }

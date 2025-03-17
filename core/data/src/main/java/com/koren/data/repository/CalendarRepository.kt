@@ -30,4 +30,6 @@ interface CalendarRepository {
 
     fun getEventsForDay(date: LocalDate): Flow<List<Event>>
     fun getTasksForDay(date: LocalDate): Flow<List<Task>>
+    fun getFirstUpcomingTask(): Flow<Task?>
+    fun getFirstUpcomingEvent(): Flow<Event?>
 }
