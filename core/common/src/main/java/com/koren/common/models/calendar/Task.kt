@@ -5,7 +5,7 @@ data class Task(
     val title: String = "",
     val description: String = "",
     val taskTimestamp: Long = 0,
-    val isCompleted: Boolean = false,
+    val completed: Boolean = false,
     val creatorUserId: String = "",
     val assigneeUserId: String = ""
 )

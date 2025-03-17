@@ -3,38 +3,61 @@ package com.koren.home.ui.home
 import androidx.lifecycle.viewModelScope
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.InvitationStatus
+import com.koren.common.services.UserSession
 import com.koren.common.util.StateViewModel
+import com.koren.data.repository.CalendarRepository
 import com.koren.data.repository.InvitationRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
+import com.koren.domain.GetFamilyUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val invitationRepository: InvitationRepository,
-    getAllFamilyMembers: GetAllFamilyMembersUseCase
+    getAllFamilyMembers: GetAllFamilyMembersUseCase,
+    getFamilyUseCase: GetFamilyUseCase,
+    calendarRepository: CalendarRepository,
+    userSession: UserSession,
 ): StateViewModel<HomeEvent, HomeUiState, HomeSideEffect>() {
 
     override fun setInitialState(): HomeUiState = HomeUiState.Loading
 
     init {
+
+        val calendarFlows = combine(
+            userSession.currentUser,
+            calendarRepository.getEventsForDay(LocalDate.now()),
+            calendarRepository.getTasksForDay(LocalDate.now())
+        ) {
+            currentUser, events, tasks -> Triple(currentUser, events, tasks)
+        }
+
         combine(
             invitationRepository.getReceivedInvitations(),
             invitationRepository.getSentInvitations(),
-            getAllFamilyMembers()
-        ) { receivedInvitations, sentInvitations, familyMembers ->
+            getAllFamilyMembers(),
+            getFamilyUseCase.getFamilyFlow(),
+            calendarFlows
+        ) { receivedInvitations, sentInvitations, familyMembers, family, calendar ->
             _uiState.update {
                 HomeUiState.Shown(
+                    currentUser = calendar.first,
                     receivedInvitations = receivedInvitations.filter { it.status == InvitationStatus.PENDING },
                     sentInvitations = sentInvitations,
                     familyMembers = familyMembers,
+                    family = family,
+                    events = calendar.second,
+                    tasks = calendar.third,
                     eventSink = ::handleEvent
                 )
             }

@@ -6,6 +6,6 @@ data class Event(
     val description: String = "",
     val eventStartTime: Long = 0,
     val eventEndTime: Long = 0,
-    val isAllDay: Boolean = false,
+    val allDay: Boolean = false,
     val creatorUserId: String = ""
 )

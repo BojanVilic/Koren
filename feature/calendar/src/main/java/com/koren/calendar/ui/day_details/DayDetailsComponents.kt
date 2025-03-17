@@ -233,9 +233,9 @@ private fun TaskItem(task: Task) {
     ) {
         Icon(
             modifier = Modifier.size(24.dp),
-            imageVector = if (task.isCompleted) KorenIcons.CircleCheck else KorenIcons.Circle,
-            contentDescription = if (task.isCompleted) "Task Completed" else "Task Pending",
-            tint = if (task.isCompleted) ExtendedTheme.colors.task else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            imageVector = if (task.completed) KorenIcons.CircleCheck else KorenIcons.Circle,
+            contentDescription = if (task.completed) "Task Completed" else "Task Pending",
+            tint = if (task.completed) ExtendedTheme.colors.task else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
@@ -281,7 +281,7 @@ private fun EventItem(event: Event) {
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            if (!event.isAllDay) {
+            if (!event.allDay) {
                 val timeRange = Pair(event.eventStartTime, event.eventEndTime).toHumanReadableDateTimeRange()
                 Text(
                     text = timeRange,
@@ -313,7 +313,7 @@ fun DayDetailsScreenPreview() {
                             title = "Task 1",
                             description = "Description 1",
                             taskTimestamp = 1640000000000,
-                            isCompleted = false,
+                            completed = false,
                             creatorUserId = "1",
                             assigneeUserId = "2"
                         ),
@@ -321,7 +321,7 @@ fun DayDetailsScreenPreview() {
                             title = "Task 2",
                             description = "Description 2",
                             taskTimestamp = 1640000000000,
-                            isCompleted = false,
+                            completed = false,
                             creatorUserId = "1",
                             assigneeUserId = "2"
                         )
@@ -333,7 +333,7 @@ fun DayDetailsScreenPreview() {
                             eventStartTime = 1640000000000,
                             eventEndTime = 1640000000000,
                             creatorUserId = "1",
-                            isAllDay = false
+                            allDay = false
                         ),
                         Event(
                             title = "Event 2",
@@ -341,7 +341,7 @@ fun DayDetailsScreenPreview() {
                             eventStartTime = 1640000000000,
                             eventEndTime = 1640000000000,
                             creatorUserId = "1",
-                            isAllDay = true
+                            allDay = true
                         )
                     )
                 ),

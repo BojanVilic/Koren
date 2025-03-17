@@ -6,14 +6,11 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
 import com.google.firebase.database.getValue
-import com.google.firebase.database.values
-import com.google.firebase.storage.internal.Util.parseDateTime
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.services.UserSession
 import com.koren.common.util.DateUtils.toEpochMilliDayEnd
 import com.koren.common.util.DateUtils.toEpochMilliDayStart
-import com.koren.common.util.DateUtils.toLocalTimeZoneTimestamp
 import com.koren.common.util.HourMinute
 import com.koren.common.util.toLocalTime
 import kotlinx.coroutines.Dispatchers
@@ -22,14 +19,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.UUID
 import javax.inject.Inject
@@ -60,7 +54,7 @@ class DefaultCalendarRepository @Inject constructor(
                 description = description,
                 eventStartTime = startMillis,
                 eventEndTime = endMillis,
-                isAllDay = isAllDay,
+                allDay = isAllDay,
                 creatorUserId = user.id
             )
             val familyId = userSession.currentUser.first().familyId
@@ -89,7 +83,7 @@ class DefaultCalendarRepository @Inject constructor(
                 title = title,
                 description = description,
                 taskTimestamp = parseDateTime(taskDate, taskTime),
-                isCompleted = false,
+                completed = false,
                 creatorUserId = user.id,
                 assigneeUserId = assigneeUserId
             )

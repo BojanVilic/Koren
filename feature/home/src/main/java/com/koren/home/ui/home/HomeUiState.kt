@@ -1,5 +1,8 @@
 package com.koren.home.ui.home
 
+import com.koren.common.models.calendar.Event
+import com.koren.common.models.calendar.Task
+import com.koren.common.models.family.Family
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.user.UserData
 import com.koren.common.util.EventHandler
@@ -7,14 +10,25 @@ import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
 import com.koren.common.util.UiState
 
+sealed interface NextItem {
+    data class TaskItem(val task: Task) : NextItem
+    data class EventItem(val event: Event) : NextItem
+    data object None : NextItem
+}
+
 sealed interface HomeUiState : UiState {
     data object Loading : HomeUiState
     data class Shown(
+        val currentUser: UserData = UserData(),
         val receivedInvitations: List<Invitation> = emptyList(),
         val sentInvitations: List<Invitation> = emptyList(),
         val invitationCodeText: String = "",
         val invitationCodeError: String = "",
         val familyMembers: List<UserData> = emptyList(),
+        val family: Family? = null,
+        val tasks: List<Task> = emptyList(),
+        val events: List<Event> = emptyList(),
+        val freeDayNextItem: NextItem = NextItem.None,
         override val eventSink: (HomeEvent) -> Unit
     ) : HomeUiState, EventHandler<HomeEvent>
 }
