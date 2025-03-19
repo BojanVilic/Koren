@@ -1,7 +1,9 @@
 package com.koren.data.repository
 
 import com.koren.common.models.calendar.Event
+import com.koren.common.models.calendar.EventWithUsers
 import com.koren.common.models.calendar.Task
+import com.koren.common.models.calendar.TaskWithUsers
 import com.koren.common.util.HourMinute
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -30,6 +32,6 @@ interface CalendarRepository {
 
     fun getEventsForDay(date: LocalDate): Flow<List<Event>>
     fun getTasksForDay(date: LocalDate): Flow<List<Task>>
-    fun getFirstUpcomingTask(): Flow<Task?>
-    fun getFirstUpcomingEvent(): Flow<Event?>
+    fun getFirstUpcomingTask(): Flow<TaskWithUsers?>
+    fun getFirstUpcomingEvent(): Flow<EventWithUsers?>
 }

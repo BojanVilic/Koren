@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -26,11 +27,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
+import com.koren.common.models.calendar.TaskWithUsers
 import com.koren.common.models.user.UserData
 import com.koren.common.util.DateUtils.toHumanReadableDateTime
 import com.koren.common.util.DateUtils.toHumanReadableDateTimeRange
@@ -202,12 +209,18 @@ fun FreeDay(
                 style = MaterialTheme.typography.bodyLarge
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider()
 
         when (uiState.freeDayNextItem) {
-            is NextItem.TaskItem -> UpcomingItemTask(uiState.freeDayNextItem)
-            is NextItem.EventItem -> UpcomingItemEvent(uiState.freeDayNextItem)
+            is NextItem.TaskItem -> {
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider()
+                UpcomingItemTask(uiState.freeDayNextItem)
+            }
+            is NextItem.EventItem -> {
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider()
+                UpcomingItemEvent(uiState.freeDayNextItem)
+            }
             is NextItem.None -> Unit
         }
     }
@@ -261,7 +274,7 @@ private fun UpcomingItemTask(
     ) {
         val icon = if (taskItem.task.completed) KorenIcons.CircleCheck else KorenIcons.Circle
         Icon(
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(24.dp),
             imageVector = icon,
             contentDescription = "Task Icon",
             tint = MaterialTheme.colorScheme.primary
@@ -273,7 +286,13 @@ private fun UpcomingItemTask(
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
-            text = "due/at ${taskItem.task.taskTimestamp.toHumanReadableDateTime()}",
+            text = "Due: ${taskItem.task.taskTimestamp.toHumanReadableDateTime()}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = "From: ${taskItem.task.creator?.displayName}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
@@ -291,7 +310,7 @@ fun FreeDayWithNextItem() {
                         displayName = "John Doe",
                     ),
                     freeDayNextItem = NextItem.TaskItem(
-                        Task(
+                        TaskWithUsers(
                             title = "Grocery Shopping",
                             taskTimestamp = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }.timeInMillis
                         )

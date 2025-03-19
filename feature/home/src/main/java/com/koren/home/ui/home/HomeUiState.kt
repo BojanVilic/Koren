@@ -2,7 +2,9 @@ package com.koren.home.ui.home
 
 import com.koren.common.models.calendar.CalendarItem
 import com.koren.common.models.calendar.Event
+import com.koren.common.models.calendar.EventWithUsers
 import com.koren.common.models.calendar.Task
+import com.koren.common.models.calendar.TaskWithUsers
 import com.koren.common.models.family.Family
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.user.UserData
@@ -12,8 +14,8 @@ import com.koren.common.util.UiSideEffect
 import com.koren.common.util.UiState
 
 sealed interface NextItem {
-    data class TaskItem(val task: Task) : NextItem
-    data class EventItem(val event: Event) : NextItem
+    data class TaskItem(val task: TaskWithUsers) : NextItem
+    data class EventItem(val event: EventWithUsers) : NextItem
     data object None : NextItem
 }
 

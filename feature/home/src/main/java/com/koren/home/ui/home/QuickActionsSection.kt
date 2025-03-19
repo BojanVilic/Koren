@@ -19,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.koren.designsystem.components.ActionButton
+import com.koren.designsystem.icon.KorenIcons
+import com.koren.designsystem.icon.RemovePerson
 import com.koren.designsystem.models.ActionItem
 import com.koren.designsystem.models.IconResource
 import com.koren.home.R
@@ -53,7 +55,7 @@ internal fun LazyListScope.quickActionsSection(
             onClick = {}
         ),
         ActionItem(
-            icon = IconResource.Drawable(R.drawable.remove_person),
+            icon = IconResource.Vector(KorenIcons.RemovePerson),
             text = "Remove",
             onClick = {}
         ),

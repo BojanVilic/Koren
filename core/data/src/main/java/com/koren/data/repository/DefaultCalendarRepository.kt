@@ -7,7 +7,10 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
 import com.google.firebase.database.getValue
 import com.koren.common.models.calendar.Event
+import com.koren.common.models.calendar.EventWithUsers
 import com.koren.common.models.calendar.Task
+import com.koren.common.models.calendar.TaskWithUsers
+import com.koren.common.models.user.UserData
 import com.koren.common.services.UserSession
 import com.koren.common.util.DateUtils.toEpochMilliDayEnd
 import com.koren.common.util.DateUtils.toEpochMilliDayStart
@@ -19,7 +22,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDate
@@ -186,8 +191,9 @@ class DefaultCalendarRepository @Inject constructor(
         awaitClose { ref.removeEventListener(listener) }
     }.flowOn(Dispatchers.IO)
 
-    override fun getFirstUpcomingTask(): Flow<Task?> = callbackFlow {
+    override fun getFirstUpcomingTask(): Flow<TaskWithUsers?> = callbackFlow {
         val familyId = userSession.currentUser.first().familyId
+        val userId = userSession.currentUser.first().id
         val ref = database.child("families/$familyId/tasks")
             .orderByChild("taskTimestamp")
             .startAt(System.currentTimeMillis().toDouble())
@@ -195,8 +201,31 @@ class DefaultCalendarRepository @Inject constructor(
 
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val task = snapshot.children.firstOrNull()?.getValue<Task>()
-                trySend(task).isSuccess
+                launch {
+                    val task = snapshot.children
+                        .mapNotNull { it?.getValue<Task>() }
+                        .firstOrNull { it.assigneeUserId == userId }
+                    val creator = withContext(Dispatchers.IO) {
+                        val userRef = database.child("users/${task?.creatorUserId}")
+                        val userSnapshot = userRef.get().await()
+                        userSnapshot.getValue<UserData>()
+                    }
+                    val assignee = withContext(Dispatchers.IO) {
+                        val userRef = database.child("users/${task?.assigneeUserId}")
+                        val userSnapshot = userRef.get().await()
+                        userSnapshot.getValue<UserData>()
+                    }
+                    val taskWithUsers = TaskWithUsers(
+                        taskId = task?.taskId ?: "",
+                        title = task?.title ?: "",
+                        description = task?.description ?: "",
+                        taskTimestamp = task?.taskTimestamp ?: 0,
+                        completed = task?.completed ?: false,
+                        creator = creator,
+                        assignee = assignee
+                    )
+                    trySend(taskWithUsers).isSuccess
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -208,7 +237,7 @@ class DefaultCalendarRepository @Inject constructor(
         awaitClose { ref.removeEventListener(listener) }
     }
 
-    override fun getFirstUpcomingEvent(): Flow<Event?> = callbackFlow {
+    override fun getFirstUpcomingEvent(): Flow<EventWithUsers?> = callbackFlow {
         val familyId = userSession.currentUser.first().familyId
         val ref = database.child("families/$familyId/events")
             .orderByChild("eventStartTime")
@@ -217,8 +246,28 @@ class DefaultCalendarRepository @Inject constructor(
 
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val event = snapshot.children.firstOrNull()?.getValue<Event>()
-                trySend(event).isSuccess
+                launch {
+                    val event = snapshot.children.firstOrNull()?.getValue<Event>()
+                    if (event != null) {
+                        val creator = withContext(Dispatchers.IO) {
+                            val userRef = database.child("users/${event.creatorUserId}")
+                            val userSnapshot = userRef.get().await()
+                            userSnapshot.getValue<UserData>()
+                        }
+                        val eventWithUsers = EventWithUsers(
+                            eventId = event.eventId,
+                            title = event.title,
+                            description = event.description,
+                            eventStartTime = event.eventStartTime,
+                            eventEndTime = event.eventEndTime,
+                            allDay = event.allDay,
+                            creator = creator
+                        )
+                        trySend(eventWithUsers).isSuccess
+                    } else {
+                        trySend(null).isSuccess
+                    }
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
