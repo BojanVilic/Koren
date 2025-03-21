@@ -9,6 +9,12 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 object DateUtils {
+
+    fun Long.convertToUtcWithLocalOffset(): Long {
+        val userTimeZoneOffsetMillis = ZoneOffset.systemDefault().rules.getOffset(Instant.now()).totalSeconds * 1000L
+        return this - userTimeZoneOffsetMillis
+    }
+
     fun Long.toLocalDate(atLocalTimeZone: Boolean = false): LocalDate {
         val zoneOffset = if (atLocalTimeZone) ZoneOffset.systemDefault() else ZoneOffset.UTC
         return Instant.ofEpochMilli(this)

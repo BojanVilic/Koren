@@ -12,6 +12,7 @@ import com.koren.common.models.calendar.Task
 import com.koren.common.models.calendar.TaskWithUsers
 import com.koren.common.models.user.UserData
 import com.koren.common.services.UserSession
+import com.koren.common.util.DateUtils.convertToUtcWithLocalOffset
 import com.koren.common.util.DateUtils.toEpochMilliDayEnd
 import com.koren.common.util.DateUtils.toEpochMilliDayStart
 import com.koren.common.util.HourMinute
@@ -324,5 +325,6 @@ class DefaultCalendarRepository @Inject constructor(
         return localDateTime.atZone(ZoneOffset.UTC)
             .toInstant()
             .toEpochMilli()
+            .convertToUtcWithLocalOffset()
     }
 }

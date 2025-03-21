@@ -1,5 +1,9 @@
 package com.koren.home.ui.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,12 +16,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -27,17 +29,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.models.calendar.TaskWithUsers
@@ -50,10 +53,17 @@ import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.icon.Warning
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
+import kotlinx.coroutines.delay
+import timber.log.Timber
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.util.Calendar
+import kotlin.time.Duration.Companion.milliseconds
 
 fun LazyListScope.upcomingEventsAndTasks(
     uiState: HomeUiState.Shown
@@ -142,7 +152,29 @@ fun TaskItem(
     task: Task,
     taskCompletionButtonClicked: () -> Unit
 ) {
-    if (task.taskTimestamp < Calendar.getInstance().timeInMillis) {
+
+    var currentTimeMillis by remember { mutableLongStateOf(Instant.now().toEpochMilli()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(60_000)
+            currentTimeMillis = Instant.now().toEpochMilli()
+        }
+    }
+
+    val isOverdue by rememberUpdatedState(
+        newValue = task.taskTimestamp < currentTimeMillis && task.completed.not()
+    )
+
+    AnimatedVisibility(
+        visible = isOverdue,
+        enter = slideInVertically(
+            initialOffsetY = { it / 2 }
+        ),
+        exit = slideOutVertically(
+            targetOffsetY = { it / 2 },
+        )
+    ) {
         Row {
             Spacer(modifier = Modifier.weight(1f))
             Card(
