@@ -11,5 +11,4 @@ plugins {
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.hilt.plugin) apply false
     alias(libs.plugins.kotlin.serialization) apply false
-    id("dev.iurysouza.modulegraph") version "0.12.0"
 }

@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,8 +37,8 @@ class HomeViewModel @Inject constructor(
 
     private val calendarFlows = combine(
         userSession.currentUser,
-        calendarRepository.getEventsForDay(LocalDate.now()),
-        calendarRepository.getTasksForDay(LocalDate.now())
+        calendarRepository.getEventsForDay(LocalDate.now(ZoneOffset.UTC)),
+        calendarRepository.getTasksForDayAndUser(LocalDate.now(ZoneOffset.UTC))
     ) { currentUser, events, tasks -> Triple(currentUser, events, tasks) }
 
     private val invitationFlows = combine(

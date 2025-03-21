@@ -191,6 +191,36 @@ class DefaultCalendarRepository @Inject constructor(
         awaitClose { ref.removeEventListener(listener) }
     }.flowOn(Dispatchers.IO)
 
+
+    override fun getTasksForDayAndUser(date: LocalDate): Flow<List<Task>> = callbackFlow {
+        val familyId = userSession.currentUser.first().familyId
+        val userId = userSession.currentUser.first().id
+
+        val startOfDay = date.toEpochMilliDayStart()
+        val endOfDay = date.toEpochMilliDayEnd()
+
+        val ref = database.child("families/$familyId/tasks")
+            .orderByChild("taskTimestamp")
+            .startAt(startOfDay.toDouble())
+            .endAt(endOfDay.toDouble())
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val tasks = snapshot.children
+                    .mapNotNull { it.getValue<Task>() }
+                    .filter { it.assigneeUserId == userId }
+                trySend(tasks).isSuccess
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Timber.e(error.message)
+            }
+        }
+
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }.flowOn(Dispatchers.IO)
+
     override fun getFirstUpcomingTask(): Flow<TaskWithUsers?> = callbackFlow {
         val familyId = userSession.currentUser.first().familyId
         val userId = userSession.currentUser.first().id

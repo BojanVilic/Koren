@@ -42,6 +42,7 @@ import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.util.CollectSideEffects
 import com.koren.common.util.DateUtils.toHumanReadableDateTimeRange
+import com.koren.common.util.DateUtils.toTime
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.icon.Circle
 import com.koren.designsystem.icon.CircleCheck
@@ -245,10 +246,7 @@ private fun TaskItem(task: Task) {
             modifier = Modifier.weight(1f)
         )
         if (task.taskTimestamp > 0) {
-            val time = LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(task.taskTimestamp),
-                ZoneId.systemDefault()
-            ).format(DateTimeFormatter.ofPattern("HH:mm"))
+            val time = task.taskTimestamp.toTime(atLocalTimeZone = true)
             Text(
                 text = time,
                 style = MaterialTheme.typography.labelLarge,

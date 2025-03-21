@@ -73,6 +73,27 @@ object DateUtils {
         }
     }
 
+
+    fun Long?.toTime(
+        atLocalTimeZone: Boolean = false
+    ): String {
+        if (this == null) return ""
+
+        return try {
+            val zoneOffset = if (atLocalTimeZone) ZoneOffset.systemDefault() else ZoneOffset.UTC
+            val instant = Instant.ofEpochMilli(this)
+            val zonedDateTime = instant.atZone(zoneOffset)
+
+            val localTime = zonedDateTime.toLocalTime()
+
+            val formatter = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+            localTime.format(formatter)
+        } catch (e: Exception) {
+            println("Error formatting date: ${e.message}")
+            ""
+        }
+    }
+
     fun Pair<Long, Long>.toHumanReadableDateTimeRange(
         atLocalTimeZone: Boolean = false
     ): String {

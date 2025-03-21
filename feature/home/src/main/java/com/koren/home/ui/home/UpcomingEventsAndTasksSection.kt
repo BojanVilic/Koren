@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -16,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -44,8 +46,12 @@ import com.koren.common.util.DateUtils.toHumanReadableDateTimeRange
 import com.koren.designsystem.icon.Circle
 import com.koren.designsystem.icon.CircleCheck
 import com.koren.designsystem.icon.KorenIcons
+import com.koren.designsystem.icon.Warning
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneOffset
 import java.util.Calendar
 
 fun LazyListScope.upcomingEventsAndTasks(
@@ -116,7 +122,7 @@ fun EventItem(event: Event) {
                 )
                 val timeRange = Pair(event.eventStartTime, event.eventEndTime)
                 Text(
-                    text = if (event.allDay) "All Day" else timeRange.toHumanReadableDateTimeRange(),
+                    text = if (event.allDay) "All Day" else timeRange.toHumanReadableDateTimeRange(atLocalTimeZone = true),
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.Gray
                 )
@@ -127,6 +133,39 @@ fun EventItem(event: Event) {
 
 @Composable
 fun TaskItem(task: Task) {
+    if (task.taskTimestamp < Calendar.getInstance().timeInMillis) {
+        Row {
+            Spacer(modifier = Modifier.weight(1f))
+            Card(
+                modifier = Modifier
+                    .offset(y = (12.dp)),
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(start = 6.dp, end = 6.dp, bottom = 16.dp, top = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        modifier = Modifier.size(16.dp),
+                        imageVector = KorenIcons.Warning,
+                        contentDescription = "Warning Icon",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Text(
+                        modifier = Modifier.padding(start = 8.dp),
+                        text = "Overdue",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
@@ -153,7 +192,7 @@ fun TaskItem(task: Task) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Due: ${task.taskTimestamp.toHumanReadableDateTime()}",
+                    text = "Due: ${task.taskTimestamp.toHumanReadableDateTime(atLocalTimeZone = true)}",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
