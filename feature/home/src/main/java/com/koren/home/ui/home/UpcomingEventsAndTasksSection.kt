@@ -22,6 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -83,7 +84,12 @@ fun LazyListScope.upcomingEventsAndTasks(
         }
         items(uiState.tasks) { task ->
             Spacer(modifier = Modifier.height(4.dp))
-            TaskItem(task = task)
+            TaskItem(
+                task = task,
+                taskCompletionButtonClicked = {
+                    uiState.eventSink(HomeEvent.TaskCompletionButtonClicked(task))
+                }
+            )
         }
     }
 
@@ -132,7 +138,10 @@ fun EventItem(event: Event) {
 }
 
 @Composable
-fun TaskItem(task: Task) {
+fun TaskItem(
+    task: Task,
+    taskCompletionButtonClicked: () -> Unit
+) {
     if (task.taskTimestamp < Calendar.getInstance().timeInMillis) {
         Row {
             Spacer(modifier = Modifier.weight(1f))
@@ -178,12 +187,16 @@ fun TaskItem(task: Task) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             val icon = if (task.completed) KorenIcons.CircleCheck else KorenIcons.Circle
-            Icon(
-                modifier = Modifier.size(24.dp),
-                imageVector = icon,
-                contentDescription = "Task Icon",
-                tint = MaterialTheme.colorScheme.primary
-            )
+            IconButton(
+                onClick = { taskCompletionButtonClicked() }
+            ) {
+                Icon(
+                    modifier = Modifier.size(24.dp),
+                    imageVector = icon,
+                    contentDescription = "Task Icon",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(

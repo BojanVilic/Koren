@@ -7,6 +7,7 @@ import com.koren.common.services.UserSession
 import com.koren.common.util.StateViewModel
 import com.koren.data.repository.CalendarRepository
 import com.koren.data.repository.InvitationRepository
+import com.koren.domain.ChangeTaskStatusUseCase
 import com.koren.domain.GetAllFamilyMembersUseCase
 import com.koren.domain.GetFamilyUseCase
 import com.koren.domain.GetNextCalendarItemUseCase
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.ZoneOffset
 import javax.inject.Inject
 
@@ -30,7 +30,8 @@ class HomeViewModel @Inject constructor(
     getFamilyUseCase: GetFamilyUseCase,
     calendarRepository: CalendarRepository,
     userSession: UserSession,
-    getNextCalendarItemUseCase: GetNextCalendarItemUseCase
+    getNextCalendarItemUseCase: GetNextCalendarItemUseCase,
+    private val changeTaskStatusUseCase: ChangeTaskStatusUseCase
 ): StateViewModel<HomeEvent, HomeUiState, HomeSideEffect>() {
 
     override fun setInitialState(): HomeUiState = HomeUiState.Loading
@@ -88,6 +89,7 @@ class HomeViewModel @Inject constructor(
                 is HomeEvent.NavigateToInviteFamilyMember -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToInviteFamilyMember)
                 is HomeEvent.NavigateToSentInvitations -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToSentInvitations)
                 is HomeEvent.OpenAddCalendarEntry -> _sideEffects.emitSuspended(HomeSideEffect.OpenAddCalendarEntry)
+                is HomeEvent.TaskCompletionButtonClicked -> changeTaskStatus(event.task.taskId, !event.task.completed)
             }
         }
     }
@@ -108,6 +110,12 @@ class HomeViewModel @Inject constructor(
     private fun declineInvitation(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             invitationRepository.declineInvitation(id)
+        }
+    }
+
+    private fun changeTaskStatus(taskId: String, isCompleted: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            changeTaskStatusUseCase(taskId, isCompleted)
         }
     }
 }
