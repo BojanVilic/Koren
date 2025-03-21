@@ -48,11 +48,12 @@ class GetFamilyUseCase @Inject constructor(
         }
     }
 
-    fun getFamilyFlow(): Flow<Family> = callbackFlow {
+    fun getFamilyFlow(): Flow<Family?> = callbackFlow {
         val familyId = userSession.currentUser.first().familyId
 
         if (familyId.isBlank()) {
-            close(Exception("Family not found. \uD83D\uDE22"))
+            trySend(null).isSuccess
+            close()
             return@callbackFlow
         }
 
@@ -71,7 +72,7 @@ class GetFamilyUseCase @Inject constructor(
                     val family = Family(id, name, members, familyPortrait, savedLocations)
                     trySend(family).isSuccess
                 } else {
-                    close(Exception("Family not found. \uD83D\uDE22"))
+                    trySend(null).isSuccess
                 }
             }
 

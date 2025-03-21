@@ -205,26 +205,31 @@ class DefaultCalendarRepository @Inject constructor(
                     val task = snapshot.children
                         .mapNotNull { it?.getValue<Task>() }
                         .firstOrNull { it.assigneeUserId == userId }
-                    val creator = withContext(Dispatchers.IO) {
-                        val userRef = database.child("users/${task?.creatorUserId}")
-                        val userSnapshot = userRef.get().await()
-                        userSnapshot.getValue<UserData>()
+
+                    if (task != null) {
+                        val creator = withContext(Dispatchers.IO) {
+                            val userRef = database.child("users/${task.creatorUserId}")
+                            val userSnapshot = userRef.get().await()
+                            userSnapshot.getValue<UserData>()
+                        }
+                        val assignee = withContext(Dispatchers.IO) {
+                            val userRef = database.child("users/${task.assigneeUserId}")
+                            val userSnapshot = userRef.get().await()
+                            userSnapshot.getValue<UserData>()
+                        }
+                        val taskWithUsers = TaskWithUsers(
+                            taskId = task.taskId,
+                            title = task.title,
+                            description = task.description,
+                            taskTimestamp = task.taskTimestamp,
+                            completed = task.completed,
+                            creator = creator,
+                            assignee = assignee
+                        )
+                        trySend(taskWithUsers).isSuccess
+                    } else {
+                        trySend(null).isSuccess
                     }
-                    val assignee = withContext(Dispatchers.IO) {
-                        val userRef = database.child("users/${task?.assigneeUserId}")
-                        val userSnapshot = userRef.get().await()
-                        userSnapshot.getValue<UserData>()
-                    }
-                    val taskWithUsers = TaskWithUsers(
-                        taskId = task?.taskId ?: "",
-                        title = task?.title ?: "",
-                        description = task?.description ?: "",
-                        taskTimestamp = task?.taskTimestamp ?: 0,
-                        completed = task?.completed ?: false,
-                        creator = creator,
-                        assignee = assignee
-                    )
-                    trySend(taskWithUsers).isSuccess
                 }
             }
 
