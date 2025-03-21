@@ -2,8 +2,14 @@ package com.koren.home.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.EaseOutQuad
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,7 +38,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -40,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
@@ -54,16 +60,8 @@ import com.koren.designsystem.icon.Warning
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
 import kotlinx.coroutines.delay
-import timber.log.Timber
 import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
 import java.util.Calendar
-import kotlin.time.Duration.Companion.milliseconds
 
 fun LazyListScope.upcomingEventsAndTasks(
     uiState: HomeUiState.Shown
@@ -152,7 +150,6 @@ fun TaskItem(
     task: Task,
     taskCompletionButtonClicked: () -> Unit
 ) {
-
     var currentTimeMillis by remember { mutableLongStateOf(Instant.now().toEpochMilli()) }
 
     LaunchedEffect(Unit) {
@@ -163,84 +160,101 @@ fun TaskItem(
     }
 
     val isOverdue by rememberUpdatedState(
-        newValue = task.taskTimestamp < currentTimeMillis && task.completed.not()
+        newValue = task.taskTimestamp < currentTimeMillis && !task.completed
     )
 
-    AnimatedVisibility(
-        visible = isOverdue,
-        enter = slideInVertically(
-            initialOffsetY = { it / 2 }
-        ),
-        exit = slideOutVertically(
-            targetOffsetY = { it / 2 },
+    val offsetY by animateDpAsState(
+        targetValue = if (isOverdue) 12.dp else 0.dp,
+        animationSpec = tween(
+            durationMillis = 800,
+            easing = LinearOutSlowInEasing
         )
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize()
     ) {
-        Row {
-            Spacer(modifier = Modifier.weight(1f))
-            Card(
-                modifier = Modifier
-                    .offset(y = (12.dp)),
-                shape = MaterialTheme.shapes.medium,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(start = 6.dp, end = 6.dp, bottom = 16.dp, top = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        modifier = Modifier.size(16.dp),
-                        imageVector = KorenIcons.Warning,
-                        contentDescription = "Warning Icon",
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                    Text(
-                        modifier = Modifier.padding(start = 8.dp),
-                        text = "Overdue",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.SemiBold
-                    )
+        AnimatedVisibility(
+            visible = isOverdue,
+            enter = slideInVertically(
+                animationSpec = tween(
+                    durationMillis = 400,
+                    easing = LinearOutSlowInEasing
+                ),
+                initialOffsetY = { it / 2 }
+            )
+        ) {
+            Row {
+                Spacer(modifier = Modifier.weight(1f))
+                Card(
+                    modifier = Modifier.offset {
+                        IntOffset(0, offsetY.roundToPx())
+                    },
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                )  {
+                    Row(
+                        modifier = Modifier.padding(
+                            start = 6.dp,
+                            end = 6.dp,
+                            bottom = 16.dp,
+                            top = 6.dp
+                        ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(16.dp),
+                            imageVector = KorenIcons.Warning,
+                            contentDescription = "Warning Icon",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Text(
+                            modifier = Modifier.padding(start = 8.dp),
+                            text = "Overdue",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
         }
-    }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
         ) {
-            val icon = if (task.completed) KorenIcons.CircleCheck else KorenIcons.Circle
-            IconButton(
-                onClick = { taskCompletionButtonClicked() }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    modifier = Modifier.size(24.dp),
-                    imageVector = icon,
-                    contentDescription = "Task Icon",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Due: ${task.taskTimestamp.toHumanReadableDateTime(atLocalTimeZone = true)}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                val icon = if (task.completed) KorenIcons.CircleCheck else KorenIcons.Circle
+                IconButton(onClick = { taskCompletionButtonClicked() }) {
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        imageVector = icon,
+                        contentDescription = "Task Icon",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = task.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Due: ${task.taskTimestamp.toHumanReadableDateTime(atLocalTimeZone = true)}",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
