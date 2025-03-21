@@ -5,6 +5,7 @@ import androidx.credentials.CredentialManager
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
+import com.google.firebase.database.FirebaseDatabase
 import com.koren.auth.service.DefaultAuthService
 import com.koren.auth.service.EmailAuthService
 import com.koren.auth.service.GoogleAuthService
@@ -64,13 +65,15 @@ object SingletonModule {
         auth: FirebaseAuth,
         googleAuthService: GoogleAuthService,
         emailAuthService: EmailAuthService,
-        userSession: UserSession
+        userSession: UserSession,
+        firebaseDatabase: FirebaseDatabase
     ): AuthService {
         return DefaultAuthService(
             credentialManager,
             auth,
             googleAuthService,
-            emailAuthService
+            emailAuthService,
+            firebaseDatabase
         )
     }
 

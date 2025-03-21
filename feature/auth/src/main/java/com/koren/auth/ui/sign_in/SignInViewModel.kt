@@ -33,7 +33,7 @@ class SignInViewModel @Inject constructor(
 
     private fun signIn(current: SignInUiState.Shown) {
         viewModelScope.launch(Dispatchers.Default) {
-            authService.signIn(SignInMethod.Email(current.email, current.password))
+            authService.signIn(SignInMethod.Email(current.email.trim(), current.password.trim()))
                 .onSuccess { _sideEffects.emit(SignInUiSideEffect.NavigateToHome) }
                 .onFailure { error -> _sideEffects.emit(SignInUiSideEffect.ShowError(message = error.message?: "Unknown error.")) }
         }

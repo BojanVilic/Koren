@@ -158,11 +158,6 @@ fun TaskItem(task: Task) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Text(
-                modifier = Modifier.padding(start = 8.dp),
-                text = "Assigned to: ${task.assigneeUserId.take(5)}",
-                style = MaterialTheme.typography.labelLarge
-            )
         }
     }
 }
