@@ -19,4 +19,7 @@ dependencies {
     implementation(libs.lottie.compose)
 
     implementation(libs.accompanist.permissions)
+
+    implementation(libs.android.maps.utils)
+    implementation(libs.play.services.places)
 }

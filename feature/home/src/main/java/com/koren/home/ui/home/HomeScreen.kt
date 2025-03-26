@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalPermissionsApi::class)
+@file:OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 
 package com.koren.home.ui.home
 
@@ -9,10 +9,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +44,7 @@ import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
+import com.koren.home.ui.home.member_details.MemberDetailsScreen
 import kotlinx.serialization.Serializable
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -63,6 +68,7 @@ fun HomeScreen(
         onResume = { scaffoldStateProvider.setScaffoldState(ScaffoldState(isTopBarVisible = false, isBottomBarVisible = true)) }
     )
 
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val state by homeViewModel.uiState.collectAsStateWithLifecycle()
 
     CollectSideEffects(
@@ -82,29 +88,34 @@ fun HomeScreen(
                     events = emptyList()
                 )
             )
+            is HomeSideEffect.DismissBottomSheet -> sheetState.hide()
         }
     }
 
     HomeContent(
-        state = state
+        state = state,
+        sheetState = sheetState
     )
 }
 
 @Composable
 private fun HomeContent(
-    state: HomeUiState
+    state: HomeUiState,
+    sheetState: SheetState
 ) {
     when (state) {
         is HomeUiState.Loading -> LoadingContent()
         is HomeUiState.Shown -> ShownContent(
-            state = state
+            state = state,
+            sheetState = sheetState
         )
     }
 }
 
 @Composable
 private fun ShownContent(
-    state: HomeUiState.Shown
+    state: HomeUiState.Shown,
+    sheetState: SheetState
 ) {
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -115,6 +126,22 @@ private fun ShownContent(
                 notificationsPermission.launchPermissionRequest()
         }
     }
+
+    if (state.bottomSheetContent !is HomeBottomSheetContent.None) {
+        ModalBottomSheet(
+            sheetState = sheetState,
+            onDismissRequest = { state.eventSink(HomeEvent.DismissBottomSheet) },
+            dragHandle = null
+        ) {
+            when (state.bottomSheetContent) {
+                is HomeBottomSheetContent.MemberDetails -> MemberDetailsScreen(
+                    userId = state.bottomSheetContent.member.id
+                )
+                else -> Unit
+            }
+        }
+    }
+
     LazyColumn(
         modifier = Modifier
             .padding(16.dp)
@@ -224,7 +251,8 @@ fun HomePreview() {
                         )
                     ),
                     eventSink = {}
-                )
+                ),
+                sheetState = rememberModalBottomSheetState()
             )
         }
     }

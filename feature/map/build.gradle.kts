@@ -23,7 +23,6 @@ dependencies {
     implementation(libs.android.maps.utils)
     implementation(libs.firebase.database.ktx)
 
-
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.common)
 }
