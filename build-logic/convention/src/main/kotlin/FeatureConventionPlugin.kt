@@ -38,6 +38,8 @@ class FeatureConventionPlugin : Plugin<Project> {
 
                 add("implementation", project(":core:designsystem"))
                 add("implementation", project(":core:common"))
+
+                add("implementation", libs.findLibrary("molecule-runtime").get())
             }
         }
     }

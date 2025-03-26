@@ -1,6 +1,7 @@
 [versions]
 androidMapsUtils = "2.2.5"
 minSdkVersion = "28"
+moleculeRuntime = "2.0.0"
 targetSdkVersion = "35"
 
 agp = "8.7.3"
@@ -57,6 +58,7 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "j
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" }
+molecule-runtime = { module = "app.cash.molecule:molecule-runtime", version.ref = "moleculeRuntime" }
 qrcode-kotlin = { module = "io.github.g0dkar:qrcode-kotlin", version.ref = "qrcodeKotlin" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerializationLibrary" }

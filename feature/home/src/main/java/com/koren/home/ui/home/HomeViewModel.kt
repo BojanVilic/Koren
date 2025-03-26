@@ -1,8 +1,15 @@
 package com.koren.home.ui.home
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewModelScope
+import app.cash.molecule.AndroidUiDispatcher
+import app.cash.molecule.RecompositionMode
+import app.cash.molecule.launchMolecule
+import com.koren.common.models.calendar.CalendarItem
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.InvitationStatus
+import com.koren.common.models.user.UserData
 import com.koren.common.services.UserSession
 import com.koren.common.util.StateViewModel
 import com.koren.data.repository.CalendarRepository
@@ -12,6 +19,7 @@ import com.koren.domain.GetAllFamilyMembersUseCase
 import com.koren.domain.GetFamilyUseCase
 import com.koren.domain.GetNextCalendarItemUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -36,29 +44,19 @@ class HomeViewModel @Inject constructor(
 
     override fun setInitialState(): HomeUiState = HomeUiState.Loading
 
-    private val calendarFlows = combine(
-        userSession.currentUser,
-        calendarRepository.getEventsForDay(LocalDate.now(ZoneOffset.UTC)),
-        calendarRepository.getTasksForDayAndUser(LocalDate.now(ZoneOffset.UTC))
-    ) { currentUser, events, tasks -> Triple(currentUser, events, tasks) }
-
-    private val invitationFlows = combine(
-        invitationRepository.getReceivedInvitations(),
-        invitationRepository.getSentInvitations()
-    ) { receivedInvitations, sentInvitations -> Pair(receivedInvitations, sentInvitations) }
-
-    private val familyFlows = combine(
-        getAllFamilyMembers(),
-        getFamilyUseCase.getFamilyFlow()
-    ) { familyMembers, family -> Pair(familyMembers, family) }
+    private val scope = CoroutineScope(viewModelScope.coroutineContext + AndroidUiDispatcher.Main)
 
     init {
-        combine(
-            invitationFlows,
-            familyFlows,
-            calendarFlows,
-            getNextCalendarItemUseCase()
-        ) { (receivedInvitations, sentInvitations), (familyMembers, family), (currentUser, events, tasks), upcomingItem ->
+        scope.launchMolecule(mode = RecompositionMode.ContextClock) {
+            val currentUser by userSession.currentUser.collectAsState(initial = UserData())
+            val events by calendarRepository.getEventsForDay(LocalDate.now(ZoneOffset.UTC)).collectAsState(initial = emptyList())
+            val tasks by calendarRepository.getTasksForDayAndUser(LocalDate.now(ZoneOffset.UTC)).collectAsState(initial = emptyList())
+            val receivedInvitations by invitationRepository.getReceivedInvitations().collectAsState(initial = emptyList())
+            val sentInvitations by invitationRepository.getSentInvitations().collectAsState(initial = emptyList())
+            val familyMembers by getAllFamilyMembers().collectAsState(initial = emptyList())
+            val family by getFamilyUseCase.getFamilyFlow().collectAsState(initial = null)
+            val upcomingItem by getNextCalendarItemUseCase().collectAsState(initial = CalendarItem.None)
+
             _uiState.update {
                 HomeUiState.Shown(
                     currentUser = currentUser,
@@ -73,10 +71,6 @@ class HomeViewModel @Inject constructor(
                 )
             }
         }
-            .catch {
-                Timber.e("Error loading home data: $it")
-            }
-            .launchIn(viewModelScope)
     }
 
     override fun handleEvent(event: HomeEvent) {
