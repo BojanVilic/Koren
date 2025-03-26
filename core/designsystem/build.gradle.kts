@@ -11,4 +11,5 @@ dependencies {
     implementation(libs.lottie.compose)
 
     implementation(libs.qrcode.kotlin)
+    implementation(libs.androidx.ui.text.google.fonts)
 }

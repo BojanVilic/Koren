@@ -41,6 +41,7 @@ firebaseDatabaseKtx = "21.0.0"
 workRuntimeKtx = "2.10.0"
 hiltCommon = "1.2.0"
 hiltWork = "1.2.0"
+uiTextGoogleFonts = "1.7.8"
 
 [libraries]
 android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version.ref = "androidMapsUtils" }
@@ -99,6 +100,7 @@ play-services-fitness = { group = "com.google.android.gms", name = "play-service
 firebase-database-ktx = { group = "com.google.firebase", name = "firebase-database-ktx", version.ref = "firebaseDatabaseKtx" }
 androidx-hilt-common = { group = "androidx.hilt", name = "hilt-common", version.ref = "hiltCommon" }
 androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltWork" }
+androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
