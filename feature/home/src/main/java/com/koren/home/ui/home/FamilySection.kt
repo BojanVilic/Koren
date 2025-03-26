@@ -2,10 +2,7 @@ package com.koren.home.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
@@ -25,24 +22,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.koren.common.models.user.UserData
-import com.koren.home.R
 
 internal fun LazyListScope.familySection(
     state: HomeUiState.Shown
 ) {
     item {
         if (state.familyMembers.isNotEmpty()) {
-            Text(
-                modifier = Modifier.padding(vertical = 12.dp),
-                text = state.family?.name ?: stringResource(R.string.family_members),
-                style = MaterialTheme.typography.titleSmall
-            )
             Card(
                 modifier = Modifier
                     .fillMaxWidth()

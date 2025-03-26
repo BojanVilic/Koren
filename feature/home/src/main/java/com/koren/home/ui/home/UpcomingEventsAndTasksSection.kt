@@ -286,7 +286,7 @@ fun FreeDay(
     ) {
         Text(
             text = "Hello, ${uiState.currentUser.displayName}!",
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
         )
         Spacer(modifier = Modifier.height(4.dp))
         Row(
