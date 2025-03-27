@@ -17,12 +17,12 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.navigation.rememberBottomSheetNavigator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarDuration.Short
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
@@ -37,8 +37,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.koren.calendar.ui.add_entry.AddEntryScreen
-import com.koren.calendar.ui.calendar.CalendarUiEvent
-import com.koren.calendar.ui.calendar.CalendarUiState
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.LocalSnackbarHostState
@@ -76,7 +74,8 @@ class MainActivity : ComponentActivity() {
             KorenTheme {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-                val navController = rememberNavController()
+                val bottomSheetNavigator = rememberBottomSheetNavigator()
+                val navController = rememberNavController(bottomSheetNavigator)
                 val scaffoldState = LocalScaffoldStateProvider.current.getScaffoldState().collectAsStateWithLifecycle()
                 val snackbarHostState = LocalSnackbarHostState.current
 
@@ -122,7 +121,8 @@ class MainActivity : ComponentActivity() {
                         },
                         setMainActivityBottomSheetContent = { bottomSheetContent ->
                             (uiState as? MainActivityUiState.Success)?.eventSink?.invoke(MainActivityUiEvent.SetBottomSheetContent(bottomSheetContent))
-                        }
+                        },
+                        bottomSheetNavigator = bottomSheetNavigator
                     )
 
                     (uiState as? MainActivityUiState.Success)?.let { uiState ->

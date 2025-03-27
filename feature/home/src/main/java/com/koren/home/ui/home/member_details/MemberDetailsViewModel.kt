@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.util.Locale
 import javax.inject.Inject
 
@@ -32,6 +33,8 @@ class MemberDetailsViewModel @Inject constructor(
                 currentUser to familyMemberDetails
             }
             .collect { (currentUser, familyMemberDetails) ->
+
+                Timber.d("Current user id: ${currentUser.id}, family member id: $userId")
                 if (currentUser.id == userId) {
                     _uiState.update {
                         MemberDetailsUiState.SelfDetails

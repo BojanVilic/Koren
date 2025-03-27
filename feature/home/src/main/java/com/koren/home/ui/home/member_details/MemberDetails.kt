@@ -40,6 +40,13 @@ import com.koren.designsystem.icon.MapSelected
 import com.koren.designsystem.icon.Task
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
+import kotlinx.serialization.Serializable
+
+
+@Serializable
+data class MemberDetails(
+    val userId: String
+)
 
 @Composable
 fun MemberDetailsScreen(
@@ -84,6 +91,7 @@ private fun MemberDetailsScreenShownContent(
 
     Column(
         modifier = Modifier
+            .clip(BottomSheetDefaults.ExpandedShape)
             .background(MaterialTheme.colorScheme.inverseSurface)
     ) {
         Row(
@@ -114,8 +122,8 @@ private fun MemberDetailsScreenShownContent(
             modifier = Modifier
                 .clip(BottomSheetDefaults.ExpandedShape)
                 .fillMaxWidth()
-                .background(BottomSheetDefaults.ContainerColor),
-            ) {
+                .background(BottomSheetDefaults.ContainerColor)
+        ) {
             BottomSheetDefaults.DragHandle(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
@@ -184,9 +192,10 @@ fun SelfDetailsContent() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 36.dp),
+            .padding(start = 16.dp, end = 16.dp, bottom = 36.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        BottomSheetDefaults.DragHandle()
         Text(
             text = getRandomMessageAndEmoji(),
             style = MaterialTheme.typography.titleLarge,

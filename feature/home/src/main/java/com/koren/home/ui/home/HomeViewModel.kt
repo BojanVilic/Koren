@@ -104,7 +104,10 @@ class HomeViewModel @Inject constructor(
                 is HomeEvent.NavigateToSentInvitations -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToSentInvitations)
                 is HomeEvent.OpenAddCalendarEntry -> _sideEffects.emitSuspended(HomeSideEffect.OpenAddCalendarEntry)
                 is HomeEvent.TaskCompletionButtonClicked -> changeTaskStatus(event.task.taskId, !event.task.completed)
-                is HomeEvent.FamilyMemberClicked -> _uiState.update { current.copy(bottomSheetContent = HomeBottomSheetContent.MemberDetails(event.member)) }
+                is HomeEvent.FamilyMemberClicked -> {
+//                    _uiState.update { current.copy(bottomSheetContent = HomeBottomSheetContent.MemberDetails(event.member)) }
+                    _sideEffects.emitSuspended(HomeSideEffect.OpenMemberDetails(event.member))
+                }
                 is HomeEvent.DismissBottomSheet -> {
                     _sideEffects.emitSuspended(HomeSideEffect.DismissBottomSheet)
                     _uiState.update { current.copy(bottomSheetContent = HomeBottomSheetContent.None) }

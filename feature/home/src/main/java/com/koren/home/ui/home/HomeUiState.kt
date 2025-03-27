@@ -13,11 +13,6 @@ import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
 import com.koren.common.util.UiState
 
-sealed interface HomeBottomSheetContent {
-    data class MemberDetails(val member: UserData) : HomeBottomSheetContent
-    data object None : HomeBottomSheetContent
-}
-
 sealed interface NextItem {
     data class TaskItem(val task: TaskWithUsers) : NextItem
     data class EventItem(val event: EventWithUsers) : NextItem
@@ -37,7 +32,6 @@ sealed interface HomeUiState : UiState {
         val tasks: List<Task> = emptyList(),
         val events: List<Event> = emptyList(),
         val freeDayNextItem: NextItem = NextItem.None,
-        val bottomSheetContent: HomeBottomSheetContent = HomeBottomSheetContent.None,
         override val eventSink: (HomeEvent) -> Unit
     ) : HomeUiState, EventHandler<HomeEvent>
 }
@@ -56,7 +50,6 @@ sealed interface HomeEvent : UiEvent {
     data object OpenAddCalendarEntry : HomeEvent
     data class TaskCompletionButtonClicked(val task: Task) : HomeEvent
     data class FamilyMemberClicked(val member: UserData) : HomeEvent
-    data object DismissBottomSheet : HomeEvent
 }
 
 sealed interface HomeSideEffect : UiSideEffect {
@@ -64,8 +57,8 @@ sealed interface HomeSideEffect : UiSideEffect {
     data object NavigateToCreateFamily : HomeSideEffect
     data object NavigateToSentInvitations : HomeSideEffect
     data object OpenAddCalendarEntry : HomeSideEffect
+    data class OpenMemberDetails(val member: UserData) : HomeSideEffect
     data class ShowError(val message: String) : HomeSideEffect
-    data object DismissBottomSheet : HomeSideEffect
 }
 
 fun CalendarItem.toNextItem(): NextItem {

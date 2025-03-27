@@ -14,7 +14,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -47,7 +46,6 @@ import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.home.ui.home.member_details.MemberDetailsScreen
 import kotlinx.serialization.Serializable
-import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 
@@ -61,7 +59,8 @@ fun HomeScreen(
     createFamily: () -> Unit,
     sentInvitations: () -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit,
-    openAddCalendarEntry: (Day) -> Unit
+    openAddCalendarEntry: (Day) -> Unit,
+    openMemberDetails: (userId: String) -> Unit
 ) {
 
     val scaffoldStateProvider = LocalScaffoldStateProvider.current
@@ -71,7 +70,6 @@ fun HomeScreen(
     )
 
     val state by homeViewModel.uiState.collectAsStateWithLifecycle()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     CollectSideEffects(
         viewModel = homeViewModel
@@ -90,34 +88,30 @@ fun HomeScreen(
                     events = emptyList()
                 )
             )
-            is HomeSideEffect.DismissBottomSheet -> sheetState.hide()
+            is HomeSideEffect.OpenMemberDetails -> openMemberDetails(sideEffect.member.id)
         }
     }
 
     HomeContent(
-        state = state,
-        sheetState = sheetState
+        state = state
     )
 }
 
 @Composable
 private fun HomeContent(
-    state: HomeUiState,
-    sheetState: SheetState
+    state: HomeUiState
 ) {
     when (state) {
         is HomeUiState.Loading -> LoadingContent()
         is HomeUiState.Shown -> ShownContent(
-            state = state,
-            sheetState = sheetState
+            state = state
         )
     }
 }
 
 @Composable
 private fun ShownContent(
-    state: HomeUiState.Shown,
-    sheetState: SheetState
+    state: HomeUiState.Shown
 ) {
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -126,21 +120,6 @@ private fun ShownContent(
         LaunchedEffect(notificationsPermission.status.isGranted) {
             if (notificationsPermission.status.isGranted.not())
                 notificationsPermission.launchPermissionRequest()
-        }
-    }
-
-    if (state.bottomSheetContent !is HomeBottomSheetContent.None) {
-        ModalBottomSheet(
-            sheetState = sheetState,
-            onDismissRequest = { state.eventSink(HomeEvent.DismissBottomSheet) },
-            dragHandle = null
-        ) {
-            when (state.bottomSheetContent) {
-                is HomeBottomSheetContent.MemberDetails -> MemberDetailsScreen(
-                    userId = state.bottomSheetContent.member.id
-                )
-                else -> Unit
-            }
         }
     }
 
@@ -253,8 +232,7 @@ fun HomePreview() {
                         )
                     ),
                     eventSink = {}
-                ),
-                sheetState = rememberModalBottomSheetState()
+                )
             )
         }
     }
