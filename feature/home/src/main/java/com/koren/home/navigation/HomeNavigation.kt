@@ -1,14 +1,24 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.koren.home.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.navDeepLink
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import com.koren.common.models.calendar.Day
 import com.koren.home.ui.home.HomeDestination
 import com.koren.home.ui.home.HomeScreen
+import com.koren.home.ui.home.member_details.MemberDetailsScreen
 import com.koren.home.ui.qr.QRAcceptInvitationDestination
 import com.koren.home.ui.qr.QRAcceptInvitationScreen
 import com.koren.home.ui.sent_invitations.SentInvitationsDestination

@@ -1,8 +1,10 @@
 package com.koren.calendar.navigation
 
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.navigation
 import com.koren.calendar.ui.calendar.CalendarDestination
 import com.koren.calendar.ui.calendar.CalendarScreen

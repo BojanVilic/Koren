@@ -14,6 +14,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -46,6 +47,7 @@ import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.home.ui.home.member_details.MemberDetailsScreen
 import kotlinx.serialization.Serializable
+import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 
@@ -68,8 +70,8 @@ fun HomeScreen(
         onResume = { scaffoldStateProvider.setScaffoldState(ScaffoldState(isTopBarVisible = false, isBottomBarVisible = true)) }
     )
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val state by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     CollectSideEffects(
         viewModel = homeViewModel

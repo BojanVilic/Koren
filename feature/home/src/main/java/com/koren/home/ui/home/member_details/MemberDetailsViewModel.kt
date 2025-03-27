@@ -1,20 +1,15 @@
 package com.koren.home.ui.home.member_details
 
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewModelScope
-import app.cash.molecule.AndroidUiDispatcher
-import app.cash.molecule.RecompositionMode
-import app.cash.molecule.launchMolecule
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import com.koren.common.models.user.UserData
 import com.koren.common.services.UserSession
 import com.koren.common.util.StateViewModel
-import com.koren.domain.GetFamilyLocations
 import com.koren.domain.GetFamilyMemberUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -28,41 +23,61 @@ class MemberDetailsViewModel @Inject constructor(
 
     override fun setInitialState(): MemberDetailsUiState = MemberDetailsUiState.Loading
 
-    private val scope = CoroutineScope(viewModelScope.coroutineContext + AndroidUiDispatcher.Main)
-
     fun init(userId: String) {
-        scope.launchMolecule(mode = RecompositionMode.ContextClock) {
-            val currentUser by userSession.currentUser.collectAsState(initial = UserData())
-
-            if (currentUser.id == userId) {
-                _uiState.update {
-                    MemberDetailsUiState.SelfDetails
+        viewModelScope.launch {
+            combine(
+                userSession.currentUser,
+                getFamilyMemberUseCase(userId)
+            ) { currentUser, familyMemberDetails ->
+                currentUser to familyMemberDetails
+            }
+            .collect { (currentUser, familyMemberDetails) ->
+                if (currentUser.id == userId) {
+                    _uiState.update {
+                        MemberDetailsUiState.SelfDetails
+                    }
+                    return@collect
                 }
-                return@launchMolecule
-            }
+                val distanceString = getDistanceBetweenUsers(currentUser, familyMemberDetails)
 
-            val familyMemberDetails by getFamilyMemberUseCase(userId).collectAsState(initial = UserData())
-            val currentUserLat = currentUser.lastLocation?.latitude?: 0.0
-            val currentUserLon = currentUser.lastLocation?.longitude?: 0.0
-            val memberLat = familyMemberDetails.lastLocation?.latitude?: 0.0
-            val memberLon = familyMemberDetails.lastLocation?.longitude?: 0.0
-
-            val distance = SphericalUtil.computeDistanceBetween(LatLng(currentUserLat, currentUserLon), LatLng(memberLat, memberLon)).toLong()
-            var distanceString = "${distance}m away"
-
-            if (distance > 2000) {
-                val distanceKm = distance / 1000.0
-                distanceString = String.format(Locale.getDefault(),"%.1fkm away", distanceKm)
-            }
-
-            _uiState.update {
-                MemberDetailsUiState.Shown(
-                    member = familyMemberDetails,
-                    distanceText = distanceString,
-                    eventSink = { event -> handleEvent(event) }
-                )
+                _uiState.getAndUpdate {
+                    when (it) {
+                        is MemberDetailsUiState.Shown -> it.copy(
+                            member = familyMemberDetails,
+                            distanceText = distanceString,
+                            eventSink = { event -> handleEvent(event) }
+                        )
+                        else -> MemberDetailsUiState.Shown(
+                            member = familyMemberDetails,
+                            distanceText = distanceString,
+                            eventSink = { event -> handleEvent(event) }
+                        )
+                    }
+                }
             }
         }
+    }
+
+    private fun getDistanceBetweenUsers(
+        currentUser: UserData,
+        familyMemberDetails: UserData
+    ): String {
+        val currentUserLat = currentUser.lastLocation?.latitude ?: 0.0
+        val currentUserLon = currentUser.lastLocation?.longitude ?: 0.0
+        val memberLat = familyMemberDetails.lastLocation?.latitude ?: 0.0
+        val memberLon = familyMemberDetails.lastLocation?.longitude ?: 0.0
+
+        val distance = SphericalUtil.computeDistanceBetween(
+            LatLng(currentUserLat, currentUserLon),
+            LatLng(memberLat, memberLon)
+        ).toLong()
+        var distanceString = "${distance}m away"
+
+        if (distance > 2000) {
+            val distanceKm = distance / 1000.0
+            distanceString = String.format(Locale.getDefault(), "%.1fkm away", distanceKm)
+        }
+        return distanceString
     }
 
     override fun handleEvent(event: MemberDetailsUiEvent) {

@@ -57,18 +57,38 @@ class HomeViewModel @Inject constructor(
             val family by getFamilyUseCase.getFamilyFlow().collectAsState(initial = null)
             val upcomingItem by getNextCalendarItemUseCase().collectAsState(initial = CalendarItem.None)
 
-            _uiState.update {
-                HomeUiState.Shown(
-                    currentUser = currentUser,
-                    receivedInvitations = receivedInvitations.filter { it.status == InvitationStatus.PENDING },
-                    sentInvitations = sentInvitations,
-                    familyMembers = familyMembers,
-                    family = family,
-                    events = events,
-                    tasks = tasks,
-                    freeDayNextItem = upcomingItem.toNextItem(),
-                    eventSink = ::handleEvent
-                )
+
+            when (val currentState = uiState.collectAsState().value) {
+                is HomeUiState.Loading -> {
+                    _uiState.update {
+                        HomeUiState.Shown(
+                            currentUser = currentUser,
+                            receivedInvitations = receivedInvitations.filter { it.status == InvitationStatus.PENDING },
+                            sentInvitations = sentInvitations,
+                            familyMembers = familyMembers,
+                            family = family,
+                            events = events,
+                            tasks = tasks,
+                            freeDayNextItem = upcomingItem.toNextItem(),
+                            eventSink = ::handleEvent
+                        )
+                    }
+                }
+                is HomeUiState.Shown -> {
+                    _uiState.update {
+                        currentState.copy(
+                            currentUser = currentUser,
+                            receivedInvitations = receivedInvitations.filter { it.status == InvitationStatus.PENDING },
+                            sentInvitations = sentInvitations,
+                            familyMembers = familyMembers,
+                            family = family,
+                            events = events,
+                            tasks = tasks,
+                            freeDayNextItem = upcomingItem.toNextItem(),
+                            eventSink = ::handleEvent
+                        )
+                    }
+                }
             }
         }
     }
@@ -86,8 +106,8 @@ class HomeViewModel @Inject constructor(
                 is HomeEvent.TaskCompletionButtonClicked -> changeTaskStatus(event.task.taskId, !event.task.completed)
                 is HomeEvent.FamilyMemberClicked -> _uiState.update { current.copy(bottomSheetContent = HomeBottomSheetContent.MemberDetails(event.member)) }
                 is HomeEvent.DismissBottomSheet -> {
-                    _uiState.update { current.copy(bottomSheetContent = HomeBottomSheetContent.None) }
                     _sideEffects.emitSuspended(HomeSideEffect.DismissBottomSheet)
+                    _uiState.update { current.copy(bottomSheetContent = HomeBottomSheetContent.None) }
                 }
             }
         }
