@@ -1,13 +1,11 @@
 package com.koren.calendar.ui.calendar
 
 import androidx.lifecycle.viewModelScope
-import com.koren.common.models.calendar.Day
 import com.koren.common.models.calendar.Event
 import com.koren.common.util.DateUtils.toLocalDate
 import com.koren.common.util.StateViewModel
 import com.koren.data.repository.CalendarRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.update
@@ -57,28 +55,8 @@ class CalendarViewModel @Inject constructor(
     override fun handleEvent(event: CalendarUiEvent) {
         withEventfulState<CalendarUiState.Shown> { currentState ->
             when (event) {
-                is CalendarUiEvent.DayClicked -> initDayDetails(currentState, event.day)
-                is CalendarUiEvent.ResetCalendarBottomSheetContent -> dismissBottomSheet(currentState)
+                is CalendarUiEvent.DayClicked -> _sideEffects.emitSuspended(CalendarUiSideEffect.OpenDayDetails(event.day))
             }
-        }
-    }
-
-    private fun dismissBottomSheet(currentState: CalendarUiState.Shown) {
-        viewModelScope.launch {
-            delay(200)
-            _uiState.update { currentState.copy(calendarBottomSheetContent = CalendarBottomSheetContent.None) }
-        }
-    }
-
-    private fun initDayDetails(
-        currentState: CalendarUiState.Shown,
-        day: Day
-    ) {
-        _uiState.update {
-            currentState.copy(
-                calendarBottomSheetContent = CalendarBottomSheetContent.DayDetails(day),
-                eventSink = { event -> handleEvent(event) }
-            )
         }
     }
 

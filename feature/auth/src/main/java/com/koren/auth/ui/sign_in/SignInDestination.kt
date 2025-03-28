@@ -50,7 +50,7 @@ import com.koren.designsystem.theme.ThemePreview
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object SignInScreen
+data object SignInDestination
 
 @Composable
 fun SignInScreen(

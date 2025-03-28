@@ -19,7 +19,7 @@ import com.koren.activity.ui.activityScreen
 import com.koren.auth.navigation.AuthGraph
 import com.koren.auth.navigation.authScreen
 import com.koren.calendar.navigation.calendarScreen
-import com.koren.calendar.ui.add_entry.AddEntry
+import com.koren.calendar.ui.add_entry.AddEntryDestination
 import com.koren.calendar.ui.add_entry.AddEntryScreen
 import com.koren.calendar.ui.calendar.CalendarDestination
 import com.koren.common.models.calendar.Day
@@ -80,7 +80,7 @@ fun KorenNavHost(
                     onShowSnackbar = onShowSnackbar,
                     openAddCalendarEntry = { day ->
                         navController.navigate(
-                            AddEntry(
+                            AddEntryDestination(
                                 dayOfMonth = day.dayOfMonth ?: 0,
                                 dayOfWeek = day.dayOfWeek?.value ?: 0,
                                 localDate = day.localDate?.toString() ?: ""
@@ -113,15 +113,19 @@ fun KorenNavHost(
                     }
                 )
                 invitationScreen(navController = navController)
-                calendarScreen(navController = navController, onShowSnackbar = onShowSnackbar)
-                bottomSheet<AddEntry> { backStackEntry ->
-                    val addEntry = backStackEntry.toRoute<AddEntry>()
+                calendarScreen(
+                    navController = navController,
+                    onShowSnackbar = onShowSnackbar
+                )
+                bottomSheet<AddEntryDestination> { backStackEntry ->
+                    val addEntryDestination = backStackEntry.toRoute<AddEntryDestination>()
                     AddEntryScreen(
-                        Day(
-                            dayOfMonth = addEntry.dayOfMonth,
-                            dayOfWeek = DayOfWeek.of(addEntry.dayOfWeek),
-                            localDate = LocalDate.parse(addEntry.localDate)
-                        )
+                        day = Day(
+                            dayOfMonth = addEntryDestination.dayOfMonth,
+                            dayOfWeek = DayOfWeek.of(addEntryDestination.dayOfWeek),
+                            localDate = LocalDate.parse(addEntryDestination.localDate)
+                        ),
+                        onDismiss = { navController.popBackStack() }
                     )
                 }
             }

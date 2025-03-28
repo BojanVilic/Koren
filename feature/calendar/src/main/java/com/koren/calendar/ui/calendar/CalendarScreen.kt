@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.calendar.ui.day_details.DayDetailsScreen
+import com.koren.common.models.calendar.Day
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
@@ -34,7 +35,8 @@ object CalendarDestination
 @Composable
 fun CalendarScreen(
     viewModel: CalendarViewModel = hiltViewModel(),
-    onShowSnackbar: suspend (message: String) -> Unit
+    onShowSnackbar: suspend (message: String) -> Unit,
+    openDayDetails: (Day) -> Unit,
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -47,82 +49,34 @@ fun CalendarScreen(
         )
     )
 
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = {
-            if (it == SheetValue.Hidden) {
-                (uiState as? CalendarUiState.Shown)?.let { state ->
-                    state.eventSink(CalendarUiEvent.ResetCalendarBottomSheetContent)
-                }
-                true
-            } else true
-        }
-    )
-
     CollectSideEffects(
         viewModel = viewModel
     ) { uiSideEffect ->
         when (uiSideEffect) {
             is CalendarUiSideEffect.ShowSnackbar -> onShowSnackbar(uiSideEffect.message)
+            is CalendarUiSideEffect.OpenDayDetails -> openDayDetails(uiSideEffect.day)
         }
     }
 
     CalendarScreenContent(
-        uiState = uiState,
-        sheetState = sheetState
+        uiState = uiState
     )
 }
 
 @Composable
 private fun CalendarScreenContent(
-    uiState: CalendarUiState,
-    sheetState: SheetState
+    uiState: CalendarUiState
 ) {
     when (uiState) {
         is CalendarUiState.Loading -> CircularProgressIndicator()
-        is CalendarUiState.Shown -> CalendarScreenShownContent(
-            uiState = uiState,
-            sheetState = sheetState
-        )
+        is CalendarUiState.Shown -> CalendarScreenShownContent(uiState = uiState)
     }
 }
 
 @Composable
 private fun CalendarScreenShownContent(
-    uiState: CalendarUiState.Shown,
-    sheetState: SheetState
+    uiState: CalendarUiState.Shown
 ) {
-
-    val coroutineScope = rememberCoroutineScope()
-
-    if (uiState.calendarBottomSheetContent !is CalendarBottomSheetContent.None) {
-        ModalBottomSheet(
-            modifier = Modifier.windowInsetsPadding(
-                WindowInsets.safeDrawing.only(
-                    WindowInsetsSides.Vertical
-                )
-            ),
-            sheetState = sheetState,
-            onDismissRequest = {
-                coroutineScope.launch {
-                    sheetState.hide()
-                }
-            }
-        ) {
-            when (uiState.calendarBottomSheetContent) {
-                is CalendarBottomSheetContent.DayDetails -> DayDetailsScreen(
-                    day = uiState.calendarBottomSheetContent.day,
-                    onDismiss = {
-                        coroutineScope.launch {
-                            sheetState.hide()
-                        }
-                    }
-                )
-                else -> Unit
-            }
-        }
-    }
-
     CalendarUI(
         uiState = uiState
     )
@@ -135,8 +89,7 @@ fun CalendarScreenPreview() {
         CalendarScreenContent(
             uiState = CalendarUiState.Shown(
                 eventSink = {}
-            ),
-            sheetState = rememberModalBottomSheetState()
+            )
         )
     }
 }

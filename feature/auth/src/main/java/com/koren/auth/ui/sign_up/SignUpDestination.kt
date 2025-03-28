@@ -63,7 +63,7 @@ import com.koren.designsystem.theme.ThemePreview
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object SignUpScreen
+data object SignUpDestination
 
 @Composable
 fun SignUpScreen(

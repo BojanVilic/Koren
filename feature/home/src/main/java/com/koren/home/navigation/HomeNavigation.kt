@@ -9,7 +9,7 @@ import androidx.navigation.toRoute
 import com.koren.common.models.calendar.Day
 import com.koren.home.ui.home.HomeDestination
 import com.koren.home.ui.home.HomeScreen
-import com.koren.home.ui.home.member_details.MemberDetails
+import com.koren.home.ui.home.member_details.MemberDetailsDestination
 import com.koren.home.ui.home.member_details.MemberDetailsScreen
 import com.koren.home.ui.qr.QRAcceptInvitationDestination
 import com.koren.home.ui.qr.QRAcceptInvitationScreen
@@ -39,7 +39,7 @@ fun NavGraphBuilder.homeScreen(
                 onShowSnackbar = onShowSnackbar,
                 openAddCalendarEntry = openAddCalendarEntry,
                 openMemberDetails = {
-                    navController.navigate(MemberDetails(it))
+                    navController.navigate(MemberDetailsDestination(it))
                 }
             )
         }
@@ -68,9 +68,9 @@ fun NavGraphBuilder.homeScreen(
             SentInvitationsScreen()
         }
 
-        bottomSheet<MemberDetails> { backStackEntry ->
+        bottomSheet<MemberDetailsDestination> { backStackEntry ->
             MemberDetailsScreen(
-                userId = backStackEntry.toRoute<MemberDetails>().userId
+                userId = backStackEntry.toRoute<MemberDetailsDestination>().userId
             )
         }
     }

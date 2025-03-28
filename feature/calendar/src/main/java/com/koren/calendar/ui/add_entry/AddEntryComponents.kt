@@ -6,16 +6,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -67,11 +62,9 @@ import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalSnackbarHostState
 import com.koren.designsystem.theme.ThemePreview
 import kotlinx.serialization.Serializable
-import java.time.DayOfWeek
-import java.time.LocalDate
 
 @Serializable
-data class AddEntry(
+data class AddEntryDestination(
     val dayOfMonth: Int,
     val dayOfWeek: Int,
     val localDate: String
@@ -80,7 +73,8 @@ data class AddEntry(
 @Composable
 fun AddEntryScreen(
     day: Day,
-    viewModel: AddEntryViewModel = hiltViewModel()
+    viewModel: AddEntryViewModel = hiltViewModel(),
+    onDismiss: () -> Unit
 ) {
 
     DisposableEffectWithLifecycle(
@@ -95,7 +89,7 @@ fun AddEntryScreen(
     ) { uiSideEffect ->
         when (uiSideEffect) {
             is AddEntryUiSideEffect.ShowSnackbar -> snackbarHost.showSnackbar(uiSideEffect.message)
-            is AddEntryUiSideEffect.Dismiss -> Unit
+            is AddEntryUiSideEffect.Dismiss -> onDismiss()
         }
     }
 
@@ -119,10 +113,9 @@ private fun AddEntryScreenShownContent(
     uiState: AddEntryUiState.Shown
 ) {
     Column(
-        modifier = Modifier
-            .padding(top = 16.dp)
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
+        BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.CenterHorizontally))
         Row(
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {

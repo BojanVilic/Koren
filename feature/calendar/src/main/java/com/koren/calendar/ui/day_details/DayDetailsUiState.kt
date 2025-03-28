@@ -14,11 +14,6 @@ sealed interface DayDetailsUiState : UiState {
     sealed interface Shown : DayDetailsUiState, EventHandler<DayDetailsUiEvent> {
         val day: Day
 
-        data class AddEntry(
-            override val day: Day,
-            override val eventSink: (DayDetailsUiEvent) -> Unit
-        ) : Shown
-
         data class Empty(
             override val day: Day,
             override val eventSink: (DayDetailsUiEvent) -> Unit
@@ -39,4 +34,5 @@ sealed interface DayDetailsUiEvent : UiEvent {
 
 sealed interface DayDetailsUiSideEffect : UiSideEffect {
     data class ShowSnackbar(val message: String) : DayDetailsUiSideEffect
+    data class OpenAddEntry(val day: Day) : DayDetailsUiSideEffect
 }

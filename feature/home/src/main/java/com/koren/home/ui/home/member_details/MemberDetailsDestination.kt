@@ -44,7 +44,7 @@ import kotlinx.serialization.Serializable
 
 
 @Serializable
-data class MemberDetails(
+data class MemberDetailsDestination(
     val userId: String
 )
 

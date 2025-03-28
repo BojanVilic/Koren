@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.koren.calendar.ui.day_details
 
 import androidx.compose.animation.animateContentSize
@@ -20,13 +22,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,14 +41,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.koren.common.models.calendar.Day
 import com.koren.calendar.ui.add_entry.AddEntryScreen
+import com.koren.common.models.calendar.Day
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.util.CollectSideEffects
 import com.koren.common.util.DateUtils.toHumanReadableDateTimeRange
 import com.koren.common.util.DateUtils.toTime
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
+import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.icon.Circle
 import com.koren.designsystem.icon.CircleCheck
 import com.koren.designsystem.icon.KorenIcons
@@ -51,22 +57,27 @@ import com.koren.designsystem.theme.ExtendedTheme
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalSnackbarHostState
 import com.koren.designsystem.theme.ThemePreview
+import kotlinx.serialization.Serializable
 import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+
+@Serializable
+data class DayDetailsDestination(
+    val dayOfMonth: Int,
+    val dayOfWeek: Int,
+    val localDate: String
+)
 
 @Composable
 fun DayDetailsScreen(
     viewModel: DayDetailsViewModel = hiltViewModel(),
     day: Day,
-    onDismiss: () -> Unit
+    openAddEntry: (Day) -> Unit,
 ) {
 
-    DisposableEffectWithLifecycle(
-        onCreate = { viewModel.init(day = day) }
-    )
+    LaunchedEffect(Unit) {
+        viewModel.init(day = day)
+    }
 
     val snackbarHost = LocalSnackbarHostState.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -76,19 +87,18 @@ fun DayDetailsScreen(
     ) { uiSideEffect ->
         when (uiSideEffect) {
             is DayDetailsUiSideEffect.ShowSnackbar -> snackbarHost.showSnackbar(uiSideEffect.message)
+            is DayDetailsUiSideEffect.OpenAddEntry -> openAddEntry(uiSideEffect.day)
         }
     }
 
     DayDetailsScreenContent(
-        uiState = uiState,
-        onDismiss = onDismiss
+        uiState = uiState
     )
 }
 
 @Composable
 private fun DayDetailsScreenContent(
-    uiState: DayDetailsUiState,
-    onDismiss: () -> Unit
+    uiState: DayDetailsUiState
 ) {
     Column(
         modifier = Modifier.animateContentSize(
@@ -97,11 +107,11 @@ private fun DayDetailsScreenContent(
             )
         )
     ) {
+        BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.CenterHorizontally))
         when (uiState) {
-            is DayDetailsUiState.Loading -> CircularProgressIndicator()
+            is DayDetailsUiState.Loading -> LoadingContent(modifier = Modifier.padding(vertical = 16.dp))
             is DayDetailsUiState.Shown.Idle -> DayDetailsScreenShownContent(uiState = uiState)
             is DayDetailsUiState.Shown.Empty -> EmptyDayDetailsContent(uiState = uiState)
-            is DayDetailsUiState.Shown.AddEntry -> AddEntryScreen(day = uiState.day)
         }
     }
 }
@@ -341,8 +351,7 @@ fun DayDetailsScreenPreview() {
                     )
                 ),
                 eventSink = {}
-            ),
-            onDismiss = {}
+            )
         )
     }
 }
