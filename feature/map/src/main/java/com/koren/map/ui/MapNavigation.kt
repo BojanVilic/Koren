@@ -4,6 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,11 +15,13 @@ fun NavGraphBuilder.mapScreen(
     onShowSnackbar: suspend (message: String) -> Unit
 ) {
     navigation<MapGraph>(
-        startDestination = MapDestination
+        startDestination = MapDestination()
     ) {
-        composable<MapDestination> {
+        composable<MapDestination> { backStackEntry ->
+            val mapDestination = backStackEntry.toRoute<MapDestination>()
             MapScreen(
-                onShowSnackbar = onShowSnackbar
+                onShowSnackbar = onShowSnackbar,
+                userId = mapDestination.userId
             )
         }
     }

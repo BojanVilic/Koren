@@ -86,6 +86,9 @@ fun KorenNavHost(
                                 localDate = day.localDate?.toString() ?: ""
                             )
                         )
+                    },
+                    navigateAndFindOnMap = { userId ->
+                        navController.navigateToMapWithCoordinates(userId)
                     }
                 )
                 onboardingScreen(
@@ -145,8 +148,22 @@ fun NavHostController.navigateToTopLevelDestination(topLevelRoute: TopLevelRoute
 
     when (topLevelRoute) {
         is HomeTopLevelRoute -> navController.navigate(HomeDestination, topLevelNavOptions)
-        is MapTopLevelRoute -> navController.navigate(MapDestination, topLevelNavOptions)
+        is MapTopLevelRoute -> navController.navigate(MapDestination(), topLevelNavOptions)
         is ActivityTopLevelRoute -> navController.navigate(ActivityDestination, topLevelNavOptions)
         is AccountTopLevelRoute -> navController.navigate(AccountDestination, topLevelNavOptions)
     }
+}
+
+fun NavHostController.navigateToMapWithCoordinates(
+    userId: String
+) {
+    val navController = this
+    val mapNavOptions = navOptions {
+        popUpTo(navController.graph.findStartDestination().id) {
+            saveState = true
+        }
+        launchSingleTop = true
+        restoreState = true
+    }
+    navController.navigate(MapDestination(userId), mapNavOptions)
 }

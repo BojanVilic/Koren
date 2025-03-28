@@ -51,7 +51,8 @@ data class MemberDetailsDestination(
 @Composable
 fun MemberDetailsScreen(
     viewModel: MemberDetailsViewModel = hiltViewModel(),
-    userId: String
+    userId: String,
+    navigateAndFindOnMap: (userId: String) -> Unit
 ) {
 
     LaunchedEffect(Unit) {
@@ -64,7 +65,7 @@ fun MemberDetailsScreen(
         viewModel = viewModel
     ) { uiSideEffect ->
         when (uiSideEffect) {
-            else -> {}
+            is MemberDetailsUiSideEffect.NavigateAndFindOnMap -> navigateAndFindOnMap(uiSideEffect.userId)
         }
     }
 
@@ -146,12 +147,12 @@ val options = listOf(
     MemberDetailsOption(
         icon = KorenIcons.MapSelected,
         title = "Find on map",
-        event = MemberDetailsUiEvent.CallHome
+        event = MemberDetailsUiEvent.FindOnMap
     ),
     MemberDetailsOption(
         icon = KorenIcons.Task,
         title = "View assigned tasks",
-        event = MemberDetailsUiEvent.CallHome
+        event = MemberDetailsUiEvent.ViewAssignedTasks
     ),
     MemberDetailsOption(
         icon = Icons.Default.Edit,

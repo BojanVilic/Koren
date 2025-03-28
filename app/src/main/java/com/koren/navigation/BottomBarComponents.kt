@@ -14,6 +14,7 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavGraph
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import timber.log.Timber
 
 @Composable
 fun BottomNavigationBar(
@@ -26,7 +27,7 @@ fun BottomNavigationBar(
         val haptics = LocalHapticFeedback.current
 
         topLevelRoutes.forEach { item ->
-            val selected = currentDestination?.getAllParentGraphs()?.any { it.startDestinationRoute == item.route::class.qualifiedName } == true
+            val selected = currentDestination?.getAllParentGraphs()?.any { it.startDestinationRoute?.substringBefore("?") == item.route::class.qualifiedName } == true
 
             NavigationBarItem(
                 icon = {

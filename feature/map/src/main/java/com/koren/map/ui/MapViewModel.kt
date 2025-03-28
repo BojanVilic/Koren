@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.UUID
@@ -50,20 +51,22 @@ class MapViewModel @Inject constructor(
 
     override fun setInitialState(): MapUiState = MapUiState.Loading
 
-    init {
+    fun init(
+        userId: String?
+    ) {
         if (!locationService.isLocationPermissionGranted()) {
             _uiState.update {
                 MapUiState.LocationPermissionNotGranted(
                     onPermissionGranted = {
                         setupLocationUpdates()
-                        fetchFamilyData()
+                        fetchFamilyData(userId = userId)
                         observeLocationSuggestions()
                     }
                 )
             }
         } else {
             setupLocationUpdates()
-            fetchFamilyData()
+            fetchFamilyData(userId = userId)
             observeLocationSuggestions()
         }
     }
@@ -201,7 +204,7 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    private fun fetchFamilyData() {
+    private fun fetchFamilyData(userId: String?) {
         viewModelScope.launch(Dispatchers.Default) {
             combine(
                 getAllFamilyMembersUseCase(),
@@ -211,7 +214,12 @@ class MapViewModel @Inject constructor(
             }
                 .catch { _uiState.update { MapUiState.Shown.IdleMap(eventSink = ::handleEvent) } }
                 .collect { (familyMembers, savedLocations) ->
-                    val userLocation = userSession.currentUser.first().lastLocation
+                    val userLocation =
+                        if (userId == null)
+                            userSession.currentUser.first().lastLocation
+                        else
+                            familyMembers.find { it.id == userId }?.lastLocation
+
                     when (val current = _uiState.value) {
                         MapUiState.Loading -> _uiState.update {
                             MapUiState.Shown.IdleMap(

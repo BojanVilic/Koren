@@ -23,7 +23,7 @@ data object HomeTopLevelRoute : TopLevelRoute(
 )
 
 data object MapTopLevelRoute : TopLevelRoute(
-    route = MapDestination,
+    route = MapDestination(),
     selectedIcon = R.drawable.map_selected,
     unselectedIcon = R.drawable.map_unselected,
     titleTextId = R.string.map_label

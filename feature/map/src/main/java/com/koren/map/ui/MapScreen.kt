@@ -57,6 +57,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -76,6 +77,9 @@ import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.gms.maps.CameraUpdate
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
@@ -96,17 +100,26 @@ import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.map.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 @Serializable
-object MapDestination
+data class MapDestination(
+    val userId: String? = null
+)
 
 @Composable
 fun MapScreen(
     mapViewModel: MapViewModel = hiltViewModel(),
-    onShowSnackbar: suspend (message: String) -> Unit
+    onShowSnackbar: suspend (message: String) -> Unit,
+    userId: String?
 ) {
+
+    LaunchedEffect(Unit) {
+        mapViewModel.init(userId = userId)
+    }
 
     LocalScaffoldStateProvider.current.setScaffoldState(
         ScaffoldState(isTopBarVisible = false)

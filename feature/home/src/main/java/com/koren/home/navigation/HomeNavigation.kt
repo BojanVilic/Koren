@@ -26,7 +26,8 @@ fun NavGraphBuilder.homeScreen(
     inviteFamilyMember: () -> Unit,
     createFamily: () -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit,
-    openAddCalendarEntry: (Day) -> Unit
+    openAddCalendarEntry: (Day) -> Unit,
+    navigateAndFindOnMap: (userId: String) -> Unit
 ) {
     navigation<HomeGraph>(
         startDestination = HomeDestination
@@ -70,7 +71,8 @@ fun NavGraphBuilder.homeScreen(
 
         bottomSheet<MemberDetailsDestination> { backStackEntry ->
             MemberDetailsScreen(
-                userId = backStackEntry.toRoute<MemberDetailsDestination>().userId
+                userId = backStackEntry.toRoute<MemberDetailsDestination>().userId,
+                navigateAndFindOnMap = navigateAndFindOnMap
             )
         }
     }

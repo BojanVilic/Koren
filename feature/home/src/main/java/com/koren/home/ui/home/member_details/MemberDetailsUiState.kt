@@ -1,5 +1,6 @@
 package com.koren.home.ui.home.member_details
 
+import com.google.android.gms.maps.model.LatLng
 import com.koren.common.models.user.UserData
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
@@ -19,8 +20,10 @@ sealed interface MemberDetailsUiState : UiState {
 sealed interface MemberDetailsUiEvent : UiEvent {
     data object EditRole : MemberDetailsUiEvent
     data object CallHome : MemberDetailsUiEvent
-    data object ShowOnMap : MemberDetailsUiEvent
+    data object FindOnMap : MemberDetailsUiEvent
+    data object ViewAssignedTasks : MemberDetailsUiEvent
 }
 
 sealed interface MemberDetailsUiSideEffect : UiSideEffect {
+    data class NavigateAndFindOnMap(val userId: String) : MemberDetailsUiSideEffect
 }

@@ -86,7 +86,10 @@ class MemberDetailsViewModel @Inject constructor(
     override fun handleEvent(event: MemberDetailsUiEvent) {
         withEventfulState<MemberDetailsUiState.Shown> { currentState ->
             when (event) {
-                else -> {}
+                is MemberDetailsUiEvent.CallHome -> Unit
+                is MemberDetailsUiEvent.FindOnMap -> _sideEffects.emitSuspended(MemberDetailsUiSideEffect.NavigateAndFindOnMap(currentState.member.id))
+                is MemberDetailsUiEvent.ViewAssignedTasks -> Unit
+                is MemberDetailsUiEvent.EditRole -> Unit
             }
         }
     }
