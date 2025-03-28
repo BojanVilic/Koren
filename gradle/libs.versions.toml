@@ -1,9 +1,5 @@
 [versions]
-androidMapsUtils = "2.2.5"
-materialNavigation = "1.8.0-rc02"
 minSdkVersion = "28"
-moleculeRuntime = "2.0.0"
-resaca = "4.4.4"
 targetSdkVersion = "35"
 
 agp = "8.7.3"
@@ -44,6 +40,8 @@ workRuntimeKtx = "2.10.0"
 hiltCommon = "1.2.0"
 hiltWork = "1.2.0"
 uiTextGoogleFonts = "1.7.8"
+moleculeRuntime = "2.0.0"
+androidMapsUtils = "2.2.5"
 
 [libraries]
 android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version.ref = "androidMapsUtils" }
@@ -51,7 +49,6 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
-androidx-material-navigation = { module = "androidx.compose.material:material-navigation", version.ref = "materialNavigation" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 firebase-database = { module = "com.google.firebase:firebase-database", version.ref = "firebaseDatabase" }
@@ -64,7 +61,6 @@ androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecyc
 google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" }
 molecule-runtime = { module = "app.cash.molecule:molecule-runtime", version.ref = "moleculeRuntime" }
 qrcode-kotlin = { module = "io.github.g0dkar:qrcode-kotlin", version.ref = "qrcodeKotlin" }
-resaca = { module = "io.github.sebaslogen:resaca", version.ref = "resaca" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerializationLibrary" }
 

@@ -5,7 +5,6 @@ import com.koren.common.services.UserNotLoggedInException
 import com.koren.common.services.UserSession
 import com.koren.common.util.StateViewModel
 import com.koren.common.util.orUnknownError
-import com.koren.navigation.MainActivityBottomSheetContent
 import com.koren.navigation.MainActivityUiEvent
 import com.koren.navigation.MainActivityUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,7 +28,6 @@ class MainActivityViewModel @Inject constructor(
                     try {
                         _uiState.update {
                             MainActivityUiState.Success(
-                                bottomSheetContent = MainActivityBottomSheetContent.None,
                                 userData = userData,
                                 eventSink = ::handleEvent
                             )
@@ -55,8 +53,7 @@ class MainActivityViewModel @Inject constructor(
     override fun handleEvent(event: MainActivityUiEvent) {
         withEventfulState<MainActivityUiState.Success> { currentState ->
             when (event) {
-                is MainActivityUiEvent.DismissBottomSheet -> _uiState.update { currentState.copy(bottomSheetContent = MainActivityBottomSheetContent.None) }
-                is MainActivityUiEvent.SetBottomSheetContent -> _uiState.update { currentState.copy(bottomSheetContent = event.bottomSheetContent) }
+                else -> Unit
             }
         }
     }

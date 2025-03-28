@@ -101,10 +101,7 @@ private fun DayDetailsScreenContent(
             is DayDetailsUiState.Loading -> CircularProgressIndicator()
             is DayDetailsUiState.Shown.Idle -> DayDetailsScreenShownContent(uiState = uiState)
             is DayDetailsUiState.Shown.Empty -> EmptyDayDetailsContent(uiState = uiState)
-            is DayDetailsUiState.Shown.AddEntry -> AddEntryScreen(
-                day = uiState.day,
-                onDismiss = { onDismiss() }
-            )
+            is DayDetailsUiState.Shown.AddEntry -> AddEntryScreen(day = uiState.day)
         }
     }
 }

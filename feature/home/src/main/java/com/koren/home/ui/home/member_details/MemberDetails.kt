@@ -88,7 +88,6 @@ private fun MemberDetailsScreenContent(
 private fun MemberDetailsScreenShownContent(
     uiState: MemberDetailsUiState.Shown
 ) {
-
     Column(
         modifier = Modifier
             .clip(BottomSheetDefaults.ExpandedShape)

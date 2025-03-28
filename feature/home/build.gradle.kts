@@ -22,6 +22,4 @@ dependencies {
 
     implementation(libs.android.maps.utils)
     implementation(libs.play.services.places)
-
-    implementation(libs.androidx.material.navigation)
 }

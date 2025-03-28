@@ -2,19 +2,9 @@
 
 package com.koren.navigation
 
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.navigation.BottomSheetNavigator
-import androidx.compose.material.navigation.ModalBottomSheetLayout
-import androidx.compose.material.navigation.bottomSheet
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -29,18 +19,24 @@ import com.koren.activity.ui.activityScreen
 import com.koren.auth.navigation.AuthGraph
 import com.koren.auth.navigation.authScreen
 import com.koren.calendar.navigation.calendarScreen
+import com.koren.calendar.ui.add_entry.AddEntry
+import com.koren.calendar.ui.add_entry.AddEntryScreen
 import com.koren.calendar.ui.calendar.CalendarDestination
+import com.koren.common.models.calendar.Day
 import com.koren.home.navigation.HomeGraph
 import com.koren.home.navigation.homeScreen
 import com.koren.home.ui.home.HomeDestination
-import com.koren.home.ui.home.member_details.MemberDetails
-import com.koren.home.ui.home.member_details.MemberDetailsScreen
 import com.koren.invitation.navigation.invitationScreen
 import com.koren.invitation.ui.InvitationDestination
 import com.koren.map.ui.MapDestination
 import com.koren.map.ui.mapScreen
 import com.koren.onboarding.navigation.OnboardingGraph
 import com.koren.onboarding.navigation.onboardingScreen
+import com.koren.designsystem.components.bottom_sheet.BottomSheetNavigator
+import com.koren.designsystem.components.bottom_sheet.ModalBottomSheetLayout
+import com.koren.designsystem.components.bottom_sheet.bottomSheet
+import java.time.DayOfWeek
+import java.time.LocalDate
 
 @Composable
 fun KorenNavHost(
@@ -48,7 +44,6 @@ fun KorenNavHost(
     navController: NavHostController,
     mainActivityViewModel: MainActivityViewModel,
     onShowSnackbar: suspend (message: String) -> Unit,
-    setMainActivityBottomSheetContent: (MainActivityBottomSheetContent) -> Unit,
     bottomSheetNavigator: BottomSheetNavigator
 ) {
     val uiState = mainActivityViewModel.uiState.collectAsStateWithLifecycle()
@@ -62,8 +57,7 @@ fun KorenNavHost(
         ModalBottomSheetLayout(
             modifier = modifier,
             bottomSheetNavigator = bottomSheetNavigator,
-            sheetBackgroundColor = BottomSheetDefaults.ContainerColor,
-            sheetShape = BottomSheetDefaults.ExpandedShape
+            dragHandle = null
         ) {
             NavHost(
                 navController = navController,
@@ -84,9 +78,13 @@ fun KorenNavHost(
                     },
                     createFamily = { navController.navigate(OnboardingGraph) },
                     onShowSnackbar = onShowSnackbar,
-                    openAddCalendarEntry = {
-                        setMainActivityBottomSheetContent(
-                            MainActivityBottomSheetContent.AddCalendarEntry(it)
+                    openAddCalendarEntry = { day ->
+                        navController.navigate(
+                            AddEntry(
+                                dayOfMonth = day.dayOfMonth ?: 0,
+                                dayOfWeek = day.dayOfWeek?.value ?: 0,
+                                localDate = day.localDate?.toString() ?: ""
+                            )
                         )
                     }
                 )
@@ -116,6 +114,16 @@ fun KorenNavHost(
                 )
                 invitationScreen(navController = navController)
                 calendarScreen(navController = navController, onShowSnackbar = onShowSnackbar)
+                bottomSheet<AddEntry> { backStackEntry ->
+                    val addEntry = backStackEntry.toRoute<AddEntry>()
+                    AddEntryScreen(
+                        Day(
+                            dayOfMonth = addEntry.dayOfMonth,
+                            dayOfWeek = DayOfWeek.of(addEntry.dayOfWeek),
+                            localDate = LocalDate.parse(addEntry.localDate)
+                        )
+                    )
+                }
             }
         }
     }

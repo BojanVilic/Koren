@@ -14,6 +14,7 @@ class CoreConventionPlugin : Plugin<Project> {
             with(pluginManager) {
                 apply("com.android.library")
                 apply("org.jetbrains.kotlin.android")
+                apply("org.jetbrains.kotlin.plugin.serialization")
             }
 
             extensions.configure<LibraryExtension> {
@@ -29,6 +30,7 @@ class CoreConventionPlugin : Plugin<Project> {
                 add("androidTestImplementation", libs.findLibrary("androidx-junit").get())
                 add("androidTestImplementation", libs.findLibrary("androidx-espresso-core").get())
                 add("implementation", libs.findLibrary("timber").get())
+                add("implementation", libs.findLibrary("kotlin-serialization").get())
             }
         }
     }

@@ -1,6 +1,5 @@
 package com.koren.home.navigation
 
-import androidx.compose.material.navigation.bottomSheet
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
@@ -16,6 +15,7 @@ import com.koren.home.ui.qr.QRAcceptInvitationDestination
 import com.koren.home.ui.qr.QRAcceptInvitationScreen
 import com.koren.home.ui.sent_invitations.SentInvitationsDestination
 import com.koren.home.ui.sent_invitations.SentInvitationsScreen
+import com.koren.designsystem.components.bottom_sheet.bottomSheet
 import kotlinx.serialization.Serializable
 
 @Serializable
