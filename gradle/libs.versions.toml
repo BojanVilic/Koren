@@ -42,6 +42,7 @@ hiltWork = "1.2.0"
 uiTextGoogleFonts = "1.7.8"
 moleculeRuntime = "2.0.0"
 androidMapsUtils = "2.2.5"
+firebaseMessagingKtx = "24.1.1"
 
 [libraries]
 android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version.ref = "androidMapsUtils" }
@@ -101,6 +102,7 @@ firebase-database-ktx = { group = "com.google.firebase", name = "firebase-databa
 androidx-hilt-common = { group = "androidx.hilt", name = "hilt-common", version.ref = "hiltCommon" }
 androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltWork" }
 androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
+firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messaging-ktx", version.ref = "firebaseMessagingKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
