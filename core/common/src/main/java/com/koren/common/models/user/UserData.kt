@@ -10,5 +10,6 @@ data class UserData(
     val profilePictureUrl: String = "",
     val familyRole: FamilyRole = FamilyRole.NONE,
     val lastLocation: UserLocation? = null,
-    val lastActivityId: String = ""
+    val lastActivityId: String = "",
+    val fcmToken: String = ""
 )

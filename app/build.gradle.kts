@@ -65,11 +65,11 @@ dependencies {
     implementation(projects.feature.account)
     implementation(projects.feature.invitation)
     implementation(projects.feature.calendar)
+    implementation(projects.core.notifications)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.hilt.work)
-    implementation(libs.firebase.messaging.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

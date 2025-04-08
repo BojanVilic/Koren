@@ -34,6 +34,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.koren.common.models.calendar.Day
+import com.koren.common.models.calendar.TaskWithUsers
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.InvitationStatus
 import com.koren.common.models.user.UserData
@@ -229,6 +230,23 @@ fun HomePreview() {
                         UserData(
                             id = "2",
                             displayName = "Jane Doe",
+                        )
+                    ),
+                    freeDayNextItem = NextItem.TaskItem(
+                        TaskWithUsers(
+                            taskId = "1",
+                            title = "Task 1",
+                            description = "Description 1",
+                            taskTimestamp = 1630000000000,
+                            completed = false,
+                            creator = UserData(
+                                id = "1",
+                                displayName = "John Doe"
+                            ),
+                            assignee = UserData(
+                                id = "2",
+                                displayName = "Jane Doe"
+                            )
                         )
                     ),
                     eventSink = {}

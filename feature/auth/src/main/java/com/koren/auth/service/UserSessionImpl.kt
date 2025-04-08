@@ -1,10 +1,12 @@
 package com.koren.auth.service
 
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.database.database
 import com.google.firebase.database.getValue
 import com.google.firebase.database.values
+import com.google.firebase.messaging.FirebaseMessaging
 import com.koren.common.models.user.UserData
 import com.koren.common.services.UserNotLoggedInException
 import com.koren.common.services.UserSession
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 import javax.inject.Singleton
 
 class UserSessionImpl : UserSession {
@@ -47,17 +50,21 @@ class UserSessionImpl : UserSession {
             .await()
             .getValue<UserData>()
 
+        val fcmToken = FirebaseMessaging.getInstance().token.await()
+
         Firebase.database.getReference("users")
             .child(auth.currentUser?.uid ?: "")
             .setValue(
                 currentUserData?.copy(
                     id = auth.currentUser?.uid ?: "",
                     email = auth.currentUser?.email ?: "",
-                    displayName = auth.currentUser?.displayName ?: ""
+                    displayName = auth.currentUser?.displayName ?: "",
+                    fcmToken = fcmToken
                 )?: UserData(
                     id = auth.currentUser?.uid ?: "",
                     email = auth.currentUser?.email ?: "",
-                    displayName = auth.currentUser?.displayName ?: ""
+                    displayName = auth.currentUser?.displayName ?: "",
+                    fcmToken = fcmToken
                 )
             )
     }

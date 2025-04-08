@@ -308,11 +308,13 @@ fun FreeDay(
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()
                 UpcomingItemTask(uiState.freeDayNextItem)
+                Spacer(modifier = Modifier.height(16.dp))
             }
             is NextItem.EventItem -> {
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()
                 UpcomingItemEvent(uiState.freeDayNextItem)
+                Spacer(modifier = Modifier.height(16.dp))
             }
             is NextItem.None -> Unit
         }
