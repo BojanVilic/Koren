@@ -2,6 +2,7 @@
 
 package com.koren.home.ui.home.member_details
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -26,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -66,6 +69,7 @@ fun MemberDetailsScreen(
     ) { uiSideEffect ->
         when (uiSideEffect) {
             is MemberDetailsUiSideEffect.NavigateAndFindOnMap -> navigateAndFindOnMap(uiSideEffect.userId)
+            is MemberDetailsUiSideEffect.ShowSnackbarMessage -> Unit
         }
     }
 
@@ -127,52 +131,40 @@ private fun MemberDetailsScreenShownContent(
             BottomSheetDefaults.DragHandle(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
-            options.forEach { option ->
+            uiState.options.forEach { option ->
                 Option(
                     icon = option.icon,
                     title = option.title,
-                    onClick = { uiState.eventSink(option.event) }
+                    description = option.description,
+                    isEnabled = option.isEnabled,
+                    onClick = {
+                        if (option.isEnabled) {
+                            uiState.eventSink(option.event)
+                        }
+                    }
                 )
             }
         }
     }
 }
 
-val options = listOf(
-    MemberDetailsOption(
-        icon = KorenIcons.CallHome,
-        title = "Call home",
-        event = MemberDetailsUiEvent.CallHome
-    ),
-    MemberDetailsOption(
-        icon = KorenIcons.MapSelected,
-        title = "Find on map",
-        event = MemberDetailsUiEvent.FindOnMap
-    ),
-    MemberDetailsOption(
-        icon = KorenIcons.Task,
-        title = "View assigned tasks",
-        event = MemberDetailsUiEvent.ViewAssignedTasks
-    ),
-    MemberDetailsOption(
-        icon = Icons.Default.Edit,
-        title = "Edit role",
-        event = MemberDetailsUiEvent.EditRole
-    )
-)
-
 @Composable
 private fun Option(
     icon: ImageVector,
     title: String,
+    description: String?,
+    isEnabled: Boolean,
     onClick: () -> Unit
 ) {
+    val contentAlpha = if (isEnabled) 1f else 0.5f
+
     Row(
         modifier = Modifier
-            .clickable {
+            .alpha(contentAlpha)
+            .clickable(enabled = isEnabled) {
                 onClick()
             }
-            .padding(12.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -180,10 +172,25 @@ private fun Option(
             imageVector = icon,
             contentDescription = null
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = title
-        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            AnimatedVisibility(!description.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = description?: "",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }
 
@@ -227,6 +234,30 @@ fun MemberDetailsScreenShownContentPreview() {
             MemberDetailsScreenShownContent(
                 uiState = MemberDetailsUiState.Shown(
                     distanceText = "450m away",
+                    options = listOf(
+                        MemberDetailsOption(
+                            icon = KorenIcons.CallHome,
+                            title = "Call home",
+                            event = MemberDetailsUiEvent.CallHome,
+                            isEnabled = false,
+                            description = "Request sent"
+                        ),
+                        MemberDetailsOption(
+                            icon = KorenIcons.MapSelected,
+                            title = "Find on map",
+                            event = MemberDetailsUiEvent.FindOnMap
+                        ),
+                        MemberDetailsOption(
+                            icon = KorenIcons.Task,
+                            title = "View assigned tasks",
+                            event = MemberDetailsUiEvent.ViewAssignedTasks
+                        ),
+                        MemberDetailsOption(
+                            icon = Icons.Default.Edit,
+                            title = "Edit role",
+                            event = MemberDetailsUiEvent.EditRole
+                        )
+                    ),
                     eventSink = {}
                 )
             )

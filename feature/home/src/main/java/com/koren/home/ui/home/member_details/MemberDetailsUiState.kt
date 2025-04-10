@@ -1,6 +1,5 @@
 package com.koren.home.ui.home.member_details
 
-import com.google.android.gms.maps.model.LatLng
 import com.koren.common.models.user.UserData
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
@@ -13,6 +12,7 @@ sealed interface MemberDetailsUiState : UiState {
     data class Shown(
         val member: UserData = UserData(),
         val distanceText: String = "",
+        val options: List<MemberDetailsOption> = emptyList(),
         override val eventSink: (MemberDetailsUiEvent) -> Unit
     ) : MemberDetailsUiState, EventHandler<MemberDetailsUiEvent>
 }
@@ -26,4 +26,5 @@ sealed interface MemberDetailsUiEvent : UiEvent {
 
 sealed interface MemberDetailsUiSideEffect : UiSideEffect {
     data class NavigateAndFindOnMap(val userId: String) : MemberDetailsUiSideEffect
+    data class ShowSnackbarMessage(val message: String) : MemberDetailsUiSideEffect
 }

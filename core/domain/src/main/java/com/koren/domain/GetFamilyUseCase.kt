@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import com.google.firebase.database.getValue
+import com.koren.common.models.family.CallHomeRequest
 import com.koren.common.models.family.SavedLocation
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -37,8 +38,12 @@ class GetFamilyUseCase @Inject constructor(
                 val savedLocationMap = snapshot.child("savedLocations").getValue(object : GenericTypeIndicator<Map<String, SavedLocation>>() {}) ?: emptyMap()
 
                 val savedLocations = savedLocationMap.values.toList()
+                val callHomeRequests = snapshot.child("callHomeRequests")
+                    .getValue(object : GenericTypeIndicator<Map<String, CallHomeRequest>>() {}) ?: emptyMap()
 
-                val family = Family(id, name, members, familyPortrait, savedLocations)
+                val family = Family(
+                    id, name, members, familyPortrait, savedLocations, callHomeRequests
+                )
                 Result.success(family)
             } else {
                 Result.failure(Exception("Family not found. \uD83D\uDE22"))
@@ -68,8 +73,11 @@ class GetFamilyUseCase @Inject constructor(
                     val savedLocationMap = snapshot.child("savedLocations").getValue(object : GenericTypeIndicator<Map<String, SavedLocation>>() {}) ?: emptyMap()
 
                     val savedLocations = savedLocationMap.values.toList()
+                    val callHomeRequests = snapshot.child("callHomeRequests").getValue(object : GenericTypeIndicator<Map<String, CallHomeRequest>>() {}) ?: emptyMap()
 
-                    val family = Family(id, name, members, familyPortrait, savedLocations)
+                    val family = Family(
+                        id, name, members, familyPortrait, savedLocations, callHomeRequests
+                    )
                     trySend(family).isSuccess
                 } else {
                     trySend(null).isSuccess

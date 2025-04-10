@@ -1,12 +1,6 @@
-const {logger} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/v2/https");
+const admin = require("firebase-admin");
 
-// The Firebase Admin SDK to access Firestore.
-const {initializeApp} = require("firebase-admin/app");
+admin.initializeApp();
 
-initializeApp();
-
-exports.helloWorld = onRequest((request, response) => {
-    logger.info("Hello logs!", {structuredData: true});
-    response.send("Hello from Firebase!");
-});
+const callHomeFunctions = require("./callHome");
+exports.sendCallHomeNotification = callHomeFunctions.sendCallHomeNotification;
