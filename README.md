@@ -20,8 +20,6 @@ Koren is a modern Android application designed to help families stay connected, 
 ![Screenshot_20250409_230240](https://github.com/user-attachments/assets/6f1c85b4-34b1-410d-8af3-3d6d3cb119ba)
 ![Screenshot_20250409_230206](https://github.com/user-attachments/assets/6946eace-4601-43db-91ce-1d3f837e4038)
 ![Screenshot_20250409_230146](https://github.com/user-attachments/assets/be81b1b2-7be9-45bd-ac9a-08bac0c00d2f)
-![Screenshot 2025-04-09 at 14 38 20](https://github.com/user-attachments/assets/0ae3dedb-77c1-4401-bf8e-8fb36abee625)
-
 
 ## Architecture
 
