@@ -18,21 +18,26 @@ Koren is a modern Android application designed to help families stay connected, 
 ### Multi-Module Structure
 
 Koren follows a modular architecture pattern that separates concerns and promotes scalability:
-app/
-├── core/
-│   ├── common/         # Base utilities, extensions, and shared components
-│   ├── designsystem/ # UI components, themes, and styling
-│   └── notifications/ # Push notification handling
-├── feature/
-│   ├── auth/           # Authentication and user management
-│   ├── home/           # Main dashboard and navigation
-│   ├── map/            # Location tracking and visualization
-│   ├── activity/       # Activity feed and history
-│   ├── account/        # User profile and settings
-│   ├── invitation/     # Family member invitations
-│   ├── calendar/       # Event scheduling
-│   └── onboarding/     # New user experience
-└── build-logic/      # Custom Gradle plugins and build configurations
+
+```mermaid
+graph TD
+    app --> core
+    app --> feature
+    app --> build-logic
+
+    core --> common
+    core --> designsystem
+    core --> notifications
+
+    feature --> auth
+    feature --> home
+    feature --> map
+    feature --> activity
+    feature --> account
+    feature --> invitation
+    feature --> calendar
+    feature --> onboarding
+```
 
 Each feature module contains its complete implementation (UI, domain logic, and data layer), while core modules provide shared functionality across features.
 
