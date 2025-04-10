@@ -179,9 +179,9 @@ fun MyScreen(viewModel: MyScreenViewModel) {
 ```
 
 ####  Technical Stack:
-  **Language:** Kotlin
-  **UI Framework:** Jetpack Compose
-  **Architecture:** MVVM with UiStateManager pattern
-  **Dependency Injection:** Hilt
-  **Build System:** Gradle (Kotlin DSL)
-  **Concurrency:** Kotlin Coroutines & Flow
+- **Language:** Kotlin
+- **UI Framework:** Jetpack Compose
+- **Architecture:** MVVM with UiStateManager pattern
+- **Dependency Injection:** Hilt
+- **Build System:** Gradle (Kotlin DSL)
+- **Concurrency:** Kotlin Coroutines & Flow
