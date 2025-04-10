@@ -11,7 +11,17 @@ Koren is a modern Android application designed to help families stay connected, 
 - **Calendar Integration**: Manage family events and schedules
 - **Interactive Map**: Find and navigate to family members
 - **Account Management**: Personalize your profile and settings
-- **Invitation System**: Invite new members to join your family group
+- **Invitation System**: Invite new members to join your family group!
+
+![Screenshot_20250409_230534](https://github.com/user-attachments/assets/7bd9c909-cfb2-48d9-9a7d-e15bb26728c4)
+![Screenshot_20250409_230520](https://github.com/user-attachments/assets/da6e3de8-af2d-4495-b8d9-31a8f1434a25)
+![Screenshot_20250409_230510](https://github.com/user-attachments/assets/227714fe-c417-454e-9405-1d57b8fccefd)
+![Screenshot_20250409_230404](https://github.com/user-attachments/assets/634ccd92-d69c-4ad6-ad0a-88ed4085aa59)
+![Screenshot_20250409_230240](https://github.com/user-attachments/assets/6f1c85b4-34b1-410d-8af3-3d6d3cb119ba)
+![Screenshot_20250409_230206](https://github.com/user-attachments/assets/6946eace-4601-43db-91ce-1d3f837e4038)
+![Screenshot_20250409_230146](https://github.com/user-attachments/assets/be81b1b2-7be9-45bd-ac9a-08bac0c00d2f)
+![Screenshot 2025-04-09 at 14 38 20](https://github.com/user-attachments/assets/0ae3dedb-77c1-4401-bf8e-8fb36abee625)
+
 
 ## Architecture
 
