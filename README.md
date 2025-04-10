@@ -99,8 +99,6 @@ graph LR
   :feature:map --> :core:data
 ```
 
-Each feature module contains its complete implementation (UI, domain logic, and data layer), while core modules provide shared functionality across features.
-
 ### UiStateManager Pattern
 
 The app implements a custom UI state management pattern inspired by Slack's Circuit framework, defined in the `common` module:
