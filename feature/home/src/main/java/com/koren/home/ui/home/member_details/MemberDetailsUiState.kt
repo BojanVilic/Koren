@@ -1,5 +1,7 @@
 package com.koren.home.ui.home.member_details
 
+import com.koren.common.models.calendar.Task
+import com.koren.common.models.calendar.TaskTimeRange
 import com.koren.common.models.user.UserData
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
@@ -13,6 +15,9 @@ sealed interface MemberDetailsUiState : UiState {
         val member: UserData = UserData(),
         val distanceText: String = "",
         val options: List<MemberDetailsOption> = emptyList(),
+        val assignedTasks: List<Task> = emptyList(),
+        val showViewAssignedTasksDialog: Boolean = false,
+        val selectedTimeRange: TaskTimeRange = TaskTimeRange.Next7Days,
         override val eventSink: (MemberDetailsUiEvent) -> Unit
     ) : MemberDetailsUiState, EventHandler<MemberDetailsUiEvent>
 }
@@ -22,6 +27,8 @@ sealed interface MemberDetailsUiEvent : UiEvent {
     data object CallHome : MemberDetailsUiEvent
     data object FindOnMap : MemberDetailsUiEvent
     data object ViewAssignedTasks : MemberDetailsUiEvent
+    data object DismissTasksDialog : MemberDetailsUiEvent
+    data class SelectTimeRange(val timeRange: TaskTimeRange) : MemberDetailsUiEvent
 }
 
 sealed interface MemberDetailsUiSideEffect : UiSideEffect {

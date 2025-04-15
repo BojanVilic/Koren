@@ -16,15 +16,18 @@ import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.icon.MapSelected
 import com.koren.designsystem.icon.Task
 import com.koren.domain.ExistingRequestException
+import com.koren.domain.GetAssignedTasksForUserUseCase
 import com.koren.domain.GetFamilyMemberUseCase
 import com.koren.domain.GetFamilyUseCase
 import com.koren.domain.SendCallHomeRequestUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.util.Locale
 import javax.inject.Inject
 
@@ -33,10 +36,13 @@ class MemberDetailsViewModel @Inject constructor(
     private val getFamilyMemberUseCase: GetFamilyMemberUseCase,
     private val userSession: UserSession,
     private val sendCallHomeRequestUseCase: SendCallHomeRequestUseCase,
-    private val getFamilyUseCase: GetFamilyUseCase
+    private val getFamilyUseCase: GetFamilyUseCase,
+    private val getAssignedTasksForUserUseCase: GetAssignedTasksForUserUseCase
 ): StateViewModel<MemberDetailsUiEvent, MemberDetailsUiState, MemberDetailsUiSideEffect>() {
 
     override fun setInitialState(): MemberDetailsUiState = MemberDetailsUiState.Loading
+
+    private var taskCollectionJob: Job? = null
 
     fun init(userId: String) {
         viewModelScope.launch {
@@ -120,9 +126,24 @@ class MemberDetailsViewModel @Inject constructor(
             when (event) {
                 is MemberDetailsUiEvent.CallHome -> sendCallHomeRequest(currentState.member.id)
                 is MemberDetailsUiEvent.FindOnMap -> _sideEffects.emitSuspended(MemberDetailsUiSideEffect.NavigateAndFindOnMap(currentState.member.id))
-                is MemberDetailsUiEvent.ViewAssignedTasks -> Unit
+                is MemberDetailsUiEvent.ViewAssignedTasks -> loadAssignedTasksForUser(currentState.copy(showViewAssignedTasksDialog = true))
                 is MemberDetailsUiEvent.EditRole -> Unit
+                is MemberDetailsUiEvent.DismissTasksDialog -> _uiState.update { currentState.copy(showViewAssignedTasksDialog = false) }
+                is MemberDetailsUiEvent.SelectTimeRange -> {
+                    val newState = _uiState.updateAndGet { currentState.copy(selectedTimeRange = event.timeRange) }
+                    loadAssignedTasksForUser(newState as MemberDetailsUiState.Shown)
+                }
             }
+        }
+    }
+
+    private fun loadAssignedTasksForUser(
+        currentState: MemberDetailsUiState.Shown
+    ) {
+        taskCollectionJob?.cancel()
+        taskCollectionJob = viewModelScope.launch {
+            getAssignedTasksForUserUseCase(currentState.member.id, currentState.selectedTimeRange)
+                .collect { tasks -> _uiState.update { currentState.copy(assignedTasks = tasks) } }
         }
     }
 
@@ -156,4 +177,9 @@ class MemberDetailsViewModel @Inject constructor(
             event = MemberDetailsUiEvent.EditRole
         )
     )
+
+    override fun onCleared() {
+        super.onCleared()
+        taskCollectionJob?.cancel()
+    }
 }
