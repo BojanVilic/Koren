@@ -48,7 +48,7 @@ sealed interface HomeEvent : UiEvent {
     data object NavigateToCreateFamily : HomeEvent
     data object NavigateToSentInvitations : HomeEvent
     data object OpenAddCalendarEntry : HomeEvent
-    data class TaskCompletionButtonClicked(val task: Task) : HomeEvent
+    data class TaskCompletionButtonClicked(val taskId: String, val completed: Boolean) : HomeEvent
     data class FamilyMemberClicked(val member: UserData) : HomeEvent
 }
 

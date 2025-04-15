@@ -24,10 +24,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,14 +41,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.koren.calendar.ui.add_entry.AddEntryScreen
 import com.koren.common.models.calendar.Day
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.util.CollectSideEffects
 import com.koren.common.util.DateUtils.toHumanReadableDateTimeRange
 import com.koren.common.util.DateUtils.toTime
-import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.icon.Circle
 import com.koren.designsystem.icon.CircleCheck
@@ -199,7 +197,12 @@ private fun DayDetailsScreenShownContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(uiState.tasks) { task ->
-                    TaskItem(task = task)
+                    TaskItem(
+                        task = task,
+                        taskCompletionButtonClicked = {
+                            uiState.eventSink(DayDetailsUiEvent.TaskCompletionButtonClicked(task.taskId, !task.completed))
+                        }
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -232,19 +235,28 @@ private fun DayDetailsScreenShownContent(
 }
 
 @Composable
-private fun TaskItem(task: Task) {
+private fun TaskItem(
+    task: Task,
+    taskCompletionButtonClicked: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            modifier = Modifier.size(24.dp),
-            imageVector = if (task.completed) KorenIcons.CircleCheck else KorenIcons.Circle,
-            contentDescription = if (task.completed) "Task Completed" else "Task Pending",
-            tint = if (task.completed) ExtendedTheme.colors.task else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
+        IconButton(
+            onClick = {
+                taskCompletionButtonClicked()
+            }
+        ) {
+            Icon(
+                modifier = Modifier.size(24.dp),
+                imageVector = if (task.completed) KorenIcons.CircleCheck else KorenIcons.Circle,
+                contentDescription = if (task.completed) "Task Completed" else "Task Pending",
+                tint = if (task.completed) ExtendedTheme.colors.task else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = task.title,

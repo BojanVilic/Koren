@@ -1,5 +1,6 @@
 package com.koren.calendar.ui.day_details
 
+import com.koren.calendar.ui.calendar.CalendarUiEvent
 import com.koren.common.models.calendar.Day
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
@@ -30,6 +31,8 @@ sealed interface DayDetailsUiState : UiState {
 
 sealed interface DayDetailsUiEvent : UiEvent {
     data object AddClicked : DayDetailsUiEvent
+    data class TaskCompletionButtonClicked(val taskId: String, val completed: Boolean) : DayDetailsUiEvent
+
 }
 
 sealed interface DayDetailsUiSideEffect : UiSideEffect {

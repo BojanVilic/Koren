@@ -95,7 +95,7 @@ fun LazyListScope.upcomingEventsAndTasks(
             TaskItem(
                 task = task,
                 taskCompletionButtonClicked = {
-                    uiState.eventSink(HomeEvent.TaskCompletionButtonClicked(task))
+                    uiState.eventSink(HomeEvent.TaskCompletionButtonClicked(task.taskId, !task.completed))
                 }
             )
         }
@@ -307,7 +307,12 @@ fun FreeDay(
             is NextItem.TaskItem -> {
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()
-                UpcomingItemTask(uiState.freeDayNextItem)
+                UpcomingItemTask(
+                    taskItem = uiState.freeDayNextItem,
+                    taskCompletionButtonClicked = { taskId, completed ->
+                        uiState.eventSink(HomeEvent.TaskCompletionButtonClicked(taskId, completed))
+                    }
+                )
                 Spacer(modifier = Modifier.height(16.dp))
             }
             is NextItem.EventItem -> {
@@ -356,7 +361,8 @@ private fun UpcomingItemEvent(
 
 @Composable
 private fun UpcomingItemTask(
-    taskItem: NextItem.TaskItem
+    taskItem: NextItem.TaskItem,
+    taskCompletionButtonClicked: (taskId: String, completed: Boolean) -> Unit
 ) {
     Spacer(modifier = Modifier.height(16.dp))
     Text(
@@ -368,12 +374,18 @@ private fun UpcomingItemTask(
         verticalAlignment = Alignment.CenterVertically
     ) {
         val icon = if (taskItem.task.completed) KorenIcons.CircleCheck else KorenIcons.Circle
-        Icon(
-            modifier = Modifier.size(24.dp),
-            imageVector = icon,
-            contentDescription = "Task Icon",
-            tint = MaterialTheme.colorScheme.primary
-        )
+        IconButton(
+            onClick = {
+                taskCompletionButtonClicked(taskItem.task.taskId, !taskItem.task.completed)
+            }
+        ) {
+            Icon(
+                modifier = Modifier.size(24.dp),
+                imageVector = icon,
+                contentDescription = "Task Icon",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = taskItem.task.title,

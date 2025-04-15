@@ -99,7 +99,7 @@ class HomeViewModel @Inject constructor(
                 is HomeEvent.NavigateToInviteFamilyMember -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToInviteFamilyMember)
                 is HomeEvent.NavigateToSentInvitations -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToSentInvitations)
                 is HomeEvent.OpenAddCalendarEntry -> _sideEffects.emitSuspended(HomeSideEffect.OpenAddCalendarEntry)
-                is HomeEvent.TaskCompletionButtonClicked -> changeTaskStatus(event.task.taskId, !event.task.completed)
+                is HomeEvent.TaskCompletionButtonClicked -> changeTaskStatus(event.taskId, event.completed)
                 is HomeEvent.FamilyMemberClicked -> _sideEffects.emitSuspended(HomeSideEffect.OpenMemberDetails(event.member))
             }
         }
