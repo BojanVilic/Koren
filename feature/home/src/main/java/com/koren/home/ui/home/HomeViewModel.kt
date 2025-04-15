@@ -107,6 +107,7 @@ class HomeViewModel @Inject constructor(
                 is HomeEvent.FamilyMemberClicked -> _sideEffects.emitSuspended(HomeSideEffect.OpenMemberDetails(event.member))
                 is HomeEvent.AcceptCallHomeRequest -> Unit
                 is HomeEvent.RejectCallHomeRequest -> Unit
+                is HomeEvent.ActionsFabClicked -> _uiState.update { current.copy(actionsOpen = !current.actionsOpen) }
             }
         }
     }

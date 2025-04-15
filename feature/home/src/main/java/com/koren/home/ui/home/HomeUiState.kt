@@ -36,6 +36,7 @@ sealed interface HomeUiState : UiState {
         val events: List<Event> = emptyList(),
         val callHomeRequest: CallHomeRequestWithUser? = null,
         val freeDayNextItem: NextItem = NextItem.None,
+        val actionsOpen: Boolean = false,
         override val eventSink: (HomeEvent) -> Unit
     ) : HomeUiState, EventHandler<HomeEvent>
 }
@@ -56,6 +57,7 @@ sealed interface HomeEvent : UiEvent {
     data class FamilyMemberClicked(val member: UserData) : HomeEvent
     data class AcceptCallHomeRequest(val callHomeRequest: CallHomeRequestWithUser) : HomeEvent
     data class RejectCallHomeRequest(val callHomeRequest: CallHomeRequestWithUser) : HomeEvent
+    data object ActionsFabClicked : HomeEvent
 }
 
 sealed interface HomeSideEffect : UiSideEffect {
