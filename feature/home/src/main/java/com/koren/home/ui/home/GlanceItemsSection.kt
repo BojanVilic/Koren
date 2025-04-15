@@ -2,12 +2,8 @@ package com.koren.home.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.EaseOutQuad
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Column
@@ -50,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.models.calendar.TaskWithUsers
+import com.koren.common.models.family.CallHomeRequestWithUser
 import com.koren.common.models.user.UserData
 import com.koren.common.util.DateUtils.toHumanReadableDateTime
 import com.koren.common.util.DateUtils.toHumanReadableDateTimeRange
@@ -63,14 +60,43 @@ import kotlinx.coroutines.delay
 import java.time.Instant
 import java.util.Calendar
 
-fun LazyListScope.upcomingEventsAndTasks(
+fun LazyListScope.glanceItems(
     uiState: HomeUiState.Shown
 ) {
+
+    item {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = "Hello, ${uiState.currentUser.displayName}!",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+            )
+        }
+    }
+
+    if (uiState.callHomeRequest != null) {
+        item {
+            CallHomeRequestItem(
+                callHomeRequest = uiState.callHomeRequest,
+                onAccept = {
+                    uiState.eventSink(HomeEvent.AcceptCallHomeRequest(uiState.callHomeRequest))
+                },
+                onReject = {
+                    uiState.eventSink(HomeEvent.RejectCallHomeRequest(uiState.callHomeRequest))
+                }
+            )
+        }
+    }
+
     if (uiState.events.isNotEmpty()) {
         item {
             Text(
                 modifier = Modifier.padding(start = 8.dp, top = 8.dp),
-                text = "Upcoming Events",
+                text = "Glance Events",
                 style = MaterialTheme.typography.titleSmall
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -79,13 +105,16 @@ fun LazyListScope.upcomingEventsAndTasks(
             Spacer(modifier = Modifier.height(4.dp))
             EventItem(event = event)
         }
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+        }
     }
 
     if (uiState.tasks.isNotEmpty()) {
         item {
             Text(
                 modifier = Modifier.padding(start = 8.dp, top = 16.dp),
-                text = "Upcoming Tasks",
+                text = "Glance Tasks",
                 style = MaterialTheme.typography.titleSmall
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -99,11 +128,54 @@ fun LazyListScope.upcomingEventsAndTasks(
                 }
             )
         }
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+        }
     }
 
     if (uiState.tasks.isEmpty() && uiState.events.isEmpty()) {
         item {
             FreeDay(uiState)
+        }
+    }
+}
+
+@Composable
+fun CallHomeRequestItem(
+    callHomeRequest: CallHomeRequestWithUser,
+    onAccept: () -> Unit,
+    onReject: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                modifier = Modifier.size(24.dp),
+                imageVector = KorenIcons.Warning,
+                contentDescription = "Warning Icon",
+                tint = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Call Home Request",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "From: ${callHomeRequest.requester.displayName}",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.Gray
+                )
+            }
         }
     }
 }
@@ -284,10 +356,6 @@ fun FreeDay(
             .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.Start
     ) {
-        Text(
-            text = "Hello, ${uiState.currentUser.displayName}!",
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
-        )
         Spacer(modifier = Modifier.height(4.dp))
         Row(
             verticalAlignment = Alignment.CenterVertically
@@ -307,7 +375,7 @@ fun FreeDay(
             is NextItem.TaskItem -> {
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()
-                UpcomingItemTask(
+                GlanceItemTask(
                     taskItem = uiState.freeDayNextItem,
                     taskCompletionButtonClicked = { taskId, completed ->
                         uiState.eventSink(HomeEvent.TaskCompletionButtonClicked(taskId, completed))
@@ -318,7 +386,7 @@ fun FreeDay(
             is NextItem.EventItem -> {
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()
-                UpcomingItemEvent(uiState.freeDayNextItem)
+                GlanceItemEvent(uiState.freeDayNextItem)
                 Spacer(modifier = Modifier.height(16.dp))
             }
             is NextItem.None -> Unit
@@ -327,7 +395,7 @@ fun FreeDay(
 }
 
 @Composable
-private fun UpcomingItemEvent(
+private fun GlanceItemEvent(
     eventItem: NextItem.EventItem
 ) {
     Spacer(modifier = Modifier.height(16.dp))
@@ -360,7 +428,7 @@ private fun UpcomingItemEvent(
 }
 
 @Composable
-private fun UpcomingItemTask(
+private fun GlanceItemTask(
     taskItem: NextItem.TaskItem,
     taskCompletionButtonClicked: (taskId: String, completed: Boolean) -> Unit
 ) {
@@ -448,7 +516,7 @@ fun FreeDayWithoutNextItem() {
 
 @ThemePreview
 @Composable
-fun UpcomingEventsAndTasksPreview() {
+fun GlanceEventsAndTasksPreview() {
     val tasks = listOf(
         Task(title = "Grocery Shopping", taskTimestamp = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }.timeInMillis),
         Task(title = "Pay Bills", taskTimestamp = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 3) }.timeInMillis),
@@ -467,7 +535,7 @@ fun UpcomingEventsAndTasksPreview() {
     )
     KorenTheme {
         LazyColumn {
-            upcomingEventsAndTasks(
+            glanceItems(
                 HomeUiState.Shown(
                     currentUser = UserData(
                         displayName = "John Doe",

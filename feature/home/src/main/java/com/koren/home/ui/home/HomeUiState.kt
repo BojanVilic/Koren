@@ -5,6 +5,9 @@ import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.EventWithUsers
 import com.koren.common.models.calendar.Task
 import com.koren.common.models.calendar.TaskWithUsers
+import com.koren.common.models.family.CallHomeRequest
+import com.koren.common.models.family.CallHomeRequestStatus
+import com.koren.common.models.family.CallHomeRequestWithUser
 import com.koren.common.models.family.Family
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.user.UserData
@@ -31,6 +34,7 @@ sealed interface HomeUiState : UiState {
         val family: Family? = null,
         val tasks: List<Task> = emptyList(),
         val events: List<Event> = emptyList(),
+        val callHomeRequest: CallHomeRequestWithUser? = null,
         val freeDayNextItem: NextItem = NextItem.None,
         override val eventSink: (HomeEvent) -> Unit
     ) : HomeUiState, EventHandler<HomeEvent>
@@ -50,6 +54,8 @@ sealed interface HomeEvent : UiEvent {
     data object OpenAddCalendarEntry : HomeEvent
     data class TaskCompletionButtonClicked(val taskId: String, val completed: Boolean) : HomeEvent
     data class FamilyMemberClicked(val member: UserData) : HomeEvent
+    data class AcceptCallHomeRequest(val callHomeRequest: CallHomeRequestWithUser) : HomeEvent
+    data class RejectCallHomeRequest(val callHomeRequest: CallHomeRequestWithUser) : HomeEvent
 }
 
 sealed interface HomeSideEffect : UiSideEffect {

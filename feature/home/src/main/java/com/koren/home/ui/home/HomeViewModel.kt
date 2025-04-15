@@ -16,6 +16,7 @@ import com.koren.data.repository.CalendarRepository
 import com.koren.data.repository.InvitationRepository
 import com.koren.domain.ChangeTaskStatusUseCase
 import com.koren.domain.GetAllFamilyMembersUseCase
+import com.koren.domain.GetCallHomeRequestUseCase
 import com.koren.domain.GetFamilyUseCase
 import com.koren.domain.GetNextCalendarItemUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,7 +36,8 @@ class HomeViewModel @Inject constructor(
     calendarRepository: CalendarRepository,
     userSession: UserSession,
     getNextCalendarItemUseCase: GetNextCalendarItemUseCase,
-    private val changeTaskStatusUseCase: ChangeTaskStatusUseCase
+    private val changeTaskStatusUseCase: ChangeTaskStatusUseCase,
+    private val getCallHomeRequestUseCase: GetCallHomeRequestUseCase
 ): StateViewModel<HomeEvent, HomeUiState, HomeSideEffect>() {
 
     override fun setInitialState(): HomeUiState = HomeUiState.Loading
@@ -51,8 +53,8 @@ class HomeViewModel @Inject constructor(
             val sentInvitations by invitationRepository.getSentInvitations().collectAsState(initial = emptyList())
             val familyMembers by getAllFamilyMembers().collectAsState(initial = emptyList())
             val family by getFamilyUseCase.getFamilyFlow().collectAsState(initial = null)
-            val upcomingItem by getNextCalendarItemUseCase().collectAsState(initial = CalendarItem.None)
-
+            val glanceItem by getNextCalendarItemUseCase().collectAsState(initial = CalendarItem.None)
+            val callHomeRequest by getCallHomeRequestUseCase().collectAsState(initial = null)
 
             when (val currentState = uiState.collectAsState().value) {
                 is HomeUiState.Loading -> {
@@ -65,7 +67,8 @@ class HomeViewModel @Inject constructor(
                             family = family,
                             events = events,
                             tasks = tasks,
-                            freeDayNextItem = upcomingItem.toNextItem(),
+                            freeDayNextItem = glanceItem.toNextItem(),
+                            callHomeRequest = callHomeRequest,
                             eventSink = ::handleEvent
                         )
                     }
@@ -80,7 +83,8 @@ class HomeViewModel @Inject constructor(
                             family = family,
                             events = events,
                             tasks = tasks,
-                            freeDayNextItem = upcomingItem.toNextItem(),
+                            freeDayNextItem = glanceItem.toNextItem(),
+                            callHomeRequest = callHomeRequest,
                             eventSink = ::handleEvent
                         )
                     }
@@ -101,6 +105,8 @@ class HomeViewModel @Inject constructor(
                 is HomeEvent.OpenAddCalendarEntry -> _sideEffects.emitSuspended(HomeSideEffect.OpenAddCalendarEntry)
                 is HomeEvent.TaskCompletionButtonClicked -> changeTaskStatus(event.taskId, event.completed)
                 is HomeEvent.FamilyMemberClicked -> _sideEffects.emitSuspended(HomeSideEffect.OpenMemberDetails(event.member))
+                is HomeEvent.AcceptCallHomeRequest -> Unit
+                is HomeEvent.RejectCallHomeRequest -> Unit
             }
         }
     }

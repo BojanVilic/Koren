@@ -222,7 +222,7 @@ class DefaultCalendarRepository @Inject constructor(
         awaitClose { ref.removeEventListener(listener) }
     }.flowOn(Dispatchers.IO)
 
-    override fun getFirstUpcomingTask(): Flow<TaskWithUsers?> = callbackFlow {
+    override fun getFirstGlanceTask(): Flow<TaskWithUsers?> = callbackFlow {
         val familyId = userSession.currentUser.first().familyId
         val userId = userSession.currentUser.first().id
         val ref = database.child("families/$familyId/tasks")
@@ -273,7 +273,7 @@ class DefaultCalendarRepository @Inject constructor(
         awaitClose { ref.removeEventListener(listener) }
     }
 
-    override fun getFirstUpcomingEvent(): Flow<EventWithUsers?> = callbackFlow {
+    override fun getFirstGlanceEvent(): Flow<EventWithUsers?> = callbackFlow {
         val familyId = userSession.currentUser.first().familyId
         val ref = database.child("families/$familyId/events")
             .orderByChild("eventStartTime")

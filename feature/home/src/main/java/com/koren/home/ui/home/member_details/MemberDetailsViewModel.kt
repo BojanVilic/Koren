@@ -170,11 +170,6 @@ class MemberDetailsViewModel @Inject constructor(
             icon = KorenIcons.Task,
             title = "View assigned tasks",
             event = MemberDetailsUiEvent.ViewAssignedTasks
-        ),
-        MemberDetailsOption(
-            icon = Icons.Default.Edit,
-            title = "Edit role",
-            event = MemberDetailsUiEvent.EditRole
         )
     )
 

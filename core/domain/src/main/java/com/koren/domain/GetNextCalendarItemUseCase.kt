@@ -9,11 +9,10 @@ import javax.inject.Inject
 class GetNextCalendarItemUseCase @Inject constructor(
     private val calendarRepository: CalendarRepository
 ) {
-
     operator fun invoke(): Flow<CalendarItem> {
         return combine(
-            calendarRepository.getFirstUpcomingEvent(),
-            calendarRepository.getFirstUpcomingTask()
+            calendarRepository.getFirstGlanceEvent(),
+            calendarRepository.getFirstGlanceTask()
         ) { event, task ->
             when {
                 event != null && task != null ->
