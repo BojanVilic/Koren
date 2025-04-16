@@ -11,6 +11,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -48,7 +50,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -82,6 +86,7 @@ import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.home.R
+import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -181,7 +186,7 @@ fun Scrim(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.6f))
+            .background(Color.Black.copy(alpha = 0.4f))
             .clickable(
                 onClick = onClick,
                 indication = null,
@@ -236,8 +241,8 @@ fun HomeScaffoldWithExpandingFab(
 
             AnimatedVisibility(
                 visible = state.actionsOpen,
-                enter = fadeIn(animationSpec = tween(durationMillis = 200)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 200))
+                enter = fadeIn(animationSpec = tween(durationMillis = 800)),
+                exit = fadeOut(animationSpec = tween(durationMillis = 600))
             ) {
                 Scrim(onClick = { state.eventSink(HomeEvent.ActionsFabClicked) })
             }
@@ -252,18 +257,26 @@ fun HomeScaffoldWithExpandingFab(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-
-                AnimatedVisibility(
-                    visible = state.actionsOpen,
-                    enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }, animationSpec = tween(150)),
-                    exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }, animationSpec = tween(150))
+                Column(
+                    modifier = Modifier.width(IntrinsicSize.Min),
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.width(IntrinsicSize.Min),
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        actions.forEach { action ->
+                    actions.forEachIndexed { index, action ->
+                        var visible by remember { mutableStateOf(false) }
+                        LaunchedEffect(state.actionsOpen) {
+                            if (state.actionsOpen) {
+                                delay(((actions.size - index) * 10L))
+                                visible = true
+                            } else {
+                                visible = false
+                            }
+                        }
+                        AnimatedVisibility(
+                            visible = visible,
+                            enter = scaleIn(animationSpec = tween(durationMillis = 200)),
+                            exit = scaleOut(animationSpec = tween(durationMillis = 150))
+                        ) {
                             MiniFabItem(
                                 modifier = Modifier.fillMaxWidth(),
                                 actionItem = action,
@@ -321,10 +334,9 @@ fun MiniFabItem(
         Row(
             modifier = modifier.padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             actionItem.IconComposable()
-            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = actionItem.text,
                 style = MaterialTheme.typography.labelLarge,
