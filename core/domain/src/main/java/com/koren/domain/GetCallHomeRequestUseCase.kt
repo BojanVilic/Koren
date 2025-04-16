@@ -24,7 +24,7 @@ class GetCallHomeRequestUseCase @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase,
     private val userSession: UserSession
 ) {
-    operator fun invoke(): Flow<CallHomeRequestWithUser> = callbackFlow {
+    operator fun invoke(): Flow<CallHomeRequestWithUser?> = callbackFlow {
         val user = userSession.currentUser.first()
         val query = firebaseDatabase.getReference("families/${user.familyId}/callHomeRequests/${user.id}")
 
@@ -33,22 +33,27 @@ class GetCallHomeRequestUseCase @Inject constructor(
                 launch {
                     val callHomeRequest = snapshot.getValue<CallHomeRequest>()
 
-                    val requester = firebaseDatabase.reference
-                        .child("users/${callHomeRequest?.requesterId}")
-                        .get()
-                        .await()
-                        .getValue<UserData>()
+                    callHomeRequest?.let {
+                        val requester = firebaseDatabase.reference
+                            .child("users/${callHomeRequest.requesterId}")
+                            .get()
+                            .await()
+                            .getValue<UserData>()
 
-                    val callHomeRequestWithUser = CallHomeRequestWithUser(
-                        requester = requester ?: UserData(),
-                        timestamp = callHomeRequest?.timestamp ?: 0,
-                        status = callHomeRequest?.status ?: CallHomeRequestStatus.NONE
-                    )
-                    trySend(callHomeRequestWithUser).isSuccess
+                        val callHomeRequestWithUser = CallHomeRequestWithUser(
+                            requester = requester ?: UserData(),
+                            timestamp = callHomeRequest.timestamp,
+                            status = callHomeRequest.status
+                        )
+                        trySend(callHomeRequestWithUser).isSuccess
+                    }?: run {
+                        trySend(null).isSuccess
+                    }
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {
+                trySend(null).isSuccess
                 close(error.toException())
             }
         })
