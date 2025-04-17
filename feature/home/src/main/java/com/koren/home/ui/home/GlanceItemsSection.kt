@@ -6,6 +6,7 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,12 +23,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,12 +49,15 @@ import androidx.compose.ui.unit.dp
 import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.Task
 import com.koren.common.models.calendar.TaskWithUsers
+import com.koren.common.models.family.CallHomeRequestStatus
 import com.koren.common.models.family.CallHomeRequestWithUser
 import com.koren.common.models.user.UserData
 import com.koren.common.util.DateUtils.toHumanReadableDateTime
 import com.koren.common.util.DateUtils.toHumanReadableDateTimeRange
+import com.koren.designsystem.icon.CallHome
 import com.koren.designsystem.icon.Circle
 import com.koren.designsystem.icon.CircleCheck
+import com.koren.designsystem.icon.HomeSelected
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.icon.Warning
 import com.koren.designsystem.theme.KorenTheme
@@ -78,15 +84,15 @@ fun LazyListScope.glanceItems(
         }
     }
 
-    if (uiState.callHomeRequest != null) {
+    if (uiState.callHomeRequest?.status == CallHomeRequestStatus.REQUESTED) {
         item {
             CallHomeRequestItem(
                 callHomeRequest = uiState.callHomeRequest,
                 onAccept = {
-                    uiState.eventSink(HomeEvent.AcceptCallHomeRequest(uiState.callHomeRequest))
+                    uiState.eventSink(HomeEvent.AcceptCallHomeRequest)
                 },
                 onReject = {
-                    uiState.eventSink(HomeEvent.RejectCallHomeRequest(uiState.callHomeRequest))
+                    uiState.eventSink(HomeEvent.RejectCallHomeRequest)
                 }
             )
         }
@@ -155,26 +161,41 @@ fun CallHomeRequestItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Icon(
-                modifier = Modifier.size(24.dp),
-                imageVector = KorenIcons.Warning,
-                contentDescription = "Warning Icon",
-                tint = MaterialTheme.colorScheme.error
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Call Home Request",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    modifier = Modifier.size(24.dp),
+                    imageVector = KorenIcons.CallHome,
+                    contentDescription = "Warning Icon",
+                    tint = MaterialTheme.colorScheme.error
                 )
-                Text(
-                    text = "From: ${callHomeRequest.requester.displayName}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Color.Gray
-                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = "Call Home Request",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "From: ${callHomeRequest.requester.displayName}",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.Gray
+                    )
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Button(onClick = onAccept) {
+                    Text("Accept")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                OutlinedButton(onClick = onReject) {
+                    Text("Reject")
+                }
             }
         }
     }

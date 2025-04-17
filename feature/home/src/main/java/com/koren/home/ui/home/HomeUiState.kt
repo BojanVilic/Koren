@@ -5,8 +5,6 @@ import com.koren.common.models.calendar.Event
 import com.koren.common.models.calendar.EventWithUsers
 import com.koren.common.models.calendar.Task
 import com.koren.common.models.calendar.TaskWithUsers
-import com.koren.common.models.family.CallHomeRequest
-import com.koren.common.models.family.CallHomeRequestStatus
 import com.koren.common.models.family.CallHomeRequestWithUser
 import com.koren.common.models.family.Family
 import com.koren.common.models.invitation.Invitation
@@ -15,6 +13,7 @@ import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
 import com.koren.common.util.UiState
+import com.koren.home.ui.home.ui_models.FamilyMemberUserData
 
 sealed interface NextItem {
     data class TaskItem(val task: TaskWithUsers) : NextItem
@@ -30,7 +29,7 @@ sealed interface HomeUiState : UiState {
         val sentInvitations: List<Invitation> = emptyList(),
         val invitationCodeText: String = "",
         val invitationCodeError: String = "",
-        val familyMembers: List<UserData> = emptyList(),
+        val familyMembers: List<FamilyMemberUserData> = emptyList(),
         val family: Family? = null,
         val tasks: List<Task> = emptyList(),
         val events: List<Event> = emptyList(),
@@ -54,9 +53,9 @@ sealed interface HomeEvent : UiEvent {
     data object NavigateToSentInvitations : HomeEvent
     data object OpenAddCalendarEntry : HomeEvent
     data class TaskCompletionButtonClicked(val taskId: String, val completed: Boolean) : HomeEvent
-    data class FamilyMemberClicked(val member: UserData) : HomeEvent
-    data class AcceptCallHomeRequest(val callHomeRequest: CallHomeRequestWithUser) : HomeEvent
-    data class RejectCallHomeRequest(val callHomeRequest: CallHomeRequestWithUser) : HomeEvent
+    data class FamilyMemberClicked(val member: FamilyMemberUserData) : HomeEvent
+    data object AcceptCallHomeRequest : HomeEvent
+    data object RejectCallHomeRequest : HomeEvent
     data object ActionsFabClicked : HomeEvent
 }
 
@@ -66,7 +65,7 @@ sealed interface HomeSideEffect : UiSideEffect {
     data object NavigateToSentInvitations : HomeSideEffect
     data object OpenAddCalendarEntry : HomeSideEffect
     data class OpenMemberDetails(val member: UserData) : HomeSideEffect
-    data class ShowError(val message: String) : HomeSideEffect
+    data class ShowMessage(val message: String) : HomeSideEffect
 }
 
 fun CalendarItem.toNextItem(): NextItem {

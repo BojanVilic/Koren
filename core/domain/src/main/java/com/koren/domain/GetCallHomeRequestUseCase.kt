@@ -6,7 +6,6 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
 import com.koren.common.models.family.CallHomeRequest
-import com.koren.common.models.family.CallHomeRequestStatus
 import com.koren.common.models.family.CallHomeRequestWithUser
 import com.koren.common.models.user.UserData
 import com.koren.common.services.UserSession

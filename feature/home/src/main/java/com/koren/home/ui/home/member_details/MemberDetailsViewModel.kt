@@ -10,6 +10,7 @@ import com.koren.common.models.family.Family
 import com.koren.common.models.user.UserData
 import com.koren.common.services.UserSession
 import com.koren.common.util.StateViewModel
+import com.koren.common.util.formatDistanceToText
 import com.koren.common.util.orUnknownError
 import com.koren.designsystem.icon.CallHome
 import com.koren.designsystem.icon.KorenIcons
@@ -17,6 +18,7 @@ import com.koren.designsystem.icon.MapSelected
 import com.koren.designsystem.icon.Task
 import com.koren.domain.ExistingRequestException
 import com.koren.domain.GetAssignedTasksForUserUseCase
+import com.koren.domain.GetDistanceBetweenTwoUsersUseCase
 import com.koren.domain.GetFamilyMemberUseCase
 import com.koren.domain.GetFamilyUseCase
 import com.koren.domain.SendCallHomeRequestUseCase
@@ -37,7 +39,8 @@ class MemberDetailsViewModel @Inject constructor(
     private val userSession: UserSession,
     private val sendCallHomeRequestUseCase: SendCallHomeRequestUseCase,
     private val getFamilyUseCase: GetFamilyUseCase,
-    private val getAssignedTasksForUserUseCase: GetAssignedTasksForUserUseCase
+    private val getAssignedTasksForUserUseCase: GetAssignedTasksForUserUseCase,
+    private val getDistanceBetweenUsers: GetDistanceBetweenTwoUsersUseCase
 ): StateViewModel<MemberDetailsUiEvent, MemberDetailsUiState, MemberDetailsUiSideEffect>() {
 
     override fun setInitialState(): MemberDetailsUiState = MemberDetailsUiState.Loading
@@ -60,7 +63,7 @@ class MemberDetailsViewModel @Inject constructor(
                     }
                     return@collect
                 }
-                val distanceString = getDistanceBetweenUsers(currentUser, familyMemberDetails)
+                val distanceString = getDistanceBetweenUsers(currentUser, familyMemberDetails).formatDistanceToText()
 
                 _uiState.getAndUpdate {
                     when (it) {
@@ -98,28 +101,6 @@ class MemberDetailsViewModel @Inject constructor(
             }
         )
     ) + staticOptions
-
-    private fun getDistanceBetweenUsers(
-        currentUser: UserData,
-        familyMemberDetails: UserData
-    ): String {
-        val currentUserLat = currentUser.lastLocation?.latitude ?: 0.0
-        val currentUserLon = currentUser.lastLocation?.longitude ?: 0.0
-        val memberLat = familyMemberDetails.lastLocation?.latitude ?: 0.0
-        val memberLon = familyMemberDetails.lastLocation?.longitude ?: 0.0
-
-        val distance = SphericalUtil.computeDistanceBetween(
-            LatLng(currentUserLat, currentUserLon),
-            LatLng(memberLat, memberLon)
-        ).toLong()
-        var distanceString = "${distance}m away"
-
-        if (distance > 2000) {
-            val distanceKm = distance / 1000.0
-            distanceString = String.format(Locale.getDefault(), "%.1fkm away", distanceKm)
-        }
-        return distanceString
-    }
 
     override fun handleEvent(event: MemberDetailsUiEvent) {
         withEventfulState<MemberDetailsUiState.Shown> { currentState ->

@@ -6,5 +6,5 @@ data class Family(
     val members: List<String> = emptyList(),
     val familyPortrait: String = "",
     val savedLocations: List<SavedLocation> = emptyList(),
-    val callHomeRequests: Map<String, CallHomeRequest> = emptyMap() // New property
+    val callHomeRequests: Map<String, CallHomeRequest> = emptyMap()
 )

@@ -5,7 +5,6 @@ package com.koren.home.ui.home
 import android.Manifest.permission.POST_NOTIFICATIONS
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -13,8 +12,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -24,28 +21,23 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,6 +50,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.OffsetMapping
@@ -87,6 +81,7 @@ import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.home.R
+import com.koren.home.ui.home.ui_models.FamilyMemberUserData
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import java.time.DayOfWeek
@@ -118,7 +113,7 @@ fun HomeScreen(
         viewModel = homeViewModel
     ) { sideEffect ->
         when (sideEffect) {
-            is HomeSideEffect.ShowError -> onShowSnackbar(sideEffect.message)
+            is HomeSideEffect.ShowMessage -> onShowSnackbar(sideEffect.message)
             is HomeSideEffect.NavigateToCreateFamily -> createFamily()
             is HomeSideEffect.NavigateToInviteFamilyMember -> inviteFamilyMember()
             is HomeSideEffect.NavigateToSentInvitations -> sentInvitations()
@@ -305,13 +300,17 @@ fun AnimatedFabIcon(
     actionsOpen: Boolean,
     onClick: () -> Unit
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
     val rotationAngle by animateFloatAsState(
         targetValue = if (actionsOpen) 45f else 0f,
-        animationSpec = tween(durationMillis = 300)
+        animationSpec = tween(durationMillis = 600)
     )
 
     FloatingActionButton(
-        onClick = onClick
+        onClick = {
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
+            onClick()
+        }
     ) {
         Icon(
             modifier = Modifier.rotate(rotationAngle),
@@ -327,9 +326,12 @@ fun MiniFabItem(
     actionItem: ActionItem,
     onClick: () -> Unit
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
+
     FloatingActionButton(
         modifier = modifier,
         onClick = {
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
             actionItem.onClick()
             onClick()
         }
@@ -434,13 +436,23 @@ fun HomePreview() {
                         )
                     ),
                     familyMembers = listOf(
-                        UserData(
-                            id = "1",
-                            displayName = "John Doe",
+                        FamilyMemberUserData(
+                            userData = UserData(
+                                id = "1",
+                                displayName = "John Doe",
+                                profilePictureUrl = "https://example.com/john.jpg"
+                            ),
+                            distance = 2000,
+                            goingHome = true
                         ),
-                        UserData(
-                            id = "2",
-                            displayName = "Jane Doe",
+                        FamilyMemberUserData(
+                            userData = UserData(
+                                id = "2",
+                                displayName = "Jane Smith",
+                                profilePictureUrl = "https://example.com/jane.jpg"
+                            ),
+                            distance = 5660,
+                            goingHome = false
                         )
                     ),
                     freeDayNextItem = NextItem.TaskItem(
