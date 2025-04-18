@@ -1,4 +1,4 @@
-package com.koren.onboarding.ui.create_family
+package com.koren.onboarding.ui.create_family.steps
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +29,8 @@ import com.koren.designsystem.icon.QrCode
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
 import com.koren.onboarding.R
+import com.koren.onboarding.ui.create_family.CreateFamilyEvent
+import com.koren.onboarding.ui.create_family.CreateFamilyUiState
 
 @Composable
 internal fun InviteFamilyMembersStep(

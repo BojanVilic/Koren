@@ -1,4 +1,4 @@
-package com.koren.onboarding.ui.create_family
+package com.koren.onboarding.ui.create_family.steps
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult

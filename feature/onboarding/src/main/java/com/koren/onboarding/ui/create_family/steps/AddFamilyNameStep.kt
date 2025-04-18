@@ -1,4 +1,4 @@
-package com.koren.onboarding.ui.create_family
+package com.koren.onboarding.ui.create_family.steps
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize

@@ -59,10 +59,7 @@ class CreateFamilyViewModel @Inject constructor(
                 is CreateFamilyEvent.ExpandSearchBar -> _uiState.update { currentState.copy(searchBarExpanded = true) }
                 is CreateFamilyEvent.LocationSuggestionClicked -> _uiState.update {
                     currentState.copy(
-                        homeAddress = UserLocation(
-                            latitude = event.location.latitude,
-                            longitude = event.location.longitude,
-                        ),
+                        homeAddress = event.location,
                         searchQuery = event.location.primaryText,
                         searchBarExpanded = false
                     )
@@ -168,7 +165,7 @@ class CreateFamilyViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { CreateFamilyUiState.CreatingFamily }
             try {
-                createFamilyUseCase(currentState.familyName, currentState.photoUri)
+                createFamilyUseCase(currentState.familyName, currentState.photoUri, currentState.homeAddress?: SuggestionResponse())
                 _uiState.update { 
                     currentState.copy(currentStep = CreateFamilyStep.INVITE_FAMILY_MEMBERS)
                 }

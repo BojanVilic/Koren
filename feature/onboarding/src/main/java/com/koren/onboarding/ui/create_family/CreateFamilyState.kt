@@ -27,7 +27,7 @@ sealed interface CreateFamilyUiState : UiState {
         val familyName: String = "",
         val currentStep: CreateFamilyStep = CreateFamilyStep.ADD_FAMILY_PORTRAIT,
         val addressText: String = "",
-        val homeAddress: UserLocation? = null,
+        val homeAddress: SuggestionResponse? = null,
         val isCreateQRInvitationExpanded: Boolean = false,
         val emailInviteText: String = "",
         val isEmailInviteExpanded: Boolean = false,
