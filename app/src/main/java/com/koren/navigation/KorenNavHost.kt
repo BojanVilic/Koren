@@ -67,13 +67,11 @@ fun KorenNavHost(
                 authScreen(
                     navController = navController,
                     onSignInSuccess = {
-                        mainActivityViewModel.onSignInSuccess()
                         navController.navigate(HomeGraph) {
                             popUpTo(HomeGraph) { inclusive = true }
                         }
                     },
                     onSignUpSuccess = {
-                        mainActivityViewModel.onSignInSuccess()
                         navController.navigate(OnboardingGraph) {
                             popUpTo(OnboardingGraph) { inclusive = true }
                         }

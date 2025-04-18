@@ -162,22 +162,21 @@ private fun CreateFamilyStepContent(
                 Button(
                     modifier = Modifier.weight(1f),
                     onClick = {
-                        if (currentPage < state.totalSteps - 1) {
-                            if (state.isStepValid) {
-                                coroutineScope.launch {
-                                    pagerState.scrollToPage(currentPage + 1)
-                                    state.eventSink(CreateFamilyEvent.NextStep)
-                                    keyboardController?.hide()
-                                }
+                        if (state.isStepValid) {
+                            coroutineScope.launch {
+                                pagerState.scrollToPage(currentPage + 1)
+                                state.eventSink(CreateFamilyEvent.NextStep)
+                                keyboardController?.hide()
                             }
-                        } else {
-                            state.eventSink(CreateFamilyEvent.CreateFamily)
                         }
                     },
                     enabled = state.isStepValid,
                 ) {
                     Text(
-                        text = if (currentPage < state.totalSteps - 1) stringResource(R.string.continue_label) else stringResource(R.string.create_family_label)
+                        text = if (state.currentStep != CreateFamilyStep.INVITE_FAMILY_MEMBERS) 
+                            stringResource(R.string.continue_label) 
+                        else 
+                            stringResource(R.string.create_family_label)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Image(
@@ -241,21 +240,21 @@ private fun CreateFamilyStepContent(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.Top
                 ) {
-                    when (page) {
-                        0 -> AddImageStep(
+                    when (state.currentStep) {
+                        CreateFamilyStep.ADD_FAMILY_PORTRAIT -> AddImageStep(
                             setFamilyPortraitPath = {
                                 state.eventSink(CreateFamilyEvent.SetPhotoUri(it))
                             },
                             familyPortraitPath = state.photoUri
                         )
-                        1 -> AddNameStep(
+                        CreateFamilyStep.ADD_FAMILY_NAME -> AddNameStep(
                             familyName = state.familyName,
                             setFamilyName = {
                                 state.eventSink(CreateFamilyEvent.SetFamilyName(it))
                             }
                         )
-                        2 -> AddHouseAddressStep(uiState = state)
-                        3 -> InviteFamilyMembersStep(uiState = state)
+                        CreateFamilyStep.ADD_HOUSE_ADDRESS -> AddHouseAddressStep(uiState = state)
+                        CreateFamilyStep.INVITE_FAMILY_MEMBERS -> InviteFamilyMembersStep(uiState = state)
                     }
                 }
             }

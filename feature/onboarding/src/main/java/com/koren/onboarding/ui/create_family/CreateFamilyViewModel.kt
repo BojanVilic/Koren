@@ -147,18 +147,20 @@ class CreateFamilyViewModel @Inject constructor(
     }
 
     private fun nextStep(currentState: CreateFamilyUiState.Step) {
-        if (currentState.currentStep < currentState.totalSteps - 1) {
-            _uiState.update {
-                currentState.copy(currentStep = currentState.currentStep + 1)
-            }
+        when (currentState.currentStep) {
+            CreateFamilyStep.ADD_FAMILY_PORTRAIT -> _uiState.update { currentState.copy(currentStep = CreateFamilyStep.ADD_FAMILY_NAME) }
+            CreateFamilyStep.ADD_FAMILY_NAME -> _uiState.update { currentState.copy(currentStep = CreateFamilyStep.ADD_HOUSE_ADDRESS) }
+            CreateFamilyStep.ADD_HOUSE_ADDRESS -> createFamily(currentState)
+            CreateFamilyStep.INVITE_FAMILY_MEMBERS -> _uiState.update { CreateFamilyUiState.FamilyCreated }
         }
     }
 
     private fun previousStep(currentState: CreateFamilyUiState.Step) {
-        if (currentState.currentStep > 0) {
-            _uiState.update {
-                currentState.copy(currentStep = currentState.currentStep - 1)
-            }
+        when (currentState.currentStep) {
+            CreateFamilyStep.ADD_FAMILY_PORTRAIT -> Unit
+            CreateFamilyStep.ADD_FAMILY_NAME -> _uiState.update { currentState.copy(currentStep = CreateFamilyStep.ADD_FAMILY_PORTRAIT) }
+            CreateFamilyStep.ADD_HOUSE_ADDRESS -> _uiState.update { currentState.copy(currentStep = CreateFamilyStep.ADD_FAMILY_NAME) }
+            CreateFamilyStep.INVITE_FAMILY_MEMBERS -> _uiState.update { currentState.copy(currentStep = CreateFamilyStep.ADD_HOUSE_ADDRESS) }
         }
     }
 
@@ -167,7 +169,9 @@ class CreateFamilyViewModel @Inject constructor(
             _uiState.update { CreateFamilyUiState.CreatingFamily }
             try {
                 createFamilyUseCase(currentState.familyName, currentState.photoUri)
-                _uiState.update { CreateFamilyUiState.FamilyCreated }
+                _uiState.update { 
+                    currentState.copy(currentStep = CreateFamilyStep.INVITE_FAMILY_MEMBERS)
+                }
             } catch (e: Exception) {
                 _uiState.update { CreateFamilyUiState.Error(e.message?: "Unknown error.") }
             }

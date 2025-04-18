@@ -9,6 +9,13 @@ import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
 import com.koren.common.util.UiState
 
+enum class CreateFamilyStep {
+    ADD_FAMILY_PORTRAIT,
+    ADD_FAMILY_NAME,
+    ADD_HOUSE_ADDRESS,
+    INVITE_FAMILY_MEMBERS
+}
+
 sealed interface CreateFamilyUiState : UiState {
     data object Loading: CreateFamilyUiState
     data object CreatingFamily: CreateFamilyUiState
@@ -18,7 +25,7 @@ sealed interface CreateFamilyUiState : UiState {
     data class Step(
         val photoUri: Uri? = null,
         val familyName: String = "",
-        val currentStep: Int = 0,
+        val currentStep: CreateFamilyStep = CreateFamilyStep.ADD_FAMILY_PORTRAIT,
         val addressText: String = "",
         val homeAddress: UserLocation? = null,
         val isCreateQRInvitationExpanded: Boolean = false,
@@ -35,14 +42,13 @@ sealed interface CreateFamilyUiState : UiState {
     ): CreateFamilyUiState, EventHandler<CreateFamilyEvent> {
         val isStepValid: Boolean
             get() = when (currentStep) {
-                0 -> photoUri != null
-                1 -> familyName.isNotBlank()
-                2 -> homeAddress != null
-                3 -> true
-                else -> false
+                CreateFamilyStep.ADD_FAMILY_PORTRAIT -> photoUri != null
+                CreateFamilyStep.ADD_FAMILY_NAME -> familyName.isNotBlank()
+                CreateFamilyStep.ADD_HOUSE_ADDRESS -> homeAddress != null
+                CreateFamilyStep.INVITE_FAMILY_MEMBERS -> true
             }
 
-        val totalSteps: Int = 4
+        val totalSteps: Int = CreateFamilyStep.entries.size
     }
 }
 

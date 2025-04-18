@@ -73,6 +73,7 @@ object SingletonModule {
             auth,
             googleAuthService,
             emailAuthService,
+            userSession,
             firebaseDatabase
         )
     }

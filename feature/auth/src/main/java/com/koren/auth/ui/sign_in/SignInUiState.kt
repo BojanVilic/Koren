@@ -31,5 +31,6 @@ sealed interface SignInUiEvent : UiEvent {
 sealed interface SignInUiSideEffect : UiSideEffect {
     data class ShowError(val message: String) : SignInUiSideEffect
     data object NavigateToHome : SignInUiSideEffect
+    data object NavigateToOnboarding : SignInUiSideEffect
     data object NavigateToSignUp : SignInUiSideEffect
 }

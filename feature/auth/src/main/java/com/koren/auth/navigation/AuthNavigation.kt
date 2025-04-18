@@ -25,6 +25,7 @@ fun NavGraphBuilder.authScreen(
         composable<SignInDestination> {
             SignInScreen(
                 onSignInSuccess = onSignInSuccess,
+                onNavigateToOnboarding = onSignUpSuccess,
                 navigateToSignUp = { navController.navigate(SignUpDestination) },
                 onShowSnackbar = onShowSnackbar
             )

@@ -1,18 +1,21 @@
 package com.koren.auth.ui.sign_in
 
 import androidx.lifecycle.viewModelScope
+import com.koren.common.services.UserSession
 import com.koren.data.services.AuthService
 import com.koren.data.services.SignInMethod
 import com.koren.common.util.StateViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class SignInViewModel @Inject constructor(
-    private val authService: AuthService
+    private val authService: AuthService,
+    private val userSession: UserSession
 ): StateViewModel<SignInUiEvent, SignInUiState, SignInUiSideEffect>() {
 
     override fun setInitialState(): SignInUiState = SignInUiState.Shown(eventSink = ::handleEvent)
@@ -34,7 +37,7 @@ class SignInViewModel @Inject constructor(
     private fun signIn(current: SignInUiState.Shown) {
         viewModelScope.launch(Dispatchers.Default) {
             authService.signIn(SignInMethod.Email(current.email.trim(), current.password.trim()))
-                .onSuccess { _sideEffects.emit(SignInUiSideEffect.NavigateToHome) }
+                .onSuccess { _sideEffects.emit(SignInUiSideEffect.NavigateToOnboarding) }
                 .onFailure { error -> _sideEffects.emit(SignInUiSideEffect.ShowError(message = error.message?: "Unknown error.")) }
         }
     }
@@ -42,7 +45,11 @@ class SignInViewModel @Inject constructor(
     private fun googleSignIn(current: SignInUiState.Shown) {
         viewModelScope.launch(Dispatchers.Default) {
             authService.signIn(SignInMethod.Google)
-                .onSuccess { _sideEffects.emit(SignInUiSideEffect.NavigateToHome) }
+                .onSuccess {
+                    val user = userSession.currentUser.first()
+                    if (user.familyId.isBlank()) _sideEffects.emit(SignInUiSideEffect.NavigateToOnboarding)
+                    else _sideEffects.emit(SignInUiSideEffect.NavigateToHome)
+                }
                 .onFailure { error -> _uiState.update { current.copy(errorMessage = error.message?: "Unknown error.") } }
         }
     }

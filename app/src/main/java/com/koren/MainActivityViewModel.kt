@@ -44,12 +44,6 @@ class MainActivityViewModel @Inject constructor(
         }
     }
 
-    fun onSignInSuccess() {
-        viewModelScope.launch(Dispatchers.IO) {
-            userSession.updateUserDataOnSignIn()
-        }
-    }
-
     override fun handleEvent(event: MainActivityUiEvent) {
         withEventfulState<MainActivityUiState.Success> { currentState ->
             when (event) {

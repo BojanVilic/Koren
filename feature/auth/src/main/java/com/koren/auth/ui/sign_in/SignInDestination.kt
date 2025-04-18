@@ -56,6 +56,7 @@ data object SignInDestination
 fun SignInScreen(
     signInViewModel: SignInViewModel = hiltViewModel(),
     onSignInSuccess: () -> Unit,
+    onNavigateToOnboarding: () -> Unit,
     navigateToSignUp: () -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit
 ) {
@@ -72,8 +73,9 @@ fun SignInScreen(
     CollectSideEffects(viewModel = signInViewModel) { sideEffect ->
         when (sideEffect) {
             is SignInUiSideEffect.ShowError -> onShowSnackbar(sideEffect.message)
-            is SignInUiSideEffect.NavigateToHome -> onSignInSuccess()
+            is SignInUiSideEffect.NavigateToOnboarding -> onNavigateToOnboarding()
             is SignInUiSideEffect.NavigateToSignUp -> navigateToSignUp()
+            is SignInUiSideEffect.NavigateToHome -> onSignInSuccess()
         }
     }
 

@@ -4,6 +4,7 @@ import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.koren.common.services.UserSession
 import com.koren.data.services.AuthService
 import com.koren.data.services.SignInMethod
 import javax.inject.Inject
@@ -13,6 +14,7 @@ class DefaultAuthService @Inject constructor(
     private val auth: FirebaseAuth,
     private val googleAuthService: GoogleAuthService,
     private val emailAuthService: EmailAuthService,
+    private val userSession: UserSession,
     private val firebaseDatabase: FirebaseDatabase
 ): AuthService {
 
@@ -21,6 +23,9 @@ class DefaultAuthService @Inject constructor(
             is SignInMethod.Email -> emailAuthService.signIn(signInMethod.email, signInMethod.password)
             is SignInMethod.Google -> googleAuthService()
         }
+            .onSuccess {
+                userSession.updateUserDataOnSignIn()
+            }
     }
 
     override suspend fun signUp(email: String, password: String, result: (Result<Unit>) -> Unit) {
