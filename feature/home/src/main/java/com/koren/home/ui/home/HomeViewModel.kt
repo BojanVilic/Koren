@@ -18,7 +18,7 @@ import com.koren.data.repository.InvitationRepository
 import com.koren.domain.ChangeTaskStatusUseCase
 import com.koren.domain.GetAllFamilyMembersUseCase
 import com.koren.domain.GetCallHomeRequestUseCase
-import com.koren.domain.GetDistanceBetweenTwoUsersUseCase
+import com.koren.domain.GetDistanceToHomeUseCase
 import com.koren.domain.GetFamilyUseCase
 import com.koren.domain.GetNextCalendarItemUseCase
 import com.koren.domain.UpdateCallHomeStatusUseCase
@@ -43,7 +43,7 @@ class HomeViewModel @Inject constructor(
     private val changeTaskStatusUseCase: ChangeTaskStatusUseCase,
     private val getCallHomeRequestUseCase: GetCallHomeRequestUseCase,
     private val updateCallHomeStatusUseCase: UpdateCallHomeStatusUseCase,
-    private val getDistanceBetweenTwoUsersUseCase: GetDistanceBetweenTwoUsersUseCase
+    private val getDistanceToHomeUseCase: GetDistanceToHomeUseCase
 ): StateViewModel<HomeEvent, HomeUiState, HomeSideEffect>() {
 
     override fun setInitialState(): HomeUiState = HomeUiState.Loading
@@ -61,12 +61,13 @@ class HomeViewModel @Inject constructor(
             val family by getFamilyUseCase.getFamilyFlow().collectAsState(initial = null)
             val glanceItem by getNextCalendarItemUseCase().collectAsState(initial = CalendarItem.None)
             val callHomeRequest by getCallHomeRequestUseCase().collectAsState(initial = null)
+
             val familyMemberUserData = familyMembers
                 .map {
                     val isGoingHome = family?.callHomeRequests?.get(it.id)?.status == CallHomeRequestStatus.ACCEPTED
                     FamilyMemberUserData(
                         userData = it,
-                        distance = getDistanceBetweenTwoUsersUseCase(currentUser, it),
+                        distance = if (isGoingHome) getDistanceToHomeUseCase(it.id).collectAsState(initial = 0).value else 0,
                         goingHome = isGoingHome
                     )
                 }

@@ -36,13 +36,20 @@ class GetFamilyUseCase @Inject constructor(
                 val familyPortrait = snapshot.child("familyPortrait").getValue<String>()?: ""
                 val members = snapshot.child("members").getValue(object : GenericTypeIndicator<List<String>>() {}) ?: emptyList()
                 val savedLocationMap = snapshot.child("savedLocations").getValue(object : GenericTypeIndicator<Map<String, SavedLocation>>() {}) ?: emptyMap()
-
                 val savedLocations = savedLocationMap.values.toList()
-                val callHomeRequests = snapshot.child("callHomeRequests")
-                    .getValue(object : GenericTypeIndicator<Map<String, CallHomeRequest>>() {}) ?: emptyMap()
+                val callHomeRequests = snapshot.child("callHomeRequests").getValue(object : GenericTypeIndicator<Map<String, CallHomeRequest>>() {}) ?: emptyMap()
+                val homeLat = snapshot.child("homeLat").getValue<Double>() ?: 0.0
+                val homeLng = snapshot.child("homeLng").getValue<Double>() ?: 0.0
 
                 val family = Family(
-                    id, name, members, familyPortrait, savedLocations, callHomeRequests
+                    id = id,
+                    name = name,
+                    members = members,
+                    familyPortrait = familyPortrait,
+                    savedLocations = savedLocations,
+                    callHomeRequests = callHomeRequests,
+                    homeLat = homeLat,
+                    homeLng = homeLng
                 )
                 Result.success(family)
             } else {
