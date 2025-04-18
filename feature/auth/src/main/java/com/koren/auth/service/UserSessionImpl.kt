@@ -56,9 +56,9 @@ class UserSessionImpl : UserSession {
             .child(auth.currentUser?.uid ?: "")
             .setValue(
                 currentUserData?.copy(
-                    id = auth.currentUser?.uid ?: "",
-                    email = auth.currentUser?.email ?: "",
-                    displayName = auth.currentUser?.displayName ?: "",
+                    id = auth.currentUser?.uid ?: currentUserData.id,
+                    email = auth.currentUser?.email ?: currentUserData.email,
+                    displayName = auth.currentUser?.displayName ?: currentUserData.displayName,
                     fcmToken = fcmToken
                 )?: UserData(
                     id = auth.currentUser?.uid ?: "",

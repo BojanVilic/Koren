@@ -8,6 +8,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.common)
     implementation(libs.lottie.compose)
 
     implementation(libs.qrcode.kotlin)

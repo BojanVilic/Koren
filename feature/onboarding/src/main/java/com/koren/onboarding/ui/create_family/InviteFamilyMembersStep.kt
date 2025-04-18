@@ -1,8 +1,10 @@
-package com.koren.invitation.ui
+package com.koren.onboarding.ui.create_family
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,16 +13,12 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.common.models.invitation.InvitationResult
-import com.koren.designsystem.components.BrokenBranchErrorScreen
-import com.koren.designsystem.components.SimpleSnackbar
 import com.koren.designsystem.components.invitation.EmailExpandedContent
 import com.koren.designsystem.components.invitation.EmailInviteSentContent
 import com.koren.designsystem.components.invitation.InvitationChoiceCard
@@ -29,77 +27,50 @@ import com.koren.designsystem.components.invitation.QRExpandedContent
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.icon.QrCode
 import com.koren.designsystem.theme.KorenTheme
-import com.koren.designsystem.theme.LocalScaffoldStateProvider
-import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
-import com.koren.invitation.R
-import kotlinx.serialization.Serializable
-
-@Serializable
-object InvitationDestination
+import com.koren.onboarding.R
 
 @Composable
-fun InvitationScreen(
-    invitationViewModel: InvitationViewModel = hiltViewModel(),
+internal fun InviteFamilyMembersStep(
+    uiState: CreateFamilyUiState.Step
 ) {
-    LocalScaffoldStateProvider.current.setScaffoldState(
-        state = ScaffoldState(
-            title = stringResource(com.koren.designsystem.R.string.invite_screen_title),
-            isBottomBarVisible = false
-        )
-    )
-
-    val invitationUiState by invitationViewModel.uiState.collectAsStateWithLifecycle()
-
-    InvitationContent(
-        invitationUiState = invitationUiState
-    )
-}
-
-@Composable
-private fun InvitationContent(
-    invitationUiState: InvitationUiState
-) {
-
-    when (invitationUiState) {
-        is InvitationUiState.Error -> BrokenBranchErrorScreen(errorMessage = invitationUiState.errorMessage)
-        is InvitationUiState.Shown -> ShownContent(invitationUiState = invitationUiState)
-    }
-}
-
-@Composable
-private fun ShownContent(
-    invitationUiState: InvitationUiState.Shown
-) {
-    if (invitationUiState.errorMessage.isNotEmpty()) {
-        SimpleSnackbar(message = invitationUiState.errorMessage)
-    }
-
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.Start
     ) {
+        Text(
+            text = stringResource(R.string.invite_members_title),
+            style = MaterialTheme.typography.displaySmall
+        )
+
+        Text(
+            text = stringResource(R.string.invite_members_subtitle),
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         InvitationChoiceCard(
             title = stringResource(id = com.koren.designsystem.R.string.share_qr_code),
             subtitle = stringResource(id = com.koren.designsystem.R.string.scan_qr_code_description),
             icon = KorenIcons.QrCode,
-            isExpanded = invitationUiState.isCreateQRInvitationExpanded,
+            isExpanded = uiState.isCreateQRInvitationExpanded,
             onCardClicked = {
-                if (invitationUiState.isCreateQRInvitationExpanded)
-                    invitationUiState.eventSink(InvitationEvent.CollapseCreateQRInvitation)
+                if (uiState.isCreateQRInvitationExpanded)
+                    uiState.eventSink(CreateFamilyEvent.CollapseCreateQRInvitation)
                 else
-                    invitationUiState.eventSink(InvitationEvent.CreateQRInvitation)
+                    uiState.eventSink(CreateFamilyEvent.CreateQRInvitation)
             },
             expandedContent = {
-                if (invitationUiState.qrInvitationLoading) {
+                if (uiState.qrInvitationLoading) {
                     LoadingSpinner()
                 } else {
-                    invitationUiState.qrInvitation?.let { qrInvitation ->
+                    uiState.qrInvitation?.let { qrInvitation ->
                         QRExpandedContent(
                             invitationLink = qrInvitation.invitationLink,
-                            familyName = invitationUiState.familyName
+                            familyName = uiState.familyName
                         )
                     }
                 }
@@ -110,36 +81,47 @@ private fun ShownContent(
             title = stringResource(id = com.koren.designsystem.R.string.invite_via_email),
             subtitle = stringResource(id = com.koren.designsystem.R.string.invite_via_email_description),
             icon = Icons.Default.Email,
-            isExpanded = invitationUiState.isEmailInviteExpanded,
+            isExpanded = uiState.isEmailInviteExpanded,
             onCardClicked = {
-                invitationUiState.eventSink(InvitationEvent.EmailInviteClick)
+                uiState.eventSink(CreateFamilyEvent.EmailInviteClick)
             },
             expandedContent = {
                 when {
-                    invitationUiState.emailInvitationLoading -> LoadingSpinner()
-                    invitationUiState.emailInvitation == null -> EmailExpandedContent(
-                        emailInviteText = invitationUiState.emailInviteText,
+                    uiState.emailInvitationLoading -> LoadingSpinner()
+                    uiState.emailInvitation == null -> EmailExpandedContent(
+                        emailInviteText = uiState.emailInviteText,
                         onEmailInviteTextChange = {
-                            invitationUiState.eventSink(InvitationEvent.EmailInviteTextChange(it))
+                            uiState.eventSink(CreateFamilyEvent.EmailInviteTextChange(it))
                         },
                         onInviteViaEmailClick = {
-                            invitationUiState.eventSink(InvitationEvent.InviteViaEmailClick)
+                            uiState.eventSink(CreateFamilyEvent.InviteViaEmailClick)
                         }
                     )
                     else -> EmailInviteSentContent(
-                        emailInvitation = invitationUiState.emailInvitation,
-                        emailInviteText = invitationUiState.emailInviteText
+                        emailInvitation = uiState.emailInvitation,
+                        emailInviteText = uiState.emailInviteText
                     )
                 }
             }
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            text = stringResource(R.string.invite_members_later_info),
+            style = MaterialTheme.typography.labelMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+        )
 
         Text(
-            modifier = Modifier.padding(bottom = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp, top = 8.dp),
             text = stringResource(id = com.koren.designsystem.R.string.expiration_info_label),
             style = MaterialTheme.typography.labelMedium,
+            textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
         )
     }
@@ -147,11 +129,10 @@ private fun ShownContent(
 
 @ThemePreview
 @Composable
-fun InvitationPreview() {
+private fun InviteFamilyMembersStepPreview() {
     KorenTheme {
-        InvitationContent(
-            invitationUiState = InvitationUiState.Shown(
-                familyName = "Family Name",
+        InviteFamilyMembersStep(
+            uiState = CreateFamilyUiState.Step(
                 isCreateQRInvitationExpanded = true,
                 isEmailInviteExpanded = true,
                 emailInviteText = "johndoe@gmail.com",

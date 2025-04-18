@@ -1,25 +1,20 @@
 package com.koren.onboarding.ui.create_family
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateSizeAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,20 +24,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.twotone.ArrowForward
-import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,26 +47,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.koren.designsystem.components.BrokenBranchErrorScreen
 import com.koren.designsystem.components.LoadingContent
-import com.koren.designsystem.components.dashedBorder
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -96,7 +79,7 @@ fun CreateFamilyScreen(
 ) {
 
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    val pagerState = rememberPagerState(pageCount = { (createFamilyViewModel.uiState.value as? CreateFamilyUiState.Step)?.totalSteps?: 0 })
     val state by createFamilyViewModel.uiState.collectAsStateWithLifecycle()
 
     LocalScaffoldStateProvider.current.setScaffoldState(
@@ -150,11 +133,65 @@ private fun CreateFamilyStepContent(
     val currentPage by remember { derivedStateOf { pagerState.currentPage } }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    Box(
-        modifier = Modifier.imePadding()
-    ) {
+    Scaffold(
+        modifier = Modifier.imePadding(),
+        bottomBar = {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AnimatedVisibility(currentPage > 0) {
+                    OutlinedButton(
+                        modifier = Modifier
+                            .weight(0.3f),
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState.scrollToPage(currentPage - 1)
+                                state.eventSink(CreateFamilyEvent.PreviousStep)
+                                keyboardController?.hide()
+                            }
+                        }
+                    ) {
+                        Text(
+                            text = stringResource(R.string.back_label)
+                        )
+                    }
+                }
+
+                Button(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        if (currentPage < state.totalSteps - 1) {
+                            if (state.isStepValid) {
+                                coroutineScope.launch {
+                                    pagerState.scrollToPage(currentPage + 1)
+                                    state.eventSink(CreateFamilyEvent.NextStep)
+                                    keyboardController?.hide()
+                                }
+                            }
+                        } else {
+                            state.eventSink(CreateFamilyEvent.CreateFamily)
+                        }
+                    },
+                    enabled = state.isStepValid,
+                ) {
+                    Text(
+                        text = if (currentPage < state.totalSteps - 1) stringResource(R.string.continue_label) else stringResource(R.string.create_family_label)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Image(
+                        imageVector = Icons.AutoMirrored.TwoTone.ArrowForward,
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(color = if (state.isStepValid) ButtonDefaults.buttonColors().contentColor else ButtonDefaults.buttonColors().disabledContentColor)
+                    )
+                }
+            }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { paddingValues ->
         Column(
-            modifier = Modifier.align(Alignment.TopCenter)
+            modifier = Modifier.padding(paddingValues)
         ) {
             Row(
                 modifier = Modifier
@@ -199,7 +236,10 @@ private fun CreateFamilyStepContent(
                 userScrollEnabled = false
             ) { page ->
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Top
                 ) {
                     when (page) {
                         0 -> AddImageStep(
@@ -214,198 +254,12 @@ private fun CreateFamilyStepContent(
                                 state.eventSink(CreateFamilyEvent.SetFamilyName(it))
                             }
                         )
+                        2 -> AddHouseAddressStep(uiState = state)
+                        3 -> InviteFamilyMembersStep(uiState = state)
                     }
                 }
             }
         }
-
-        Button(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 48.dp, vertical = 16.dp)
-                .fillMaxWidth(),
-            onClick = {
-                if (currentPage < state.totalSteps - 1) {
-                    if (state.isStepValid) {
-                        coroutineScope.launch {
-                            pagerState.scrollToPage(currentPage + 1)
-                            state.eventSink(CreateFamilyEvent.NextStep)
-                            keyboardController?.hide()
-                        }
-                    }
-                } else {
-                    state.eventSink(CreateFamilyEvent.CreateFamily)
-                }
-            },
-            enabled = state.isStepValid,
-        ) {
-            Text(text = if (currentPage < state.totalSteps - 1) stringResource(R.string.continue_label) else stringResource(R.string.create_family_label))
-            Spacer(modifier = Modifier.width(8.dp))
-            Image(
-                imageVector = Icons.AutoMirrored.TwoTone.ArrowForward,
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(color = if (state.isStepValid) ButtonDefaults.buttonColors().contentColor else ButtonDefaults.buttonColors().disabledContentColor)
-            )
-        }
-    }
-
-}
-
-@Composable
-private fun AddImageStep(
-    setFamilyPortraitPath: (Uri?) -> Unit,
-    familyPortraitPath: Uri?
-) {
-
-    val imagePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { uri ->
-            setFamilyPortraitPath(uri)
-        }
-    )
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Text(
-            modifier = Modifier.padding(bottom = 16.dp),
-            text = stringResource(R.string.add_image_title),
-            style = MaterialTheme.typography.displayLarge
-        )
-
-        Text(
-            text = stringResource(R.string.add_image_subtitle),
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        Card(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(top = 32.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (familyPortraitPath != null) {
-                    AsyncImage(
-                        modifier = Modifier
-                            .size(128.dp)
-                            .clip(CircleShape)
-                            .dashedBorder(
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = CircleShape,
-                                strokeWidth = 4.dp,
-                                gapLength = 8.dp
-                            ),
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .crossfade(true)
-                            .data(familyPortraitPath)
-                            .build(),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Image(
-                        modifier = Modifier
-                            .size(128.dp)
-                            .clip(CircleShape)
-                            .dashedBorder(
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = CircleShape,
-                                strokeWidth = 4.dp,
-                                gapLength = 8.dp
-                            )
-                            .clickable {
-                                imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            },
-                        painter = painterResource(R.drawable.ic_add_photo),
-                        contentDescription = null,
-                        contentScale = ContentScale.Inside,
-                        colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary)
-                    )
-                }
-                Column(
-                    modifier = Modifier
-                        .height(IntrinsicSize.Max)
-                        .padding(horizontal = 12.dp),
-                ) {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        }
-                    ) {
-                        Text(text = stringResource(R.string.add_image_button_label))
-                    }
-
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            setFamilyPortraitPath(null)
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.background,
-                            contentColor = MaterialTheme.colorScheme.onBackground
-                        )
-                    ) {
-                        Text(text = stringResource(R.string.remove_image_button_label))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AddNameStep(
-    familyName: String,
-    setFamilyName: (String) -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Text(
-            modifier = Modifier.padding(bottom = 16.dp),
-            text = stringResource(R.string.add_family_name_title),
-            style = MaterialTheme.typography.displayLarge
-        )
-
-        Text(
-            text = stringResource(R.string.add_family_name_subtitle),
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        OutlinedTextField(
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 32.dp)
-                .fillMaxWidth()
-                .align(Alignment.CenterHorizontally),
-            value = familyName,
-            onValueChange = {
-                setFamilyName(it)
-            },
-            label = {
-                Text(text = stringResource(R.string.family_name_label))
-            },
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-            trailingIcon = if (familyName.isNotBlank()) {
-                {
-                    IconButton(
-                        onClick = {
-                            setFamilyName("")
-                        },
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Clear,
-                            contentDescription = null
-                        )
-                    }
-                }
-            } else null
-        )
     }
 }
 
@@ -443,7 +297,7 @@ private fun FamilyCreated(
             Text(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(R.string.congrats_label),
-                style = MaterialTheme.typography.displayLarge,
+                style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
@@ -531,28 +385,6 @@ fun CreateFamilyPreview() {
         CreateFamilyStepContent(
             state = CreateFamilyUiState.Step(eventSink = {}),
             pagerState = rememberPagerState(pageCount = { 3 })
-        )
-    }
-}
-
-@ThemePreview
-@Composable
-fun AddImageStepPreview() {
-    KorenTheme {
-        AddImageStep(
-            setFamilyPortraitPath = {},
-            familyPortraitPath = null
-        )
-    }
-}
-
-@ThemePreview
-@Composable
-fun AddNameStepPreview() {
-    KorenTheme {
-        AddNameStep(
-            familyName = "",
-            setFamilyName = {}
         )
     }
 }

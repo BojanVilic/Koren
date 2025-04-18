@@ -19,10 +19,7 @@ sealed interface InvitationUiState : UiState {
         val qrInvitationLoading: Boolean = false,
         val errorMessage: String = "",
         override val eventSink: (InvitationEvent) -> Unit
-    ): InvitationUiState, EventHandler<InvitationEvent> {
-        val isEmailInviteButtonEnabled: Boolean
-            get() = emailInviteText.isNotBlank()
-    }
+    ): InvitationUiState, EventHandler<InvitationEvent>
 }
 
 sealed interface InvitationEvent : UiEvent {

@@ -16,6 +16,7 @@ object AuthGraph
 fun NavGraphBuilder.authScreen(
     navController: NavController,
     onSignInSuccess: () -> Unit,
+    onSignUpSuccess: () -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit
 ) {
     navigation<AuthGraph>(
@@ -31,7 +32,7 @@ fun NavGraphBuilder.authScreen(
 
         composable<SignUpDestination> {
             SignUpScreen(
-                onSignUpSuccess = onSignInSuccess,
+                onSignUpSuccess = onSignUpSuccess,
                 onNavigateBack = { navController.popBackStack() },
                 onShowSnackbar = onShowSnackbar
             )

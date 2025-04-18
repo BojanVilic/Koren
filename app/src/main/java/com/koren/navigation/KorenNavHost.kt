@@ -50,6 +50,7 @@ fun KorenNavHost(
 
     val startDestination: Any = when {
         uiState.value is MainActivityUiState.LoggedOut -> AuthGraph
+        uiState.value is MainActivityUiState.Success && (uiState.value as MainActivityUiState.Success).userData.familyId.isBlank() -> OnboardingGraph
         else -> HomeGraph
     }
 
@@ -67,7 +68,15 @@ fun KorenNavHost(
                     navController = navController,
                     onSignInSuccess = {
                         mainActivityViewModel.onSignInSuccess()
-                        navController.navigate(HomeGraph)
+                        navController.navigate(HomeGraph) {
+                            popUpTo(HomeGraph) { inclusive = true }
+                        }
+                    },
+                    onSignUpSuccess = {
+                        mainActivityViewModel.onSignInSuccess()
+                        navController.navigate(OnboardingGraph) {
+                            popUpTo(OnboardingGraph) { inclusive = true }
+                        }
                     },
                     onShowSnackbar = onShowSnackbar
                 )

@@ -1,4 +1,4 @@
-package com.koren.onboarding.usecases
+package com.koren.domain
 
 import android.net.Uri
 import com.google.firebase.database.FirebaseDatabase

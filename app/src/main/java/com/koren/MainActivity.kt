@@ -75,7 +75,10 @@ class MainActivity : ComponentActivity() {
                         TopAppBar(
                             title = { Text(scaffoldState.value.title) },
                             navigationIcon = {
-                                AnimatedVisibility(currentDestination?.route !in topLevelRoutes.map { it.route::class.qualifiedName }) {
+                                AnimatedVisibility(
+                                    visible = currentDestination?.route !in topLevelRoutes.map { it.route::class.qualifiedName }
+                                            && navController.previousBackStackEntry != null
+                                ) {
                                     IconButton(
                                         onClick = { if (scaffoldState.value.customBackAction != null) scaffoldState.value.customBackAction?.invoke() else navController.popBackStack() }
                                     ) {

@@ -11,6 +11,19 @@
     <string name="continue_label">Continue</string>
     <string name="congrats_label">Congratulations!</string>
     <string name="family_created_label">Your family has been created!</string>
+    <string name="back_label">Back</string>
+    <string name="add_house_address_title">Where is your family home located?</string>
+    <string name="add_house_address_subtitle">Adding your address helps with location-based features.</string>
+    <string name="house_address_privacy_note">Your address is kept secure and will never be shared outside the app.</string>
+    <string name="house_address_label">House Address</string>
+    <string name="clear_label">Clear</string>
+    <string name="invite_members_title">Invite your family members</string>
+    <string name="invite_members_subtitle">Welcome others to join your newly created family.</string>
+    <string name="invite_members_later_info">You can also invite members later from the family settings.</string>
+    <string name="create_or_join_family_title">Welcome</string>
+    <string name="create_or_join_family_description">To get started, create a new family or join an existing one.</string>
+    <string name="create_family_button_label">Create Family</string>
+    <string name="join_family_button_label">Join Family</string>
 
     <string name="building_family_tree">Building your family tree…</string>
     <string name="gathering_together">Gathering everyone together…</string>

@@ -6,6 +6,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.koren.onboarding.ui.create_family.CreateFamilyDestination
 import com.koren.onboarding.ui.create_family.CreateFamilyScreen
+import com.koren.onboarding.ui.create_or_join_family.CreateOrJoinFamilyDestination
+import com.koren.onboarding.ui.create_or_join_family.CreateOrJoinFamilyScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -16,8 +18,15 @@ fun NavGraphBuilder.onboardingScreen(
     onNavigateToHome: () -> Unit
 ) {
     navigation<OnboardingGraph>(
-        startDestination = CreateFamilyDestination
+        startDestination = CreateOrJoinFamilyDestination
     ) {
+        composable<CreateOrJoinFamilyDestination> {
+            CreateOrJoinFamilyScreen(
+                onNavigateToOnboarding = { navController.navigate(CreateFamilyDestination) },
+                onNavigateToPendingInvitationsScreen = {  }
+            )
+        }
+
         composable<CreateFamilyDestination> {
             CreateFamilyScreen(
                 onNavigateToHome = onNavigateToHome

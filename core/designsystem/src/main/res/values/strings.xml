@@ -2,4 +2,20 @@
 <resources>
     <string name="loading">Loading…</string>
     <string name="nothing_to_see_here">Nothing to see here!</string>
+
+    <string name="invitation_sent_to">Invitation sent to:</string>
+    <string name="invitation_code_instruction">When accepting the invitation on the other device, the user will be asked to enter the following code:</string>
+    <string name="label_email_address">"Email Address"</string>
+    <string name="label_invite">Invite</string>
+    <string name="invite_via_email_description">"Invite your family members by entering their email."</string>
+    <string name="scan_qr_code_subtitle">Scan this QR code and join the %s family!</string>
+    <string name="share_qr_code">Share QR code</string>
+    <string name="scan_qr_code_description">"Share QR code with your family members to invite them to join your family."</string>
+    <string name="invite_via_email">Invite via email</string>
+    <string name="expiration_info_label">Invitations expire after 48 hours.</string>
+    <string name="invite_screen_title">Invite your family members</string>
+    <string name="invite_via_email_subtitle">Enter the email address of the person you want to invite to join your family.</string>
+    <string name="invite_via_email_hint">Email address</string>
+    <string name="invite_via_email_button">Invite</string>
+    <string name="invite_via_email_title">Invite via email</string>
 </resources>
