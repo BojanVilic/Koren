@@ -115,7 +115,6 @@ class HomeViewModel @Inject constructor(
                 is HomeEvent.AcceptInvitation -> acceptInvitation(event.invitation, event.typedCode, current)
                 is HomeEvent.DeclineInvitation -> declineInvitation(event.id)
                 is HomeEvent.InvitationCodeChanged -> _uiState.update { current.copy(invitationCodeText = event.code, invitationCodeError = "") }
-                is HomeEvent.NavigateToCreateFamily -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToCreateFamily)
                 is HomeEvent.NavigateToInviteFamilyMember -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToInviteFamilyMember)
                 is HomeEvent.NavigateToSentInvitations -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToSentInvitations)
                 is HomeEvent.OpenAddCalendarEntry -> _sideEffects.emitSuspended(HomeSideEffect.OpenAddCalendarEntry)

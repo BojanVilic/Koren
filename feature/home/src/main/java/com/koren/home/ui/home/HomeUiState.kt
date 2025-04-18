@@ -49,7 +49,6 @@ sealed interface HomeEvent : UiEvent {
     data class DeclineInvitation(val id: String) : HomeEvent
     data class InvitationCodeChanged(val code: String) : HomeEvent
     data object NavigateToInviteFamilyMember : HomeEvent
-    data object NavigateToCreateFamily : HomeEvent
     data object NavigateToSentInvitations : HomeEvent
     data object OpenAddCalendarEntry : HomeEvent
     data class TaskCompletionButtonClicked(val taskId: String, val completed: Boolean) : HomeEvent
@@ -61,7 +60,6 @@ sealed interface HomeEvent : UiEvent {
 
 sealed interface HomeSideEffect : UiSideEffect {
     data object NavigateToInviteFamilyMember : HomeSideEffect
-    data object NavigateToCreateFamily : HomeSideEffect
     data object NavigateToSentInvitations : HomeSideEffect
     data object OpenAddCalendarEntry : HomeSideEffect
     data class OpenMemberDetails(val member: UserData) : HomeSideEffect

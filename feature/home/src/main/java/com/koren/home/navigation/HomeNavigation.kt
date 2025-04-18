@@ -24,7 +24,6 @@ object HomeGraph
 fun NavGraphBuilder.homeScreen(
     navController: NavHostController,
     inviteFamilyMember: () -> Unit,
-    createFamily: () -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit,
     openAddCalendarEntry: (Day) -> Unit,
     navigateAndFindOnMap: (userId: String) -> Unit
@@ -35,7 +34,6 @@ fun NavGraphBuilder.homeScreen(
         composable<HomeDestination> {
             HomeScreen(
                 inviteFamilyMember = inviteFamilyMember,
-                createFamily = createFamily,
                 sentInvitations = { navController.navigate(SentInvitationsDestination) },
                 onShowSnackbar = onShowSnackbar,
                 openAddCalendarEntry = openAddCalendarEntry,

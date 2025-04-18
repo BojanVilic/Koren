@@ -94,7 +94,6 @@ object HomeDestination
 fun HomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
     inviteFamilyMember: () -> Unit,
-    createFamily: () -> Unit,
     sentInvitations: () -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit,
     openAddCalendarEntry: (Day) -> Unit,
@@ -114,7 +113,6 @@ fun HomeScreen(
     ) { sideEffect ->
         when (sideEffect) {
             is HomeSideEffect.ShowMessage -> onShowSnackbar(sideEffect.message)
-            is HomeSideEffect.NavigateToCreateFamily -> createFamily()
             is HomeSideEffect.NavigateToInviteFamilyMember -> inviteFamilyMember()
             is HomeSideEffect.NavigateToSentInvitations -> sentInvitations()
             is HomeSideEffect.OpenAddCalendarEntry -> openAddCalendarEntry(
@@ -197,11 +195,6 @@ fun HomeScaffoldWithExpandingFab(
 ) {
 
     val actions = listOf(
-        ActionItem(
-            icon = IconResource.Drawable(R.drawable.create_family),
-            text = "Create\nfamily",
-            onClick = { state.eventSink(HomeEvent.NavigateToCreateFamily) }
-        ),
         ActionItem(
             icon = IconResource.Vector(Icons.Default.Add),
             text = "Invite",

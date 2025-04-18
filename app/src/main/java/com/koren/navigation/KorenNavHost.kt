@@ -83,7 +83,6 @@ fun KorenNavHost(
                     inviteFamilyMember = {
                         navController.navigate(InvitationDestination)
                     },
-                    createFamily = { navController.navigate(OnboardingGraph) },
                     onShowSnackbar = onShowSnackbar,
                     openAddCalendarEntry = { day ->
                         navController.navigate(
