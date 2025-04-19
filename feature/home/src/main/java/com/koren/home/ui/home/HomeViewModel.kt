@@ -110,19 +110,20 @@ class HomeViewModel @Inject constructor(
     }
 
     override fun handleEvent(event: HomeEvent) {
-        withEventfulState<HomeUiState.Shown> { current ->
+        withEventfulState<HomeUiState.Shown> { currentState ->
             when (event) {
-                is HomeEvent.AcceptInvitation -> acceptInvitation(event.invitation, event.typedCode, current)
-                is HomeEvent.DeclineInvitation -> declineInvitation(event.id)
-                is HomeEvent.InvitationCodeChanged -> _uiState.update { current.copy(invitationCodeText = event.code, invitationCodeError = "") }
+                is HomeEvent.ActionsFabClicked -> _uiState.update { currentState.copy(actionsOpen = !currentState.actionsOpen) }
                 is HomeEvent.NavigateToInviteFamilyMember -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToInviteFamilyMember)
                 is HomeEvent.NavigateToSentInvitations -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToSentInvitations)
                 is HomeEvent.OpenAddCalendarEntry -> _sideEffects.emitSuspended(HomeSideEffect.OpenAddCalendarEntry)
-                is HomeEvent.TaskCompletionButtonClicked -> changeTaskStatus(event.taskId, event.completed)
                 is HomeEvent.FamilyMemberClicked -> _sideEffects.emitSuspended(HomeSideEffect.OpenMemberDetails(event.member.userData))
+                is HomeEvent.NavigateToChat -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToChat)
+                is HomeEvent.AcceptInvitation -> acceptInvitation(event.invitation, event.typedCode, currentState)
+                is HomeEvent.DeclineInvitation -> declineInvitation(event.id)
+                is HomeEvent.InvitationCodeChanged -> _uiState.update { currentState.copy(invitationCodeText = event.code, invitationCodeError = "") }
+                is HomeEvent.TaskCompletionButtonClicked -> changeTaskStatus(event.taskId, event.completed)
                 is HomeEvent.AcceptCallHomeRequest -> updateCallHomeRequestStatus(CallHomeRequestStatus.ACCEPTED)
                 is HomeEvent.RejectCallHomeRequest -> updateCallHomeRequestStatus(CallHomeRequestStatus.REJECTED)
-                is HomeEvent.ActionsFabClicked -> _uiState.update { current.copy(actionsOpen = !current.actionsOpen) }
             }
         }
     }
@@ -138,12 +139,16 @@ class HomeViewModel @Inject constructor(
     private fun acceptInvitation(
         invitation: Invitation,
         typedCode: String,
-        current: HomeUiState.Shown
+        currentState: HomeUiState.Shown
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             val result = invitationRepository.acceptInvitation(invitation, typedCode)
             if (result.isFailure) {
-                _uiState.update { current.copy(invitationCodeError = result.exceptionOrNull()?.message ?: "") }
+                _uiState.update { currentState.copy(invitationCodeError = result.exceptionOrNull()?.message ?: "Unknown error") }
+                _sideEffects.emitSuspended(HomeSideEffect.ShowMessage(result.exceptionOrNull()?.message ?: "Failed to accept invitation"))
+            } else {
+                _uiState.update { currentState.copy(invitationCodeError = "") }
+                _sideEffects.emitSuspended(HomeSideEffect.ShowMessage("Invitation accepted!"))
             }
         }
     }
@@ -151,6 +156,7 @@ class HomeViewModel @Inject constructor(
     private fun declineInvitation(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             invitationRepository.declineInvitation(id)
+            _sideEffects.emitSuspended(HomeSideEffect.ShowMessage("Invitation declined"))
         }
     }
 

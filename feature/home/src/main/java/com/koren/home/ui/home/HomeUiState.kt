@@ -56,6 +56,7 @@ sealed interface HomeEvent : UiEvent {
     data object AcceptCallHomeRequest : HomeEvent
     data object RejectCallHomeRequest : HomeEvent
     data object ActionsFabClicked : HomeEvent
+    data object NavigateToChat : HomeEvent
 }
 
 sealed interface HomeSideEffect : UiSideEffect {
@@ -64,6 +65,7 @@ sealed interface HomeSideEffect : UiSideEffect {
     data object OpenAddCalendarEntry : HomeSideEffect
     data class OpenMemberDetails(val member: UserData) : HomeSideEffect
     data class ShowMessage(val message: String) : HomeSideEffect
+    data object NavigateToChat : HomeSideEffect
 }
 
 fun CalendarItem.toNextItem(): NextItem {

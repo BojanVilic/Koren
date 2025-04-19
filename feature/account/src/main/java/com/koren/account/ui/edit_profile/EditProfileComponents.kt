@@ -44,6 +44,7 @@ import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.icon.RotateCamera
+import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
@@ -279,12 +280,14 @@ private fun ShownContent(
 @ThemePreview
 @Composable
 private fun EditProfilePreview() {
-    EditProfileContent(
-        uiState = EditProfileUiState.Shown(
-            userData = UserData(
-                displayName = "John Doe"
-            ),
-            eventSink = {}
+    KorenTheme {
+        EditProfileContent(
+            uiState = EditProfileUiState.Shown(
+                userData = UserData(
+                    displayName = "John Doe"
+                ),
+                eventSink = {}
+            )
         )
-    )
+    }
 }

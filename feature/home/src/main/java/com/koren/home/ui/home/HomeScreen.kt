@@ -80,12 +80,12 @@ import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
-import com.koren.home.R
 import com.koren.home.ui.home.ui_models.FamilyMemberUserData
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import java.time.DayOfWeek
 import java.time.LocalDate
+import androidx.navigation.NavController
 
 @Serializable
 object HomeDestination
@@ -95,6 +95,7 @@ fun HomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
     inviteFamilyMember: () -> Unit,
     sentInvitations: () -> Unit,
+    navigateToChat: () -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit,
     openAddCalendarEntry: (Day) -> Unit,
     openMemberDetails: (userId: String) -> Unit
@@ -125,6 +126,7 @@ fun HomeScreen(
                 )
             )
             is HomeSideEffect.OpenMemberDetails -> openMemberDetails(sideEffect.member.id)
+            is HomeSideEffect.NavigateToChat -> navigateToChat()
         }
     }
 
@@ -203,7 +205,7 @@ fun HomeScaffoldWithExpandingFab(
         ActionItem(
             icon = IconResource.Vector(Icons.Default.Email),
             text = "Chat",
-            onClick = {}
+            onClick = { state.eventSink(HomeEvent.NavigateToChat) }
         ),
         ActionItem(
             icon = IconResource.Vector(Icons.Default.DateRange),

@@ -1,0 +1,85 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Koren Android Project Rules
+
+This document outlines key coding conventions and architectural patterns used in the Koren Android project.
+
+## General Principles
+
+-   Adhere strictly to existing patterns found in the codebase.
+-   Before adding new code (classes, functions, modules), **review similar existing code**.
+-   Avoid obvious comments; only comment non-trivial logic. No inline comments.
+
+## Module Structure & Dependencies
+
+-   **Feature modules should NOT depend directly on other feature modules.**
+-   Inter-feature navigation is handled via lambda callbacks passed from the central NavHost (in `:app`) into feature Screen composables.
+-   Repository interfaces and implementations belong in `core/data/src/main/java/com/koren/data/repository/`.
+-   Use Cases belong in `core/domain/src/main/java/com/koren/domain/`.
+-   Common data models belong in `core/common/src/main/java/com/koren/common/models/`.
+-   Feature UI code (Screens, ViewModels, States, Components) resides in `feature/{feature_name}/src/main/java/com/koren/{feature_name}/ui/`.
+-   Feature navigation definitions (destinations, NavGraphBuilder extensions) reside in `feature/{feature_name}/src/main/java/com/koren/{feature_name}/navigation/`.
+
+## Data Models (`:core:common`)
+
+-   Models should be plain, immutable Kotlin data classes.
+-   Avoid framework-specific dependencies (e.g., Firebase `ServerValue`) directly in common models. Handle such logic in the Repository layer (`:core:data`).
+-   Do not add empty constructors or helper functions unless necessary and standard practice elsewhere.
+
+## ViewModel Implementation (using `StateViewModel`)
+
+-   Extend `com.koren.common.util.StateViewModel<Event, State, SideEffect>`.
+-   Use `@HiltViewModel` and `@Inject`.
+-   Use **Molecule** for state management within the `init` block:
+    ```kotlin
+    private val scope = CoroutineScope(viewModelScope.coroutineContext + AndroidUiDispatcher.Main)
+    init {
+        scope.launchMolecule(mode = RecompositionMode.ContextClock) {
+            val data1 by flow1.collectAsState(...)
+            val data2 by flow2.collectAsState(...)
+            // Logic to update _uiState based on collected data
+             when (val currentState = uiState.collectAsState().value) {
+                is SpecificUiState.Success -> {
+                    _uiState.update { currentState.copy(...) }
+                }
+                else -> { // Handle Loading, Error, etc. -> transition to Success
+                     _uiState.update { SpecificUiState.Success(...) }
+                }
+            }
+        }
+    }
+    ```
+-   Collect flows using `collectAsState(...)` inside `launchMolecule`.
+-   Update state using `_uiState.update { ... }`.
+-   Handle events using `override fun handleEvent` and `withEventfulState<StateType>`.
+-   Emit side effects via `_sideEffects.emitSuspended(...)`.
+-   Run repository calls or other suspending operations in `viewModelScope.launch(Dispatchers.IO)`.
+
+## UI State / Event / SideEffect Definitions
+
+-   Define as sealed interfaces (`{ScreenName}UiState`, `{ScreenName}Event`, `{ScreenName}SideEffect`) typically in `{ScreenName}UiState.kt`.
+-   The primary success/shown state (e.g., `Success`, `Shown`) should implement `EventHandler<Event>`.
+
+## Compose UI Conventions
+
+-   Structure screens as: `{ScreenName}` -> `{ScreenName}Content` -> (Optional) `{ScreenName}SpecificStateContent`.
+-   `{ScreenName}` composable: Main entry point, collects state (`collectAsStateWithLifecycle`), handles side effects (`CollectSideEffects`), sets scaffold state (`LocalScaffoldStateProvider`), calls `{ScreenName}Content`.
+-   `{ScreenName}Content` composable: Contains the main `when(uiState)` block, delegating rendering to state-specific composables. Does not contain complex layout logic itself (e.g., no `Box` wrapper if state composables provide their own).
+-   Create dedicated, private composables for each distinct UI state (e.g., `Loading`, `Error`, `Success`, `NoFamily`). These handle their own layout (e.g., contain the `Box` for centering).
+-   Screens should **NOT** define their own `Scaffold`.
+-   Use `LocalScaffoldStateProvider.current.setScaffoldState(...)` **directly** within the main screen composable body (not inside `LaunchedEffect`) to control the central scaffold's appearance (title, bars).
+-   Handle side effects using the `CollectSideEffects` composable. Suspend functions (like `onShowSnackbar`) can be called directly within its lambda (no extra `CoroutineScope` needed).
+-   In custom composables, the `modifier: Modifier = Modifier` parameter should be the **first** optional parameter.
+-   Avoid passing modifiers down unnecessarily if a child composable handles its own layout/sizing (e.g., dedicated state composables filling the screen).
+-   In `when` statements, **omit curly braces `{}`** for branches calling a single function/composable.
+-   Provide `@ThemePreview` composables for content/state-specific UI parts.
+
+## Navigation
+
+-   Use `kotlinx.serialization` (`@Serializable object` or `data class`) for navigation destinations.
+-   Define NavGraphBuilder extension functions (e.g., `chatScreen(...)`) in the feature's `navigation` package.
+-   Pass necessary parameters (`NavController`, `onShowSnackbar`, navigation lambdas) into these extension functions.
+-   Call these extensions from the central `NavHost` in the `:app` module (`app/src/main/java/com/koren/navigation/KorenNavHost.kt`). 
