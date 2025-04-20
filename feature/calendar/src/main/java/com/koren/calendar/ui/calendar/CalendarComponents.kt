@@ -20,10 +20,12 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -300,9 +302,23 @@ fun DayCell(
                     }
 
                     Text(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(70))
+                            .background(
+                                if (day.dayOfMonth == LocalDate.now().dayOfMonth)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    Color.Transparent
+                            )
+                            .padding(horizontal = 8.dp),
                         text = dayOfMonth.toString(),
                         style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color =
+                            if (day.dayOfMonth == LocalDate.now().dayOfMonth)
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -314,10 +330,20 @@ fun DayCell(
 @Composable
 fun CalendarUIPreview() {
     KorenTheme {
-        CalendarUI(
-            uiState = CalendarUiState.Shown(
-                eventSink = {}
+        Surface {
+            CalendarUI(
+                uiState = CalendarUiState.Shown(
+                    groupedTasks = mapOf(
+                        LocalDate.now() to listOf(Task("Task 1"), Task("Task 2")),
+                        LocalDate.now().plusDays(1) to listOf(Task("Task 3"))
+                    ),
+                    groupedEvents = mapOf(
+                        LocalDate.now() to listOf(Event("Event 1"), Event("Event 2")),
+                        LocalDate.now().plusDays(2) to listOf(Event("Event 3"))
+                    ),
+                    eventSink = {}
+                )
             )
-        )
+        }
     }
 }
