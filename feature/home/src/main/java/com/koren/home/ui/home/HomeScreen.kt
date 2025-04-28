@@ -80,7 +80,6 @@ import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
-import com.koren.home.R
 import com.koren.home.ui.home.ui_models.FamilyMemberUserData
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
@@ -106,7 +105,7 @@ fun HomeScreen(
         onResume = { scaffoldStateProvider.setScaffoldState(ScaffoldState(isTopBarVisible = false, isBottomBarVisible = true)) }
     )
 
-    val state by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val state by homeViewModel.state.collectAsStateWithLifecycle()
 
     CollectSideEffects(
         viewModel = homeViewModel

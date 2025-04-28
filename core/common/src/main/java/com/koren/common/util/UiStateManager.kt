@@ -4,11 +4,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.cash.molecule.AndroidUiDispatcher
+import app.cash.molecule.RecompositionMode
+import app.cash.molecule.launchMolecule
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 interface UiEvent
@@ -17,6 +23,38 @@ interface UiSideEffect
 interface EventHandler<E: UiEvent> : UiState {
     val eventSink: (E) -> Unit
 }
+
+abstract class MoleculeViewModel<Event: UiEvent, State: UiState, SideEffect: UiSideEffect> : ViewModel() {
+    private val scope = CoroutineScope(viewModelScope.coroutineContext + AndroidUiDispatcher.Main)
+
+    protected val _sideEffects: MutableSharedFlow<SideEffect> = MutableSharedFlow()
+    val sideEffects: SharedFlow<SideEffect> = _sideEffects.asSharedFlow()
+
+    protected abstract fun setInitialState(): State
+
+    private val initialState: State by lazy { setInitialState() }
+
+    val state: StateFlow<State> by lazy {
+        scope.launchMolecule(mode = RecompositionMode.ContextClock) {
+            generateState()
+        }
+            .stateIn(
+                scope = scope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = initialState
+            )
+    }
+
+    @Composable
+    protected abstract fun generateState(): State
+
+    protected fun MutableSharedFlow<SideEffect>.emitSuspended(effect: SideEffect) {
+        viewModelScope.launch {
+            emit(effect)
+        }
+    }
+}
+
 
 abstract class StateViewModel<Event: UiEvent, State: UiState, SideEffect: UiSideEffect> : ViewModel() {
     protected abstract fun setInitialState(): State
@@ -47,6 +85,18 @@ abstract class StateViewModel<Event: UiEvent, State: UiState, SideEffect: UiSide
 @Composable
 fun <Effect : UiSideEffect> CollectSideEffects(
     viewModel: StateViewModel<*, *, Effect>,
+    handleSideEffect: suspend (Effect) -> Unit
+) {
+    LaunchedEffect(Unit) {
+        viewModel.sideEffects.collect { effect ->
+            handleSideEffect(effect)
+        }
+    }
+}
+
+@Composable
+fun <Effect : UiSideEffect> CollectSideEffects(
+    viewModel: MoleculeViewModel<*, *, Effect>,
     handleSideEffect: suspend (Effect) -> Unit
 ) {
     LaunchedEffect(Unit) {

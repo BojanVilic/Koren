@@ -1,7 +1,11 @@
 package com.koren.home.ui.home
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import app.cash.molecule.AndroidUiDispatcher
 import app.cash.molecule.RecompositionMode
@@ -12,7 +16,9 @@ import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.InvitationStatus
 import com.koren.common.models.user.UserData
 import com.koren.common.services.UserSession
+import com.koren.common.util.MoleculeViewModel
 import com.koren.common.util.StateViewModel
+import com.koren.common.util.orUnknownError
 import com.koren.data.repository.CalendarRepository
 import com.koren.data.repository.InvitationRepository
 import com.koren.domain.ChangeTaskStatusUseCase
@@ -35,86 +41,64 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val invitationRepository: InvitationRepository,
-    getAllFamilyMembers: GetAllFamilyMembersUseCase,
-    getFamilyUseCase: GetFamilyUseCase,
-    calendarRepository: CalendarRepository,
-    userSession: UserSession,
-    getNextCalendarItemUseCase: GetNextCalendarItemUseCase,
+    private val getAllFamilyMembers: GetAllFamilyMembersUseCase,
+    private val getFamilyUseCase: GetFamilyUseCase,
+    private val calendarRepository: CalendarRepository,
+    private val userSession: UserSession,
+    private val getNextCalendarItemUseCase: GetNextCalendarItemUseCase,
     private val changeTaskStatusUseCase: ChangeTaskStatusUseCase,
     private val getCallHomeRequestUseCase: GetCallHomeRequestUseCase,
     private val updateCallHomeStatusUseCase: UpdateCallHomeStatusUseCase,
     private val getDistanceToHomeUseCase: GetDistanceToHomeUseCase
-): StateViewModel<HomeEvent, HomeUiState, HomeSideEffect>() {
+): MoleculeViewModel<HomeEvent, HomeUiState, HomeSideEffect>() {
 
     override fun setInitialState(): HomeUiState = HomeUiState.Loading
 
-    private val scope = CoroutineScope(viewModelScope.coroutineContext + AndroidUiDispatcher.Main)
+    @Composable
+    override fun generateState(): HomeUiState {
+        val currentUser by userSession.currentUser.collectAsState(initial = UserData())
+        val events by calendarRepository.getEventsForDay(LocalDate.now(ZoneOffset.UTC)).collectAsState(initial = emptyList())
+        val tasks by calendarRepository.getTasksForDayAndUser(LocalDate.now(ZoneOffset.UTC)).collectAsState(initial = emptyList())
+        val receivedInvitations by invitationRepository.getReceivedInvitations().collectAsState(initial = emptyList())
+        val sentInvitations by invitationRepository.getSentInvitations().collectAsState(initial = emptyList())
+        val familyMembers by getAllFamilyMembers().collectAsState(initial = emptyList())
+        val family by getFamilyUseCase.getFamilyFlow().collectAsState(initial = null)
+        val glanceItem by getNextCalendarItemUseCase().collectAsState(initial = CalendarItem.None)
+        val callHomeRequest by getCallHomeRequestUseCase().collectAsState(initial = null)
 
-    init {
-        scope.launchMolecule(mode = RecompositionMode.ContextClock) {
-            val currentUser by userSession.currentUser.collectAsState(initial = UserData())
-            val events by calendarRepository.getEventsForDay(LocalDate.now(ZoneOffset.UTC)).collectAsState(initial = emptyList())
-            val tasks by calendarRepository.getTasksForDayAndUser(LocalDate.now(ZoneOffset.UTC)).collectAsState(initial = emptyList())
-            val receivedInvitations by invitationRepository.getReceivedInvitations().collectAsState(initial = emptyList())
-            val sentInvitations by invitationRepository.getSentInvitations().collectAsState(initial = emptyList())
-            val familyMembers by getAllFamilyMembers().collectAsState(initial = emptyList())
-            val family by getFamilyUseCase.getFamilyFlow().collectAsState(initial = null)
-            val glanceItem by getNextCalendarItemUseCase().collectAsState(initial = CalendarItem.None)
-            val callHomeRequest by getCallHomeRequestUseCase().collectAsState(initial = null)
+        var invitationCodeText by remember { mutableStateOf("") }
+        var invitationError by remember { mutableStateOf("") }
+        var actionsOpen by remember { mutableStateOf(false) }
 
-            val familyMemberUserData = familyMembers
-                .map {
-                    val isGoingHome = family?.callHomeRequests?.get(it.id)?.status == CallHomeRequestStatus.ACCEPTED
-                    FamilyMemberUserData(
-                        userData = it,
-                        distance = if (isGoingHome) getDistanceToHomeUseCase(it.id).collectAsState(initial = 0).value else 0,
-                        goingHome = isGoingHome
-                    )
-                }
-
-            when (val currentState = uiState.collectAsState().value) {
-                is HomeUiState.Loading -> {
-                    _uiState.update {
-                        HomeUiState.Shown(
-                            currentUser = currentUser,
-                            receivedInvitations = receivedInvitations.filter { it.status == InvitationStatus.PENDING },
-                            sentInvitations = sentInvitations,
-                            familyMembers = familyMemberUserData,
-                            family = family,
-                            events = events,
-                            tasks = tasks,
-                            freeDayNextItem = glanceItem.toNextItem(),
-                            callHomeRequest = callHomeRequest,
-                            eventSink = ::handleEvent
-                        )
-                    }
-                }
-                is HomeUiState.Shown -> {
-                    _uiState.update {
-                        currentState.copy(
-                            currentUser = currentUser,
-                            receivedInvitations = receivedInvitations.filter { it.status == InvitationStatus.PENDING },
-                            sentInvitations = sentInvitations,
-                            familyMembers = familyMemberUserData,
-                            family = family,
-                            events = events,
-                            tasks = tasks,
-                            freeDayNextItem = glanceItem.toNextItem(),
-                            callHomeRequest = callHomeRequest,
-                            eventSink = ::handleEvent
-                        )
-                    }
-                }
+        val familyMemberUserData = familyMembers
+            .map {
+                val isGoingHome = family?.callHomeRequests?.get(it.id)?.status == CallHomeRequestStatus.ACCEPTED
+                FamilyMemberUserData(
+                    userData = it,
+                    distance = if (isGoingHome) getDistanceToHomeUseCase(it.id).collectAsState(initial = 0).value else 0,
+                    goingHome = isGoingHome
+                )
             }
-        }
-    }
 
-    override fun handleEvent(event: HomeEvent) {
-        withEventfulState<HomeUiState.Shown> { current ->
+        if (currentUser.id.isBlank()) return HomeUiState.Loading
+
+        return HomeUiState.Shown(
+            currentUser = currentUser,
+            receivedInvitations = receivedInvitations.filter { it.status == InvitationStatus.PENDING },
+            invitationCodeText = invitationCodeText,
+            actionsOpen = actionsOpen,
+            sentInvitations = sentInvitations,
+            familyMembers = familyMemberUserData,
+            family = family,
+            events = events,
+            tasks = tasks,
+            freeDayNextItem = glanceItem.toNextItem(),
+            callHomeRequest = callHomeRequest
+        ) { event ->
             when (event) {
-                is HomeEvent.AcceptInvitation -> acceptInvitation(event.invitation, event.typedCode, current)
+                is HomeEvent.AcceptInvitation -> acceptInvitation(event.invitation, event.typedCode, onError = { invitationError = it })
                 is HomeEvent.DeclineInvitation -> declineInvitation(event.id)
-                is HomeEvent.InvitationCodeChanged -> _uiState.update { current.copy(invitationCodeText = event.code, invitationCodeError = "") }
+                is HomeEvent.InvitationCodeChanged -> invitationCodeText = event.code
                 is HomeEvent.NavigateToInviteFamilyMember -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToInviteFamilyMember)
                 is HomeEvent.NavigateToSentInvitations -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToSentInvitations)
                 is HomeEvent.OpenAddCalendarEntry -> _sideEffects.emitSuspended(HomeSideEffect.OpenAddCalendarEntry)
@@ -122,7 +106,7 @@ class HomeViewModel @Inject constructor(
                 is HomeEvent.FamilyMemberClicked -> _sideEffects.emitSuspended(HomeSideEffect.OpenMemberDetails(event.member.userData))
                 is HomeEvent.AcceptCallHomeRequest -> updateCallHomeRequestStatus(CallHomeRequestStatus.ACCEPTED)
                 is HomeEvent.RejectCallHomeRequest -> updateCallHomeRequestStatus(CallHomeRequestStatus.REJECTED)
-                is HomeEvent.ActionsFabClicked -> _uiState.update { current.copy(actionsOpen = !current.actionsOpen) }
+                is HomeEvent.ActionsFabClicked -> actionsOpen = !actionsOpen
             }
         }
     }
@@ -138,13 +122,11 @@ class HomeViewModel @Inject constructor(
     private fun acceptInvitation(
         invitation: Invitation,
         typedCode: String,
-        current: HomeUiState.Shown
+        onError: (String) -> Unit
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             val result = invitationRepository.acceptInvitation(invitation, typedCode)
-            if (result.isFailure) {
-                _uiState.update { current.copy(invitationCodeError = result.exceptionOrNull()?.message ?: "") }
-            }
+            if (result.isFailure) onError(result.exceptionOrNull()?.message.orUnknownError())
         }
     }
 
