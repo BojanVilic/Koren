@@ -80,7 +80,7 @@ import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
-import com.koren.home.ui.home.ui_models.FamilyMemberUserData
+import com.koren.common.models.family.FamilyMemberUserData
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import java.time.DayOfWeek

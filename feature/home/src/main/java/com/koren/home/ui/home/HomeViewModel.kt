@@ -7,9 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
-import app.cash.molecule.AndroidUiDispatcher
-import app.cash.molecule.RecompositionMode
-import app.cash.molecule.launchMolecule
 import com.koren.common.models.calendar.CalendarItem
 import com.koren.common.models.family.CallHomeRequestStatus
 import com.koren.common.models.invitation.Invitation
@@ -17,22 +14,16 @@ import com.koren.common.models.invitation.InvitationStatus
 import com.koren.common.models.user.UserData
 import com.koren.common.services.UserSession
 import com.koren.common.util.MoleculeViewModel
-import com.koren.common.util.StateViewModel
 import com.koren.common.util.orUnknownError
 import com.koren.data.repository.CalendarRepository
 import com.koren.data.repository.InvitationRepository
 import com.koren.domain.ChangeTaskStatusUseCase
-import com.koren.domain.GetAllFamilyMembersUseCase
 import com.koren.domain.GetCallHomeRequestUseCase
-import com.koren.domain.GetDistanceToHomeUseCase
-import com.koren.domain.GetFamilyUseCase
 import com.koren.domain.GetNextCalendarItemUseCase
 import com.koren.domain.UpdateCallHomeStatusUseCase
-import com.koren.home.ui.home.ui_models.FamilyMemberUserData
+import com.koren.domain.GetAllFamilyMembersWithDetailsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -41,15 +32,13 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val invitationRepository: InvitationRepository,
-    private val getAllFamilyMembers: GetAllFamilyMembersUseCase,
-    private val getFamilyUseCase: GetFamilyUseCase,
     private val calendarRepository: CalendarRepository,
     private val userSession: UserSession,
     private val getNextCalendarItemUseCase: GetNextCalendarItemUseCase,
     private val changeTaskStatusUseCase: ChangeTaskStatusUseCase,
     private val getCallHomeRequestUseCase: GetCallHomeRequestUseCase,
     private val updateCallHomeStatusUseCase: UpdateCallHomeStatusUseCase,
-    private val getDistanceToHomeUseCase: GetDistanceToHomeUseCase
+    private val getAllFamilyMembersWithDetailsUseCase: GetAllFamilyMembersWithDetailsUseCase
 ): MoleculeViewModel<HomeEvent, HomeUiState, HomeSideEffect>() {
 
     override fun setInitialState(): HomeUiState = HomeUiState.Loading
@@ -61,20 +50,9 @@ class HomeViewModel @Inject constructor(
         val tasks by calendarRepository.getTasksForDayAndUser(LocalDate.now(ZoneOffset.UTC)).collectAsState(initial = emptyList())
         val receivedInvitations by invitationRepository.getReceivedInvitations().collectAsState(initial = emptyList())
         val sentInvitations by invitationRepository.getSentInvitations().collectAsState(initial = emptyList())
-        val familyMembers by getAllFamilyMembers().collectAsState(initial = emptyList())
-        val family by getFamilyUseCase.getFamilyFlow().collectAsState(initial = null)
         val glanceItem by getNextCalendarItemUseCase().collectAsState(initial = CalendarItem.None)
         val callHomeRequest by getCallHomeRequestUseCase().collectAsState(initial = null)
-
-        val familyMemberUserData = familyMembers
-            .map {
-                val isGoingHome = family?.callHomeRequests?.get(it.id)?.status == CallHomeRequestStatus.ACCEPTED
-                FamilyMemberUserData(
-                    userData = it,
-                    distance = if (isGoingHome) getDistanceToHomeUseCase(it.id).collectAsState(initial = 0).value else 0,
-                    goingHome = isGoingHome
-                )
-            }
+        val familyMemberUserData by getAllFamilyMembersWithDetailsUseCase().collectAsState(initial = emptyList())
 
         var invitationCodeText by remember { mutableStateOf("") }
         var invitationError by remember { mutableStateOf("") }
@@ -89,7 +67,6 @@ class HomeViewModel @Inject constructor(
             actionsOpen = actionsOpen,
             sentInvitations = sentInvitations,
             familyMembers = familyMemberUserData,
-            family = family,
             events = events,
             tasks = tasks,
             freeDayNextItem = glanceItem.toNextItem(),

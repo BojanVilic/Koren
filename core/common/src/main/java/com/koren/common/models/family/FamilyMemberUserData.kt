@@ -1,4 +1,4 @@
-package com.koren.home.ui.home.ui_models
+package com.koren.common.models.family
 
 import com.koren.common.models.user.UserData
 

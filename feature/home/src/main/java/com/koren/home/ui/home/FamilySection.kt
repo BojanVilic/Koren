@@ -43,7 +43,7 @@ import com.koren.designsystem.icon.CallHome
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
-import com.koren.home.ui.home.ui_models.FamilyMemberUserData
+import com.koren.common.models.family.FamilyMemberUserData
 
 internal fun LazyListScope.familySection(
     state: HomeUiState.Shown

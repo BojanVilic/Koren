@@ -13,7 +13,7 @@ import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
 import com.koren.common.util.UiState
-import com.koren.home.ui.home.ui_models.FamilyMemberUserData
+import com.koren.common.models.family.FamilyMemberUserData
 
 sealed interface NextItem {
     data class TaskItem(val task: TaskWithUsers) : NextItem
@@ -30,7 +30,6 @@ sealed interface HomeUiState : UiState {
         val invitationCodeText: String = "",
         val invitationCodeError: String = "",
         val familyMembers: List<FamilyMemberUserData> = emptyList(),
-        val family: Family? = null,
         val tasks: List<Task> = emptyList(),
         val events: List<Event> = emptyList(),
         val callHomeRequest: CallHomeRequestWithUser? = null,
