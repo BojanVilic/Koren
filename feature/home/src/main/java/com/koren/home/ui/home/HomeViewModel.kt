@@ -55,7 +55,7 @@ class HomeViewModel @Inject constructor(
     override fun setInitialState(): HomeUiState = HomeUiState.Loading
 
     @Composable
-    override fun generateState(): HomeUiState {
+    override fun produceState(): HomeUiState {
         val currentUser by userSession.currentUser.collectAsState(initial = UserData())
         val events by calendarRepository.getEventsForDay(LocalDate.now(ZoneOffset.UTC)).collectAsState(initial = emptyList())
         val tasks by calendarRepository.getTasksForDayAndUser(LocalDate.now(ZoneOffset.UTC)).collectAsState(initial = emptyList())
@@ -66,10 +66,6 @@ class HomeViewModel @Inject constructor(
         val glanceItem by getNextCalendarItemUseCase().collectAsState(initial = CalendarItem.None)
         val callHomeRequest by getCallHomeRequestUseCase().collectAsState(initial = null)
 
-        var invitationCodeText by remember { mutableStateOf("") }
-        var invitationError by remember { mutableStateOf("") }
-        var actionsOpen by remember { mutableStateOf(false) }
-
         val familyMemberUserData = familyMembers
             .map {
                 val isGoingHome = family?.callHomeRequests?.get(it.id)?.status == CallHomeRequestStatus.ACCEPTED
@@ -79,6 +75,10 @@ class HomeViewModel @Inject constructor(
                     goingHome = isGoingHome
                 )
             }
+
+        var invitationCodeText by remember { mutableStateOf("") }
+        var invitationError by remember { mutableStateOf("") }
+        var actionsOpen by remember { mutableStateOf(false) }
 
         if (currentUser.id.isBlank()) return HomeUiState.Loading
 

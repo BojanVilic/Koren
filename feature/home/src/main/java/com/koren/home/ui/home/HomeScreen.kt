@@ -105,7 +105,7 @@ fun HomeScreen(
         onResume = { scaffoldStateProvider.setScaffoldState(ScaffoldState(isTopBarVisible = false, isBottomBarVisible = true)) }
     )
 
-    val state by homeViewModel.state.collectAsStateWithLifecycle()
+    val state by homeViewModel.uiState.collectAsStateWithLifecycle()
 
     CollectSideEffects(
         viewModel = homeViewModel

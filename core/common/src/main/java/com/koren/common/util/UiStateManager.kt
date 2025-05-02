@@ -34,9 +34,9 @@ abstract class MoleculeViewModel<Event: UiEvent, State: UiState, SideEffect: UiS
 
     private val initialState: State by lazy { setInitialState() }
 
-    val state: StateFlow<State> by lazy {
+    val uiState: StateFlow<State> by lazy {
         scope.launchMolecule(mode = RecompositionMode.ContextClock) {
-            generateState()
+            produceState()
         }
             .stateIn(
                 scope = scope,
@@ -46,7 +46,7 @@ abstract class MoleculeViewModel<Event: UiEvent, State: UiState, SideEffect: UiS
     }
 
     @Composable
-    protected abstract fun generateState(): State
+    protected abstract fun produceState(): State
 
     protected fun MutableSharedFlow<SideEffect>.emitSuspended(effect: SideEffect) {
         viewModelScope.launch {
