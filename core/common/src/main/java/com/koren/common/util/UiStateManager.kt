@@ -35,7 +35,7 @@ abstract class MoleculeViewModel<Event: UiEvent, State: UiState, SideEffect: UiS
     private val initialState: State by lazy { setInitialState() }
 
     val uiState: StateFlow<State> by lazy {
-        scope.launchMolecule(mode = RecompositionMode.ContextClock) {
+        scope.launchMolecule(mode = RecompositionMode.Immediate) {
             produceState()
         }
             .stateIn(

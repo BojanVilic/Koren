@@ -66,4 +66,5 @@ sealed interface MapEvent : UiEvent {
 sealed interface MapSideEffect : UiSideEffect {
     data class GetNewLocationSuggestions(val newQuery: String) : MapSideEffect
     data class ShowSnackbar(val message: String) : MapSideEffect
+    data object NavigateToEditPlaces : MapSideEffect
 }

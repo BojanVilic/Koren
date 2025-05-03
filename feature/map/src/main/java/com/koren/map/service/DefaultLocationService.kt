@@ -80,7 +80,7 @@ class DefaultLocationService @Inject constructor(
         return checkSelfPermission(context, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED
     }
 
-    override fun getPlaceSuggestions(query: String): Flow<List<SuggestionResponse>> = callbackFlow {
+    override suspend fun getPlaceSuggestions(query: String): List<SuggestionResponse> {
         val token = AutocompleteSessionToken.newInstance()
 
         val autocompleteRequest = FindAutocompletePredictionsRequest.builder()
@@ -98,6 +98,7 @@ class DefaultLocationService @Inject constructor(
                 prediction.getPrimaryText(null).toString() to prediction.getSecondaryText(null).toString()
 
                 SuggestionResponse(
+                    id = prediction.placeId,
                     primaryText = prediction.getPrimaryText(null).toString(),
                     secondaryText = prediction.getSecondaryText(null).toString(),
                     latitude = place.place.location?.latitude?: 0.0,
@@ -105,17 +106,15 @@ class DefaultLocationService @Inject constructor(
                 )
             }
 
-            trySend(suggestionResponse)
+            return suggestionResponse
         } catch (exception: Exception) {
             if (exception is ApiException) {
                 Timber.e("Place not found: ${exception.statusCode}")
             } else {
                 Timber.e(exception, "Error fetching places")
             }
-            trySend(emptyList())
+            return emptyList()
         }
-
-        awaitClose()
     }
 
     override suspend fun getLocationName(location: Location): String {

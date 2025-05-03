@@ -9,7 +9,7 @@ interface LocationService {
     fun requestLocationUpdates(): Flow<Location>
     fun isLocationPermissionGranted(): Boolean
 
-    fun getPlaceSuggestions(query: String): Flow<List<SuggestionResponse>>
+    suspend fun getPlaceSuggestions(query: String): List<SuggestionResponse>
 
     suspend fun getLocationName(location: Location): String
 }

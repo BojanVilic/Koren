@@ -1,6 +1,7 @@
 package com.koren.common.models.suggestion
 
 data class SuggestionResponse(
+    val id: String = "",
     val primaryText: String = "",
     val secondaryText: String = "",
     val latitude: Double = 0.0,

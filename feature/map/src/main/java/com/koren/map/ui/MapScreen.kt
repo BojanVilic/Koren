@@ -114,7 +114,8 @@ data class MapDestination(
 fun MapScreen(
     mapViewModel: MapViewModel = hiltViewModel(),
     onShowSnackbar: suspend (message: String) -> Unit,
-    userId: String?
+    userId: String?,
+    onNavigateToEditPlaces: () -> Unit
 ) {
 
     LaunchedEffect(Unit) {
@@ -132,7 +133,8 @@ fun MapScreen(
     ) { sideEffect ->
         when (sideEffect) {
             is MapSideEffect.ShowSnackbar -> onShowSnackbar(sideEffect.message)
-            else -> Unit
+            is MapSideEffect.GetNewLocationSuggestions -> TODO()
+            is MapSideEffect.NavigateToEditPlaces -> onNavigateToEditPlaces()
         }
     }
 

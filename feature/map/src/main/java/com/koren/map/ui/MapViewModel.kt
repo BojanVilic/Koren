@@ -37,7 +37,6 @@ import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
 
-@OptIn(FlowPreview::class)
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val locationService: LocationService,
@@ -79,7 +78,7 @@ class MapViewModel @Inject constructor(
                     latitude = event.userData.lastLocation?.latitude?: 0.0,
                     longitude = event.userData.lastLocation?.longitude?: 0.0
                 )
-                is MapEvent.EditModeClicked -> enterEditMode(current)
+                is MapEvent.EditModeClicked -> _sideEffects.emitSuspended(MapSideEffect.NavigateToEditPlaces)
                 is MapEvent.PinClicked -> updateCameraPosition(
                     current = current,
                     latitude = event.latitude,
@@ -259,44 +258,19 @@ class MapViewModel @Inject constructor(
     }
 
     private fun observeLocationSuggestions() {
-        viewModelScope.launch(Dispatchers.Default) {
-            _sideEffects.asSharedFlow()
-                .debounce(300)
-                .filterIsInstance<MapSideEffect.GetNewLocationSuggestions>()
-                .flatMapLatest {
-                    //                        locationService.getPlaceSuggestions(it.newQuery)
-                    getDummyLocationSuggestions()
-                }
-                .collect { suggestions ->
-                    val currentState =
-                        (_uiState.value as? MapUiState.Shown.SearchMode) ?: return@collect
-                    _uiState.update { currentState.copy(locationSuggestions = suggestions) }
-                }
-        }
-    }
-
-    private fun getDummyLocationSuggestions(): Flow<List<SuggestionResponse>> {
-        val suggestions = listOf(
-            SuggestionResponse(
-                primaryText = "5550 McGrail Avenue",
-                secondaryText = "Niagara Falls, ON, Canada",
-                latitude = 43.094260528205254,
-                longitude = -79.0765215277345
-            ),
-            SuggestionResponse(
-                primaryText = "6430 Montrose Road",
-                secondaryText = "Niagara Falls, ON, Canada",
-                latitude = 43.08167874422444,
-                longitude = -79.1219035989796
-            ),
-            SuggestionResponse(
-                primaryText = "6767 Morrison St",
-                secondaryText = "Niagara Falls, ON, Canada",
-                latitude = 43.10512883109716,
-                longitude = -79.10819105821295
-            )
-        )
-
-        return flowOf(suggestions)
+//        viewModelScope.launch(Dispatchers.Default) {
+//            _sideEffects.asSharedFlow()
+//                .debounce(300)
+//                .filterIsInstance<MapSideEffect.GetNewLocationSuggestions>()
+//                .flatMapLatest {
+//                    //                        locationService.getPlaceSuggestions(it.newQuery)
+//                    getDummyLocationSuggestions()
+//                }
+//                .collect { suggestions ->
+//                    val currentState =
+//                        (_uiState.value as? MapUiState.Shown.SearchMode) ?: return@collect
+//                    _uiState.update { currentState.copy(locationSuggestions = suggestions) }
+//                }
+//        }
     }
 }
