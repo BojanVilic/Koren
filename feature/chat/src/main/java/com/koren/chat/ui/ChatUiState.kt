@@ -28,4 +28,5 @@ sealed interface ChatUiEvent : UiEvent {
 }
 
 sealed interface ChatUiSideEffect : UiSideEffect {
+    data class ShowError(val message: String) : ChatUiSideEffect
 }

@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
@@ -43,7 +44,7 @@ class DefaultChatRepository @Inject constructor(
         awaitClose { chatRef.removeEventListener(listener) }
     }
 
-    override suspend fun sendTextMessage(messageText: String) {
+    override suspend fun sendTextMessage(messageText: String): Result<Unit> {
         val user = userSession.currentUser.first()
         val message = ChatMessage(
             id = UUID.randomUUID().toString(),
@@ -55,13 +56,13 @@ class DefaultChatRepository @Inject constructor(
 
         val chatRef = database.getReference("chats/${user.familyId}/${message.id}")
 
-        chatRef.setValue(message)
-            .addOnSuccessListener {
-                Timber.d("Message sent successfully")
-            }
-            .addOnFailureListener { error ->
-                Timber.e("Error sending message: ${error.message}")
-            }
+        return try {
+            chatRef.setValue(message).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Timber.e("Error sending message: ${e.message}")
+            Result.failure(e)
+        }
     }
 
     override suspend fun deleteMessage(messageId: String) {

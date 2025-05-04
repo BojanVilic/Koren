@@ -52,7 +52,11 @@ class ChatViewModel @Inject constructor(
                     showReactionPopup = true
                     targetMessageIdForReaction = event.messageId
                 }
-                is ChatUiEvent.SendMessage -> sendMessage(messageText.text, MessageType.TEXT)
+                is ChatUiEvent.SendMessage -> sendMessage(
+                    messageText = messageText.text,
+                    messageType = MessageType.TEXT,
+                    onSuccess = { messageText = TextFieldValue("") }
+                )
                 is ChatUiEvent.OnReactionSelected -> Unit
             }
         }
@@ -60,11 +64,14 @@ class ChatViewModel @Inject constructor(
 
     private fun sendMessage(
         messageText: String,
-        messageType: MessageType
+        messageType: MessageType,
+        onSuccess: () -> Unit
     ) {
         viewModelScope.launch(Dispatchers.Default) {
             when (messageType) {
                 MessageType.TEXT -> chatRepository.sendTextMessage(messageText)
+                    .onSuccess { onSuccess() }
+                    .onFailure { _sideEffects.emitSuspended(ChatUiSideEffect.ShowError("The message was not delivered. Please try again.")) }
                 MessageType.IMAGE -> Unit
                 MessageType.VIDEO -> Unit
                 MessageType.VOICE -> Unit

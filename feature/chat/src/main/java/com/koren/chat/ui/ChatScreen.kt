@@ -102,7 +102,7 @@ fun ChatScreen(
         viewModel = viewModel
     ) { uiSideEffect ->
         when (uiSideEffect) {
-            else -> Unit
+            is ChatUiSideEffect.ShowError -> onShowSnackbar(uiSideEffect.message)
         }
     }
 
@@ -129,7 +129,7 @@ private fun ChatScreenShownContent(
 
     LaunchedEffect(uiState.messages.size) {
         if (uiState.messages.isNotEmpty()) {
-            listState.animateScrollToItem(uiState.messages.size - 1)
+            listState.animateScrollToItem(0)
         }
     }
 
