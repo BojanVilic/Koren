@@ -15,6 +15,7 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.places.api.model.AddressComponent
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.model.PlaceTypes
@@ -78,6 +79,53 @@ class DefaultLocationService @Inject constructor(
 
     override fun isLocationPermissionGranted(): Boolean {
         return checkSelfPermission(context, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED
+    }
+
+    override suspend fun getPlaceDetails(placeId: String): SuggestionResponse? {
+        return try {
+            val placeFields = listOf(
+                Place.Field.ID,
+                Place.Field.DISPLAY_NAME,
+                Place.Field.FORMATTED_ADDRESS,
+                Place.Field.ADDRESS_COMPONENTS,
+                Place.Field.LOCATION,
+                Place.Field.TYPES
+            )
+
+            val request = FetchPlaceRequest.newInstance(placeId, placeFields)
+            val place = withContext(Dispatchers.IO) {
+                placesClient.fetchPlace(request).await()
+            }.place
+
+            val formattedAddress = buildAddress(place.addressComponents?.asList())
+
+            SuggestionResponse(
+                id = place.id ?: return null,
+                primaryText = place.displayName ?: return null,
+                secondaryText = formattedAddress ?: place.formattedAddress ?: return null,
+                latitude = place.location?.latitude ?: return null,
+                longitude = place.location?.longitude ?: return null
+            )
+
+        } catch (exception: Exception) {
+            Timber.e(exception, "Error fetching place details for ID: $placeId")
+            null
+        }
+    }
+
+    private fun buildAddress(addressComponents: List<AddressComponent>?): String? {
+        if (addressComponents == null) return null
+
+        val streetNumber = addressComponents.find { it.types.contains("street_number") }?.name
+        val route = addressComponents.find { it.types.contains("route") }?.name
+        val locality = addressComponents.find { it.types.contains("locality") }?.name
+        val province = addressComponents.find { it.types.contains("administrative_area_level_1") }?.name
+        val country = addressComponents.find { it.types.contains("country") }?.name
+
+        val streetAddress = listOfNotNull(streetNumber, route).joinToString(" ")
+        return listOfNotNull(streetAddress, locality, province, country)
+            .filter { it.isNotEmpty() }
+            .joinToString(", ")
     }
 
     override suspend fun getPlaceSuggestions(query: String): List<SuggestionResponse> {

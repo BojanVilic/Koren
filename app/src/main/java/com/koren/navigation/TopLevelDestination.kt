@@ -1,45 +1,52 @@
 package com.koren.navigation
 
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.koren.R
 import com.koren.account.ui.account.AccountDestination
 import com.koren.activity.ui.ActivityDestination
+import com.koren.designsystem.icon.ActivitySelected
+import com.koren.designsystem.icon.ActivityUnselected
+import com.koren.designsystem.icon.HomeSelected
+import com.koren.designsystem.icon.HomeUnselected
+import com.koren.designsystem.icon.KorenIcons
+import com.koren.designsystem.icon.MapSelected
+import com.koren.designsystem.icon.MapUnselected
 import com.koren.home.ui.home.HomeDestination
 import com.koren.map.ui.MapDestination
 
 sealed class TopLevelRoute(
     val route: Any,
-    @DrawableRes val selectedIcon: Int,
-    @DrawableRes val unselectedIcon: Int,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector,
     @StringRes val titleTextId: Int
 )
 
 data object HomeTopLevelRoute : TopLevelRoute(
     route = HomeDestination,
-    selectedIcon = R.drawable.home_selected,
-    unselectedIcon = R.drawable.home_unselected,
+    selectedIcon = KorenIcons.HomeSelected,
+    unselectedIcon = KorenIcons.HomeUnselected,
     titleTextId = R.string.home_label
 )
 
 data object MapTopLevelRoute : TopLevelRoute(
     route = MapDestination(),
-    selectedIcon = R.drawable.map_selected,
-    unselectedIcon = R.drawable.map_unselected,
+    selectedIcon = KorenIcons.MapSelected,
+    unselectedIcon = KorenIcons.MapUnselected,
     titleTextId = R.string.map_label
 )
 
 data object ActivityTopLevelRoute : TopLevelRoute(
     route = ActivityDestination,
-    selectedIcon = R.drawable.activity_selected,
-    unselectedIcon = R.drawable.activity_unselected,
+    selectedIcon = KorenIcons.ActivitySelected,
+    unselectedIcon = KorenIcons.ActivityUnselected,
     titleTextId = R.string.activity_label
 )
 
 data object AccountTopLevelRoute : TopLevelRoute(
     route = AccountDestination,
-    selectedIcon = R.drawable.account_selected,
-    unselectedIcon = R.drawable.account_unselected,
+    selectedIcon = KorenIcons.ActivitySelected,
+    unselectedIcon = KorenIcons.ActivityUnselected,
     titleTextId = R.string.account_label
 )
 

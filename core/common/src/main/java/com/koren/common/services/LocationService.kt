@@ -10,6 +10,7 @@ interface LocationService {
     fun isLocationPermissionGranted(): Boolean
 
     suspend fun getPlaceSuggestions(query: String): List<SuggestionResponse>
+    suspend fun getPlaceDetails(placeId: String): SuggestionResponse?
 
     suspend fun getLocationName(location: Location): String
 }

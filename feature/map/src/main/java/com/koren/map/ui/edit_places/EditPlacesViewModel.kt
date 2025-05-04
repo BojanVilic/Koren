@@ -31,9 +31,11 @@ class EditPlacesViewModel @Inject constructor(
         var suggestions by remember { mutableStateOf(emptyList<SuggestionResponse>()) }
 
         LaunchedEffect(searchQuery) {
-            delay(300)
+            if (searchQuery.length > 3) {
+                delay(300)
 //            suggestions = locationService.getPlaceSuggestions(searchQuery)
-            suggestions = getDummyLocationSuggestions()
+                suggestions = getDummyLocationSuggestions()
+            }
         }
 
         return EditPlacesUiState.Shown(
@@ -45,7 +47,7 @@ class EditPlacesViewModel @Inject constructor(
             when (event) {
                 is EditPlacesUiEvent.OnExpandSearchBarChanged -> searchBarExpanded = event.expanded
                 is EditPlacesUiEvent.SearchTextChanged -> searchQuery = event.text
-                is EditPlacesUiEvent.LocationSuggestionClicked -> Unit
+                is EditPlacesUiEvent.LocationSuggestionClicked -> _sideEffects.emitSuspended(EditPlacesUiSideEffect.NavigateToSaveLocation(event.location.id))
             }
         }
     }
@@ -53,22 +55,32 @@ class EditPlacesViewModel @Inject constructor(
     private fun getDummyLocationSuggestions(): List<SuggestionResponse> {
         val suggestions = listOf(
             SuggestionResponse(
+                id = "ChIJa7PjNOg1K4gREdFQwwrkG0Q",
                 primaryText = "5550 McGrail Avenue",
                 secondaryText = "Niagara Falls, ON, Canada",
                 latitude = 43.094260528205254,
                 longitude = -79.0765215277345
             ),
             SuggestionResponse(
+                id = "ChIJa7PjNOg1K4gREdFQwwrkG0Q",
                 primaryText = "6430 Montrose Road",
                 secondaryText = "Niagara Falls, ON, Canada",
                 latitude = 43.08167874422444,
                 longitude = -79.1219035989796
             ),
             SuggestionResponse(
+                id = "ChIJa7PjNOg1K4gREdFQwwrkG0Q",
                 primaryText = "6767 Morrison St",
                 secondaryText = "Niagara Falls, ON, Canada",
                 latitude = 43.10512883109716,
                 longitude = -79.10819105821295
+            ),
+            SuggestionResponse(
+                id = "ChIJa7PjNOg1K4gREdFQwwrkG0Q",
+                primaryText = "88 Queen St E",
+                secondaryText = "Toronto, ON, Canada",
+                latitude = 43.653225,
+                longitude = -79.383186
             )
         )
 

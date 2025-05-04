@@ -25,4 +25,5 @@ sealed interface EditPlacesUiEvent : UiEvent {
 }
 
 sealed interface EditPlacesUiSideEffect : UiSideEffect {
+    data class NavigateToSaveLocation(val placeId: String) : EditPlacesUiSideEffect
 }

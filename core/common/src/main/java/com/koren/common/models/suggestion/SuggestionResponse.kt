@@ -1,5 +1,8 @@
 package com.koren.common.models.suggestion
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class SuggestionResponse(
     val id: String = "",
     val primaryText: String = "",

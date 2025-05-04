@@ -44,6 +44,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.common.models.family.LocationIcon
 import com.koren.common.models.family.SavedLocation
+import com.koren.common.models.suggestion.SuggestionResponse
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
@@ -57,6 +58,7 @@ object EditPlacesDestination
 @Composable
 fun EditPlacesScreen(
     viewModel: EditPlacesViewModel = hiltViewModel(),
+    onNavigateToSaveLocation: (String) -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit
 ) {
 
@@ -73,7 +75,7 @@ fun EditPlacesScreen(
         viewModel = viewModel
     ) { uiSideEffect ->
         when (uiSideEffect) {
-            else -> Unit
+            is EditPlacesUiSideEffect.NavigateToSaveLocation -> onNavigateToSaveLocation(uiSideEffect.placeId)
         }
     }
 
@@ -189,9 +191,7 @@ private fun EditPlacesScreenShownContent(
             .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .animateContentSize(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {
