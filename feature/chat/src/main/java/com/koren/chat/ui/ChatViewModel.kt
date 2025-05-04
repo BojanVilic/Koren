@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import com.koren.common.models.chat.MessageType
 import com.koren.common.services.UserSession
@@ -30,7 +31,7 @@ class ChatViewModel @Inject constructor(
         val messages by chatRepository.getChatMessages().collectAsState(initial = emptyList())
         val currentUserId by userSession.currentUser.map { it.id }.collectAsState(initial = "")
 
-        var messageText by remember { mutableStateOf("") }
+        var messageText by remember { mutableStateOf(TextFieldValue("")) }
         var showReactionPopup by remember { mutableStateOf(false) }
         var targetMessageIdForReaction by remember { mutableStateOf<String?>(null) }
 
@@ -51,7 +52,7 @@ class ChatViewModel @Inject constructor(
                     showReactionPopup = true
                     targetMessageIdForReaction = event.messageId
                 }
-                is ChatUiEvent.SendMessage -> sendMessage(messageText, MessageType.TEXT)
+                is ChatUiEvent.SendMessage -> sendMessage(messageText.text, MessageType.TEXT)
                 is ChatUiEvent.OnReactionSelected -> Unit
             }
         }

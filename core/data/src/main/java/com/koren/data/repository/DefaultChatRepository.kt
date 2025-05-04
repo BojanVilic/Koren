@@ -25,11 +25,12 @@ class DefaultChatRepository @Inject constructor(
         val user = userSession.currentUser.first()
 
         val chatRef = database.getReference("chats/${user.familyId}")
+            .orderByChild("timestamp")
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val messages = snapshot.children
                     .mapNotNull { it.getValue<ChatMessage>() }
-
+                    .reversed()
                 trySend(messages).isSuccess
             }
 

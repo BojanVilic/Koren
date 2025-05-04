@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package com.koren.chat.ui
 
 import androidx.compose.animation.AnimatedContent
@@ -9,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +25,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -54,6 +58,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -129,7 +134,9 @@ private fun ChatScreenShownContent(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding()
     ) {
         MessageList(
             modifier = Modifier.weight(1f),
@@ -145,7 +152,7 @@ private fun ChatScreenShownContent(
             text = uiState.messageText,
             onTextChange = { uiState.eventSink(ChatUiEvent.OnMessageTextChanged(it)) },
             onSendClick = {
-                if (uiState.messageText.isNotBlank())
+                if (uiState.messageText.text.isNotBlank())
                     uiState.eventSink(ChatUiEvent.SendMessage)
             },
             onAttachmentClick = { },
@@ -180,7 +187,8 @@ fun MessageList(
         modifier = modifier.padding(horizontal = 8.dp),
         state = listState,
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(vertical = 8.dp)
+        contentPadding = PaddingValues(vertical = 8.dp),
+        reverseLayout = true
     ) {
         items(
             key = { it.id },
@@ -432,8 +440,8 @@ fun formatDuration(seconds: Long): String {
 
 @Composable
 fun MessageInputArea(
-    text: String,
-    onTextChange: (String) -> Unit,
+    text: TextFieldValue,
+    onTextChange: (TextFieldValue) -> Unit,
     onSendClick: () -> Unit,
     onAttachmentClick: () -> Unit,
     onMicClick: () -> Unit
@@ -443,7 +451,7 @@ fun MessageInputArea(
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.Bottom
+            verticalAlignment = Alignment.CenterVertically
         ) {
             OutlinedTextField(
                 modifier = Modifier
@@ -460,7 +468,7 @@ fun MessageInputArea(
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
-                maxLines = 5,
+                maxLines = 4,
                 leadingIcon = {
                     IconButton(onClick = onAttachmentClick) {
                         Icon(Icons.Default.Add, contentDescription = "Attach file")
@@ -479,11 +487,11 @@ fun MessageInputArea(
 
 @Composable
 fun AnimatedSendMicButton(
-    text: String,
+    text: TextFieldValue,
     onSendClick: () -> Unit,
     onMicClick: () -> Unit
 ) {
-    val isSendButton = text.isNotBlank()
+    val isSendButton = text.text.isNotBlank()
 
     val targetBackgroundColor =
         if (isSendButton) MaterialTheme.colorScheme.primary
