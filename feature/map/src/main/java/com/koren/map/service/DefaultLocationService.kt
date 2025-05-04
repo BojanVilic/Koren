@@ -48,7 +48,7 @@ class DefaultLocationService @Inject constructor(
     private val context: Context,
     private val userSession: UserSession,
     private val placesClient: PlacesClient,
-    private val firebaseDatabase: FirebaseDatabase,
+    private val firebaseDatabase: FirebaseDatabase
 ): LocationService {
 
     private val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30.seconds.inWholeMilliseconds)

@@ -9,6 +9,7 @@ import com.koren.common.util.UiState
 sealed interface ChatUiState : UiState {
     data object Loading : ChatUiState
     data class Shown(
+        val currentUserId: String = "",
         val messages: List<ChatMessage> = emptyList(),
         val messageText: String = "",
         val showReactionPopup: Boolean = false,
@@ -18,7 +19,7 @@ sealed interface ChatUiState : UiState {
 }
 
 sealed interface ChatUiEvent : UiEvent {
-    data class SendMessage(val message: String) : ChatUiEvent
+    data object SendMessage : ChatUiEvent
     data class OnMessageTextChanged(val text: String) : ChatUiEvent
     data class OpenMessageReactions(val messageId: String) : ChatUiEvent
     data class OnReactionSelected(val messageId: String, val reaction: String) : ChatUiEvent

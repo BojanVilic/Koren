@@ -12,8 +12,7 @@ data class ChatMessage(
     val textContent: String? = null,
     val mediaUrl: String? = null,
     val mediaDuration: Long? = null,
-    val reactions: Map<String, String>? = null,
-    val isRead: Boolean = false
+    val reactions: Map<String, String>? = null
 )
 
 data class ChatConversation(

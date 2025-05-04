@@ -134,7 +134,7 @@ private fun ChatScreenShownContent(
         MessageList(
             modifier = Modifier.weight(1f),
             messages = uiState.messages,
-            currentUserId = CURRENT_USER_ID,
+            currentUserId = uiState.currentUserId,
             onMessageLongPress = { messageId ->
                 uiState.eventSink(ChatUiEvent.OpenMessageReactions(messageId))
             },
@@ -145,9 +145,8 @@ private fun ChatScreenShownContent(
             text = uiState.messageText,
             onTextChange = { uiState.eventSink(ChatUiEvent.OnMessageTextChanged(it)) },
             onSendClick = {
-                if (uiState.messageText.isNotBlank()) {
-                    uiState.eventSink(ChatUiEvent.SendMessage(""))
-                }
+                if (uiState.messageText.isNotBlank())
+                    uiState.eventSink(ChatUiEvent.SendMessage)
             },
             onAttachmentClick = { },
             onMicClick = { }
@@ -166,8 +165,6 @@ private fun ChatScreenShownContent(
         }
     }
 }
-
-const val CURRENT_USER_ID = "user1"
 
 @Composable
 fun MessageList(
@@ -577,18 +574,19 @@ fun ReactionSelectionDialog(
 fun ChatScreenPreview() {
     val sampleMessages = listOf(
         ChatMessage("1", "user2", System.currentTimeMillis() - 100000000, MessageType.TEXT, "Jeste kupili boje za farbanje jaja", null, null, null),
-        ChatMessage("2", CURRENT_USER_ID, System.currentTimeMillis() - 90000000, MessageType.TEXT, "Ma kaki.", null, null, null),
+        ChatMessage("2", "user1", System.currentTimeMillis() - 90000000, MessageType.TEXT, "Ma kaki.", null, null, null),
         ChatMessage("3", "user2", System.currentTimeMillis() - 80000000, MessageType.TEXT, "Vreme vam je da pocnete farbati, vise niste sami", null, null, null),
         ChatMessage("3b", "user2", System.currentTimeMillis() - 70000000, MessageType.TEXT, "Pita vanja jel idete u kostariku", null, null, null),
         ChatMessage("4", "user2", System.currentTimeMillis() - 50000, MessageType.TEXT, "Jeste stigli", null, null, null),
-        ChatMessage("5", CURRENT_USER_ID, System.currentTimeMillis() - 10000, MessageType.TEXT, "Evo upravo. Ja vadim stvari iz auta.", null, null, mapOf("user2" to "👍")),
-        ChatMessage("6", CURRENT_USER_ID, System.currentTimeMillis() - 5000, MessageType.IMAGE, "Image Message", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Android_logo_2019_%28stacked%29.svg/2346px-Android_logo_2019_%28stacked%29.svg.png", null, null),
+        ChatMessage("5", "user1", System.currentTimeMillis() - 10000, MessageType.TEXT, "Evo upravo. Ja vadim stvari iz auta.", null, null, mapOf("user2" to "👍")),
+        ChatMessage("6", "user1", System.currentTimeMillis() - 5000, MessageType.IMAGE, "Image Message", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Android_logo_2019_%28stacked%29.svg/2346px-Android_logo_2019_%28stacked%29.svg.png", null, null),
         ChatMessage("7", "user2", System.currentTimeMillis() - 2000, MessageType.VOICE, null, null, 45L, null),
     )
 
     KorenTheme {
         ChatScreenContent(
             uiState = ChatUiState.Shown(
+                currentUserId = "user1",
                 messages = sampleMessages,
                 eventSink = {}
             )
