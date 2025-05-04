@@ -2,9 +2,8 @@ plugins {
     alias(libs.plugins.koren.feature)
 }
 
-
 android {
-    namespace = "com.koren.calendar"
+    namespace = "com.koren.chat"
 }
 
 dependencies {

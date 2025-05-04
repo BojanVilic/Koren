@@ -84,6 +84,7 @@ class HomeViewModel @Inject constructor(
                 is HomeEvent.AcceptCallHomeRequest -> updateCallHomeRequestStatus(CallHomeRequestStatus.ACCEPTED)
                 is HomeEvent.RejectCallHomeRequest -> updateCallHomeRequestStatus(CallHomeRequestStatus.REJECTED)
                 is HomeEvent.ActionsFabClicked -> actionsOpen = !actionsOpen
+                is HomeEvent.NavigateToChat -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToChat)
             }
         }
     }

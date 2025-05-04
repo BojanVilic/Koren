@@ -274,6 +274,7 @@ fun getRandomMessageAndEmoji(): String {
         "Making things happen, as always! 🚀",
         "You're the boss! 👑",
         "You got this! 💪",
+        "🦆",
     )
     return messagesAndEmojis.random()
 }

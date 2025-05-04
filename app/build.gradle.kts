@@ -57,6 +57,7 @@ kotlin {
 dependencies {
     implementation(projects.core.designsystem)
     implementation(projects.core.common)
+    implementation(projects.core.notifications)
     implementation(projects.feature.auth)
     implementation(projects.feature.home)
     implementation(projects.feature.onboarding)
@@ -65,7 +66,7 @@ dependencies {
     implementation(projects.feature.account)
     implementation(projects.feature.invitation)
     implementation(projects.feature.calendar)
-    implementation(projects.core.notifications)
+    implementation(projects.feature.chat)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

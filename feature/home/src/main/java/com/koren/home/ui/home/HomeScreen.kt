@@ -96,7 +96,8 @@ fun HomeScreen(
     sentInvitations: () -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit,
     openAddCalendarEntry: (Day) -> Unit,
-    openMemberDetails: (userId: String) -> Unit
+    openMemberDetails: (userId: String) -> Unit,
+    navigateToChat: () -> Unit
 ) {
 
     val scaffoldStateProvider = LocalScaffoldStateProvider.current
@@ -124,6 +125,7 @@ fun HomeScreen(
                 )
             )
             is HomeSideEffect.OpenMemberDetails -> openMemberDetails(sideEffect.member.id)
+            is HomeSideEffect.NavigateToChat -> navigateToChat()
         }
     }
 
@@ -202,7 +204,7 @@ fun HomeScaffoldWithExpandingFab(
         ActionItem(
             icon = IconResource.Vector(Icons.Default.Email),
             text = "Chat",
-            onClick = {}
+            onClick = { state.eventSink(HomeEvent.NavigateToChat) }
         ),
         ActionItem(
             icon = IconResource.Vector(Icons.Default.DateRange),

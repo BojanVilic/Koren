@@ -22,6 +22,8 @@ import com.koren.calendar.navigation.calendarScreen
 import com.koren.calendar.ui.add_entry.AddEntryDestination
 import com.koren.calendar.ui.add_entry.AddEntryScreen
 import com.koren.calendar.ui.calendar.CalendarDestination
+import com.koren.chat.navigation.chatScreen
+import com.koren.chat.ui.ChatDestination
 import com.koren.common.models.calendar.Day
 import com.koren.designsystem.components.bottom_sheet.BottomSheetNavigator
 import com.koren.designsystem.components.bottom_sheet.ModalBottomSheetLayout
@@ -95,6 +97,9 @@ fun KorenNavHost(
                     },
                     navigateAndFindOnMap = { userId ->
                         navController.navigateToMapWithCoordinates(userId)
+                    },
+                    navigateToChat = {
+                        navController.navigate(ChatDestination)
                     }
                 )
                 onboardingScreen(
@@ -123,6 +128,10 @@ fun KorenNavHost(
                 )
                 invitationScreen(navController = navController)
                 calendarScreen(
+                    navController = navController,
+                    onShowSnackbar = onShowSnackbar
+                )
+                chatScreen(
                     navController = navController,
                     onShowSnackbar = onShowSnackbar
                 )

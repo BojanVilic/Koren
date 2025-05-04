@@ -55,11 +55,13 @@ sealed interface HomeEvent : UiEvent {
     data object AcceptCallHomeRequest : HomeEvent
     data object RejectCallHomeRequest : HomeEvent
     data object ActionsFabClicked : HomeEvent
+    data object NavigateToChat : HomeEvent
 }
 
 sealed interface HomeSideEffect : UiSideEffect {
     data object NavigateToInviteFamilyMember : HomeSideEffect
     data object NavigateToSentInvitations : HomeSideEffect
+    data object NavigateToChat : HomeSideEffect
     data object OpenAddCalendarEntry : HomeSideEffect
     data class OpenMemberDetails(val member: UserData) : HomeSideEffect
     data class ShowMessage(val message: String) : HomeSideEffect

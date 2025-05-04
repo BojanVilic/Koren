@@ -48,7 +48,7 @@ class MapViewModel @Inject constructor(
         if (!locationService.isLocationPermissionGranted()) return MapUiState.LocationPermissionNotGranted(onPermissionGranted = { setupLocationUpdates() })
         if (currentUser == null) return MapUiState.Loading
 
-        setupLocationUpdates()
+        LaunchedEffect(Unit) { setupLocationUpdates() }
         val targetUserId = savedStateHandle.toRoute<MapDestination>().userId
         val familyMembers by getAllFamilyMembersUseCase().collectAsState(initial = emptyList())
         val savedLocations by getFamilyLocations().collectAsState(initial = emptyList())
@@ -59,7 +59,7 @@ class MapViewModel @Inject constructor(
                         currentUser?.lastLocation?.latitude ?: 0.0,
                         currentUser?.lastLocation?.longitude ?: 0.0
                     ),
-                    18f
+                    16f
                 )
             }
         )
@@ -102,7 +102,7 @@ class MapViewModel @Inject constructor(
         longitude: Double
     ) {
         val cameraUpdate = CameraUpdateFactory.newCameraPosition(
-            CameraPosition.fromLatLngZoom(LatLng(latitude, longitude), 18f)
+            CameraPosition.fromLatLngZoom(LatLng(latitude, longitude), 16f)
         )
 
         viewModelScope.launch {
