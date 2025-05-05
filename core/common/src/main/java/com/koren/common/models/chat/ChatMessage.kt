@@ -14,11 +14,3 @@ data class ChatMessage(
     val mediaDuration: Long? = null,
     val reactions: Map<String, String>? = null
 )
-
-data class ChatConversation(
-    val chatId: String = "",
-    val participantIds: List<String> = emptyList(),
-    val lastMessageTimestamp: Long = 0L,
-    val lastMessageText: String? = null,
-    val unreadCount: Map<String, Int> = emptyMap()
-)

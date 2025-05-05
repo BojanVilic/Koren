@@ -17,6 +17,7 @@ sealed interface ChatUiState : UiState {
         val targetMessageIdForReaction: String? = null,
         val shownTimestamps: Set<String> = emptySet(),
         val attachmentsOverlayShown: Boolean = true,
+        val profilePicsMap: Map<String, String> = emptyMap(),
         override val eventSink: (ChatUiEvent) -> Unit
     ) : ChatUiState, EventHandler<ChatUiEvent>
 }

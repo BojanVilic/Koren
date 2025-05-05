@@ -168,7 +168,8 @@ private fun ChatScreenShownContent(
                 uiState.eventSink(ChatUiEvent.OpenMessageReactions(messageId))
             },
             listState = listState,
-            shownTimestamps = uiState.shownTimestamps
+            shownTimestamps = uiState.shownTimestamps,
+            profilePicsMap = uiState.profilePicsMap
         )
 
         MessageInputArea(
@@ -300,7 +301,8 @@ fun MessageList(
     listState: LazyListState = rememberLazyListState(),
     onMessageClick: (messageId: String) -> Unit,
     onMessageLongPress: (messageId: String) -> Unit,
-    shownTimestamps: Set<String>
+    shownTimestamps: Set<String>,
+    profilePicsMap: Map<String, String>
 ) {
     var lastDisplayedDate: Calendar? = null
 
@@ -330,7 +332,8 @@ fun MessageList(
                 isPreviousMessageSameSender = isPreviousMessageSameSender,
                 onMessageClick = { onMessageClick(message.id) },
                 onLongPress = { onMessageLongPress(message.id) },
-                timestampVisible = shownTimestamps.contains(message.id)
+                timestampVisible = shownTimestamps.contains(message.id),
+                profilePic = profilePicsMap.getOrDefault(message.senderId, null)
             )
         }
     }
@@ -388,7 +391,8 @@ fun MessageItem(
     isPreviousMessageSameSender: Boolean,
     onMessageClick: (String) -> Unit,
     onLongPress: () -> Unit,
-    timestampVisible: Boolean
+    timestampVisible: Boolean,
+    profilePic: String? = null
 ) {
     val arrangement =
         if (isCurrentUser) Arrangement.End
@@ -416,17 +420,17 @@ fun MessageItem(
                     modifier = Modifier
                         .padding(top = 8.dp, end = 8.dp)
                         .clip(CircleShape)
-                        .size(32.dp)
+                        .size(36.dp)
                         .align(Alignment.Top),
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKqy3AA5kpuDpGxChSg5_3CNDEiPKtWwvffch24YGo0iBnp3ZbxV9H71l6ijV8GWJ5Kp4&usqp=CAU")
+                        .data(profilePic)
                         .crossfade(true)
                         .build(),
                     contentDescription = "Sent image",
                     contentScale = ContentScale.Crop
                 )
             } else {
-                Spacer(modifier = Modifier.width(40.dp))
+                Spacer(modifier = Modifier.width(44.dp))
             }
         }
 
@@ -726,6 +730,7 @@ fun ChatScreenPreview() {
             uiState = ChatUiState.Shown(
                 currentUserId = "user1",
                 messages = sampleMessages,
+                attachmentsOverlayShown = false,
                 eventSink = {}
             )
         )
