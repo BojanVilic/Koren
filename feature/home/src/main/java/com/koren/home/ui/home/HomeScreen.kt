@@ -12,9 +12,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,7 +46,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
@@ -66,12 +62,14 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.koren.common.models.calendar.Day
 import com.koren.common.models.calendar.TaskWithUsers
+import com.koren.common.models.family.FamilyMemberUserData
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.InvitationStatus
 import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.LoadingContent
+import com.koren.designsystem.components.Scrim
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.icon.RemovePerson
 import com.koren.designsystem.models.ActionItem
@@ -80,7 +78,6 @@ import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
-import com.koren.common.models.family.FamilyMemberUserData
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import java.time.DayOfWeek
@@ -174,20 +171,6 @@ private fun ShownContent(
         receivedInvitationsSection(state)
         sentInvitationsSection(state)
     }
-}
-
-@Composable
-fun Scrim(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.4f))
-            .clickable(
-                onClick = onClick,
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            )
-    )
 }
 
 @Composable
@@ -342,55 +325,6 @@ fun MiniFabItem(
                 fontWeight = FontWeight.SemiBold
             )
         }
-    }
-}
-
-class InvitationCodeVisualTransformation : VisualTransformation {
-    override fun filter(text: AnnotatedString): TransformedText {
-        val trimmed = if (text.text.length > 6) text.text.substring(0, 6) else text.text
-        val upperCase = trimmed.uppercase()
-        val spaced = buildString {
-            upperCase.forEachIndexed { index, char ->
-                append(char)
-                if ((index + 1) % 3 == 0 && index < upperCase.length - 1) {
-                    append(" ")
-                }
-            }
-        }
-
-        return TransformedText(AnnotatedString(spaced), object : OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int {
-                if (offset <= 0) return offset
-                val spacedOffset = offset + (offset - 1) / 3
-                return minOf(spacedOffset, spaced.length)
-            }
-
-            override fun transformedToOriginal(offset: Int): Int {
-                if (offset <= 0) return offset
-                val originalOffset = offset - (offset - 1) / 4 // Divide by 4 because of added space
-                return minOf(originalOffset, upperCase.length)
-            }
-        })
-    }
-}
-
-@Composable
-fun DividerWithText(
-    modifier: Modifier = Modifier,
-    text: String
-) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        HorizontalDivider(modifier = Modifier.weight(1f))
-        Text(
-            modifier = Modifier.weight(0.6f),
-            text = text,
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center
-        )
-        HorizontalDivider(modifier = Modifier.weight(1f))
     }
 }
 

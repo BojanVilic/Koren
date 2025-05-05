@@ -33,11 +33,12 @@ import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.getExpiryText
 import com.koren.common.util.CollectSideEffects
 import com.koren.common.util.DateUtils.toRelativeTime
+import com.koren.designsystem.components.DividerWithText
 import com.koren.designsystem.components.LoadingContent
+import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
-import com.koren.home.ui.home.DividerWithText
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -195,11 +196,13 @@ private fun ShownContent(
 @ThemePreview
 @Composable
 fun QRAcceptInvitationScreenPreview() {
-    QRAcceptInvitationContent(
-        uiState = QRInvitationUiState.Shown(
-            invitation = Invitation(),
-            eventSink = {}
-        ),
-        invitationCode = "123456"
-    )
+    KorenTheme {
+        QRAcceptInvitationContent(
+            uiState = QRInvitationUiState.Shown(
+                invitation = Invitation(),
+                eventSink = {}
+            ),
+            invitationCode = "123456"
+        )
+    }
 }

@@ -16,6 +16,7 @@ sealed interface ChatUiState : UiState {
         val showReactionPopup: Boolean = false,
         val targetMessageIdForReaction: String? = null,
         val shownTimestamps: Set<String> = emptySet(),
+        val attachmentsOverlayShown: Boolean = true,
         override val eventSink: (ChatUiEvent) -> Unit
     ) : ChatUiState, EventHandler<ChatUiEvent>
 }
@@ -27,6 +28,8 @@ sealed interface ChatUiEvent : UiEvent {
     data class OnReactionSelected(val messageId: String, val reaction: String) : ChatUiEvent
     data object DismissReactionPopup : ChatUiEvent
     data class OnMessageClicked(val messageId: String) : ChatUiEvent
+    data object ShowAttachmentsOverlay : ChatUiEvent
+    data object CloseAttachmentsOverlay : ChatUiEvent
 }
 
 sealed interface ChatUiSideEffect : UiSideEffect {

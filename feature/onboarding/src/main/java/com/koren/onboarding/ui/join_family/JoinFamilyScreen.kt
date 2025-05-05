@@ -1,18 +1,23 @@
-package com.koren.home.ui.home
+package com.koren.onboarding.ui.join_family
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -20,35 +25,87 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.getExpiryText
+import com.koren.common.util.CollectSideEffects
 import com.koren.common.util.DateUtils.toRelativeTime
 import com.koren.designsystem.components.DividerWithText
 import com.koren.designsystem.components.InvitationCodeVisualTransformation
+import com.koren.designsystem.theme.KorenTheme
+import com.koren.designsystem.theme.LocalScaffoldStateProvider
+import com.koren.designsystem.theme.ScaffoldState
+import com.koren.designsystem.theme.ThemePreview
+import kotlinx.serialization.Serializable
 
-internal fun LazyListScope.receivedInvitationsSection(
-    state: HomeUiState.Shown
+@Serializable
+object JoinFamilyDestination
+
+@Composable
+fun JoinFamilyScreen(
+    viewModel: JoinFamilyViewModel = hiltViewModel(),
+    onShowSnackbar: suspend (message: String) -> Unit
 ) {
-    item {
-        if (state.receivedInvitations.isNotEmpty()) {
-            Column {
-                state.receivedInvitations.forEach { invitation ->
-                    ReceivedInvitationCard(
-                        invitation = invitation,
-                        invitationCodeText = state.invitationCodeText,
-                        acceptInvitation = { code -> state.eventSink(HomeEvent.AcceptInvitation(invitation, code)) },
-                        declineInvitation = { state.eventSink(HomeEvent.DeclineInvitation(invitation.id)) },
-                        onInvitationCodeChanged = { state.eventSink(HomeEvent.InvitationCodeChanged(it)) },
-                        invitationCodeError = state.invitationCodeError
-                    )
-                }
-            }
+
+    LocalScaffoldStateProvider.current.setScaffoldState(
+        ScaffoldState(
+
+        )
+    )
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    CollectSideEffects(
+        viewModel = viewModel
+    ) { uiSideEffect ->
+        when (uiSideEffect) {
+            else -> Unit
+        }
+    }
+
+    JoinFamilyScreenContent(
+        uiState = uiState
+    )
+}
+
+@Composable
+private fun JoinFamilyScreenContent(
+    uiState: JoinFamilyUiState
+) {
+    when (uiState) {
+        is JoinFamilyUiState.Loading -> CircularProgressIndicator()
+        is JoinFamilyUiState.Shown -> JoinFamilyScreenShownContent(uiState = uiState)
+    }
+}
+
+@Composable
+private fun JoinFamilyScreenShownContent(
+    uiState: JoinFamilyUiState.Shown
+) {
+    LazyColumn(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxSize()
+            .animateContentSize(),
+        contentPadding = PaddingValues(vertical = 16.dp)
+    ) {
+        items(uiState.receivedInvitations) { invitation ->
+            ReceivedInvitationCard(
+                invitation = invitation,
+                invitationCodeText = uiState.invitationCodeText,
+                acceptInvitation = { code -> uiState.eventSink(JoinFamilyUiEvent.AcceptInvitation(invitation, code)) },
+                declineInvitation = { uiState.eventSink(JoinFamilyUiEvent.DeclineInvitation(invitation.id)) },
+                onInvitationCodeChanged = { uiState.eventSink(JoinFamilyUiEvent.InvitationCodeChanged(it)) },
+                invitationCodeError = uiState.invitationCodeError
+            )
         }
     }
 }
@@ -148,5 +205,17 @@ private fun ReceivedInvitationCard(
                 )
             }
         }
+    }
+}
+
+@ThemePreview
+@Composable
+fun JoinFamilyScreenPreview() {
+    KorenTheme {
+        JoinFamilyScreenContent(
+            uiState = JoinFamilyUiState.Shown(
+                eventSink = {}
+            )
+        )
     }
 }

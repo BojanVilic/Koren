@@ -44,7 +44,6 @@ sealed interface HomeEvent : UiEvent {
         val invitation: Invitation,
         val typedCode: String
     ) : HomeEvent
-
     data class DeclineInvitation(val id: String) : HomeEvent
     data class InvitationCodeChanged(val code: String) : HomeEvent
     data object NavigateToInviteFamilyMember : HomeEvent

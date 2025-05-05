@@ -3,13 +3,17 @@
 package com.koren.chat.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -32,17 +36,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -54,12 +60,18 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,10 +79,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.koren.chat.ui.model.AttachmentOptions
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
 import com.koren.common.util.CollectSideEffects
+import com.koren.designsystem.components.Scrim
+import com.koren.designsystem.icon.Files
+import com.koren.designsystem.icon.Image
 import com.koren.designsystem.icon.KorenIcons
+import com.koren.designsystem.icon.Video
 import com.koren.designsystem.icon.Voice
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
@@ -161,7 +178,7 @@ private fun ChatScreenShownContent(
                 if (uiState.messageText.text.isNotBlank())
                     uiState.eventSink(ChatUiEvent.SendMessage)
             },
-            onAttachmentClick = { },
+            onAttachmentClick = { uiState.eventSink(ChatUiEvent.ShowAttachmentsOverlay) },
             onMicClick = { }
         )
 
@@ -176,6 +193,102 @@ private fun ChatScreenShownContent(
                 }
             )
         }
+    }
+
+    AnimatedVisibility(
+        modifier = Modifier.imePadding(),
+        visible = uiState.attachmentsOverlayShown,
+        enter = fadeIn(),
+        exit = fadeOut(),
+    ) {
+        AttachmentsOverlay(uiState)
+    }
+}
+
+@Composable
+private fun AttachmentsOverlay(
+    uiState: ChatUiState.Shown
+) {
+
+    val hapticFeedback = LocalHapticFeedback.current
+    var kickOffAnimation by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        kickOffAnimation = true
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scrim(onClick = { uiState.eventSink(ChatUiEvent.CloseAttachmentsOverlay) })
+
+        AnimatedVisibility(
+            modifier = Modifier.align(Alignment.BottomEnd),
+            visible = kickOffAnimation,
+            enter = slideInVertically(initialOffsetY = { it }),
+            exit = slideOutVertically(targetOffsetY = { -it })
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomEnd)
+                    .padding(horizontal = 16.dp, vertical = 64.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    val attachments = listOf(
+                        AttachmentOptions(
+                            icon = KorenIcons.Image,
+                            title = "Image",
+                            onClick = {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
+                            }
+                        ),
+                        AttachmentOptions(
+                            icon = KorenIcons.Video,
+                            title = "Video",
+                            onClick = {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
+                            }
+                        ),
+                        AttachmentOptions(
+                            icon = KorenIcons.Files,
+                            title = "File",
+                            onClick = {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
+                            }
+                        )
+                    )
+
+                    attachments.forEachIndexed { index, attachmentItem ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    attachmentItem.onClick()
+                                    uiState.eventSink(ChatUiEvent.CloseAttachmentsOverlay)
+                                }
+                                .padding(horizontal = 16.dp, vertical = 24.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                modifier = Modifier.size(24.dp),
+                                imageVector = attachmentItem.icon,
+                                contentDescription = attachmentItem.title
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = attachmentItem.title
+                            )
+                        }
+                        if (index != attachments.lastIndex) HorizontalDivider()
+                    }
+                }
+            }
+        }
+
+
+
     }
 }
 
@@ -210,13 +323,11 @@ fun MessageList(
             }
 
             val isPreviousMessageSameSender = index > 0 && messages[index - 1].senderId == message.senderId
-            val isNextMessageSameSender = index < messages.size - 1 && messages[index + 1].senderId == message.senderId
 
             MessageItem(
                 message = message,
                 isCurrentUser = message.senderId == currentUserId,
                 isPreviousMessageSameSender = isPreviousMessageSameSender,
-                isNextMessageSameSender = isNextMessageSameSender,
                 onMessageClick = { onMessageClick(message.id) },
                 onLongPress = { onMessageLongPress(message.id) },
                 timestampVisible = shownTimestamps.contains(message.id)
@@ -275,7 +386,6 @@ fun MessageItem(
     message: ChatMessage,
     isCurrentUser: Boolean,
     isPreviousMessageSameSender: Boolean,
-    isNextMessageSameSender: Boolean,
     onMessageClick: (String) -> Unit,
     onLongPress: () -> Unit,
     timestampVisible: Boolean
@@ -491,7 +601,8 @@ fun MessageInputArea(
                     IconButton(onClick = onAttachmentClick) {
                         Icon(Icons.Default.Add, contentDescription = "Attach file")
                     }
-                }
+                },
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
             )
 
             AnimatedSendMicButton(

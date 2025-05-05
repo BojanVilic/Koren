@@ -65,15 +65,107 @@ class DefaultChatRepository @Inject constructor(
         }
     }
 
-    override suspend fun deleteMessage(messageId: String) {
-        TODO("Not yet implemented")
+    override suspend fun deleteMessage(messageId: String): Result<Unit> {
+        val user = userSession.currentUser.first()
+        val messageRef = database.getReference("chats/${user.familyId}/$messageId")
+
+        return try {
+            messageRef.removeValue().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Timber.e("Error deleting message: ${e.message}")
+            Result.failure(e)
+        }
     }
 
-    override suspend fun addReactionToMessage(messageId: String, reaction: String) {
-        TODO("Not yet implemented")
+    override suspend fun addReactionToMessage(messageId: String, reaction: String): Result<Unit> {
+        val user = userSession.currentUser.first()
+        val reactionRef = database.getReference("chats/${user.familyId}/$messageId/reactions/${user.id}")
+
+        return try {
+            reactionRef.setValue(reaction).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Timber.e("Error adding reaction: ${e.message}")
+            Result.failure(e)
+        }
     }
 
-    override suspend fun removeReactionFromMessage(messageId: String, reaction: String) {
-        TODO("Not yet implemented")
+    override suspend fun removeReactionFromMessage(messageId: String, reaction: String): Result<Unit> {
+        val user = userSession.currentUser.first()
+        val reactionRef = database.getReference("chats/${user.familyId}/$messageId/reactions/${user.id}")
+
+        return try {
+            reactionRef.removeValue().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Timber.e("Error removing reaction: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun sendImageMessage(imageUrl: String): Result<Unit> {
+        val user = userSession.currentUser.first()
+        val message = ChatMessage(
+            id = UUID.randomUUID().toString(),
+            senderId = user.id,
+            timestamp = System.currentTimeMillis(),
+            messageType = MessageType.IMAGE,
+            mediaUrl = imageUrl
+        )
+
+        val chatRef = database.getReference("chats/${user.familyId}/${message.id}")
+
+        return try {
+            chatRef.setValue(message).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Timber.e("Error sending image message: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun sendVideoMessage(videoUrl: String, duration: Long): Result<Unit> {
+        val user = userSession.currentUser.first()
+        val message = ChatMessage(
+            id = UUID.randomUUID().toString(),
+            senderId = user.id,
+            timestamp = System.currentTimeMillis(),
+            messageType = MessageType.VIDEO,
+            mediaUrl = videoUrl,
+            mediaDuration = duration
+        )
+
+        val chatRef = database.getReference("chats/${user.familyId}/${message.id}")
+
+        return try {
+            chatRef.setValue(message).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Timber.e("Error sending video message: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun sendAudioMessage(audioUrl: String, duration: Long): Result<Unit> {
+        val user = userSession.currentUser.first()
+        val message = ChatMessage(
+            id = UUID.randomUUID().toString(),
+            senderId = user.id,
+            timestamp = System.currentTimeMillis(),
+            messageType = MessageType.VOICE,
+            mediaUrl = audioUrl,
+            mediaDuration = duration
+        )
+
+        val chatRef = database.getReference("chats/${user.familyId}/${message.id}")
+
+        return try {
+            chatRef.setValue(message).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Timber.e("Error sending audio message: ${e.message}")
+            Result.failure(e)
+        }
     }
 }

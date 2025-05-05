@@ -35,6 +35,7 @@ class ChatViewModel @Inject constructor(
         var showReactionPopup by remember { mutableStateOf(false) }
         var targetMessageIdForReaction by remember { mutableStateOf<String?>(null) }
         var shownTimestamps by remember { mutableStateOf(emptySet<String>()) }
+        var attachmentsOptionsOpen by remember { mutableStateOf(false) }
 
         return ChatUiState.Shown(
             currentUserId = currentUserId,
@@ -42,7 +43,8 @@ class ChatViewModel @Inject constructor(
             messageText = messageText,
             showReactionPopup = showReactionPopup,
             targetMessageIdForReaction = targetMessageIdForReaction,
-            shownTimestamps = shownTimestamps
+            shownTimestamps = shownTimestamps,
+            attachmentsOverlayShown = attachmentsOptionsOpen,
         ) { event ->
             when (event) {
                 is ChatUiEvent.DismissReactionPopup -> {
@@ -63,6 +65,8 @@ class ChatViewModel @Inject constructor(
                 is ChatUiEvent.OnMessageClicked -> shownTimestamps =
                     if (shownTimestamps.contains(event.messageId)) shownTimestamps - event.messageId
                     else shownTimestamps + event.messageId
+                is ChatUiEvent.ShowAttachmentsOverlay -> attachmentsOptionsOpen = true
+                is ChatUiEvent.CloseAttachmentsOverlay -> attachmentsOptionsOpen = false
             }
         }
     }
