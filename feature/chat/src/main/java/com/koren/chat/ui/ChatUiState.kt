@@ -15,6 +15,7 @@ sealed interface ChatUiState : UiState {
         val messageText: TextFieldValue = TextFieldValue(""),
         val showReactionPopup: Boolean = false,
         val targetMessageIdForReaction: String? = null,
+        val shownTimestamps: Set<String> = emptySet(),
         override val eventSink: (ChatUiEvent) -> Unit
     ) : ChatUiState, EventHandler<ChatUiEvent>
 }
@@ -25,6 +26,7 @@ sealed interface ChatUiEvent : UiEvent {
     data class OpenMessageReactions(val messageId: String) : ChatUiEvent
     data class OnReactionSelected(val messageId: String, val reaction: String) : ChatUiEvent
     data object DismissReactionPopup : ChatUiEvent
+    data class OnMessageClicked(val messageId: String) : ChatUiEvent
 }
 
 sealed interface ChatUiSideEffect : UiSideEffect {

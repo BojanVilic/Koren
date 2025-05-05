@@ -31,7 +31,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -142,10 +144,14 @@ private fun ChatScreenShownContent(
             modifier = Modifier.weight(1f),
             messages = uiState.messages,
             currentUserId = uiState.currentUserId,
+            onMessageClick = { messageId ->
+                uiState.eventSink(ChatUiEvent.OnMessageClicked(messageId))
+            },
             onMessageLongPress = { messageId ->
                 uiState.eventSink(ChatUiEvent.OpenMessageReactions(messageId))
             },
-            listState = listState
+            listState = listState,
+            shownTimestamps = uiState.shownTimestamps
         )
 
         MessageInputArea(
@@ -178,8 +184,10 @@ fun MessageList(
     modifier: Modifier = Modifier,
     messages: List<ChatMessage>,
     currentUserId: String,
-    listState: androidx.compose.foundation.lazy.LazyListState = rememberLazyListState(),
-    onMessageLongPress: (messageId: String) -> Unit
+    listState: LazyListState = rememberLazyListState(),
+    onMessageClick: (messageId: String) -> Unit,
+    onMessageLongPress: (messageId: String) -> Unit,
+    shownTimestamps: Set<String>
 ) {
     var lastDisplayedDate: Calendar? = null
 
@@ -190,10 +198,10 @@ fun MessageList(
         contentPadding = PaddingValues(vertical = 8.dp),
         reverseLayout = true
     ) {
-        items(
-            key = { it.id },
+        itemsIndexed(
+            key = { _, message -> message.id },
             items = messages
-        ) { message ->
+        ) { index, message ->
             val showDateSeparator = shouldShowDateSeparator(lastDisplayedDate, message.timestamp)
             if (showDateSeparator) {
                 val messageDate = Calendar.getInstance().apply { timeInMillis = message.timestamp }
@@ -201,10 +209,17 @@ fun MessageList(
                 lastDisplayedDate = messageDate
             }
 
+            val isPreviousMessageSameSender = index > 0 && messages[index - 1].senderId == message.senderId
+            val isNextMessageSameSender = index < messages.size - 1 && messages[index + 1].senderId == message.senderId
+
             MessageItem(
                 message = message,
                 isCurrentUser = message.senderId == currentUserId,
-                onLongPress = { onMessageLongPress(message.id) }
+                isPreviousMessageSameSender = isPreviousMessageSameSender,
+                isNextMessageSameSender = isNextMessageSameSender,
+                onMessageClick = { onMessageClick(message.id) },
+                onLongPress = { onMessageLongPress(message.id) },
+                timestampVisible = shownTimestamps.contains(message.id)
             )
         }
     }
@@ -259,7 +274,11 @@ fun isSameDay(cal1: Calendar, cal2: Calendar): Boolean {
 fun MessageItem(
     message: ChatMessage,
     isCurrentUser: Boolean,
-    onLongPress: () -> Unit
+    isPreviousMessageSameSender: Boolean,
+    isNextMessageSameSender: Boolean,
+    onMessageClick: (String) -> Unit,
+    onLongPress: () -> Unit,
+    timestampVisible: Boolean
 ) {
     val arrangement =
         if (isCurrentUser) Arrangement.End
@@ -277,31 +296,28 @@ fun MessageItem(
         if (isCurrentUser) MaterialTheme.colorScheme.onPrimary
         else MaterialTheme.colorScheme.onSurfaceVariant
 
-    val bubbleShape = RoundedCornerShape(
-        topStart = 16.dp,
-        topEnd = 16.dp,
-        bottomStart = if (isCurrentUser) 16.dp else 0.dp,
-        bottomEnd = if (isCurrentUser) 0.dp else 16.dp
-    )
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = arrangement
     ) {
         if (isCurrentUser.not()) {
-            AsyncImage(
-                modifier = Modifier
-                    .padding(top = 8.dp, end = 8.dp)
-                    .clip(CircleShape)
-                    .size(32.dp)
-                    .align(Alignment.Top),
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKqy3AA5kpuDpGxChSg5_3CNDEiPKtWwvffch24YGo0iBnp3ZbxV9H71l6ijV8GWJ5Kp4&usqp=CAU")
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Sent image",
-                contentScale = ContentScale.Crop
-            )
+            if (isPreviousMessageSameSender.not()) {
+                AsyncImage(
+                    modifier = Modifier
+                        .padding(top = 8.dp, end = 8.dp)
+                        .clip(CircleShape)
+                        .size(32.dp)
+                        .align(Alignment.Top),
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKqy3AA5kpuDpGxChSg5_3CNDEiPKtWwvffch24YGo0iBnp3ZbxV9H71l6ijV8GWJ5Kp4&usqp=CAU")
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Sent image",
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Spacer(modifier = Modifier.width(40.dp))
+            }
         }
 
         Column {
@@ -312,12 +328,12 @@ fun MessageItem(
                 Surface(
                     modifier = Modifier
                         .align(reactionAlignment)
-                        .clip(bubbleShape)
+                        .clip(MaterialTheme.shapes.small)
                         .combinedClickable(
-                            onClick = { },
+                            onClick = { onMessageClick(message.id) },
                             onLongClick = onLongPress
                         ),
-                    shape = bubbleShape,
+                    shape = MaterialTheme.shapes.medium,
                     color = backgroundColor
                 ) {
                     Column(
@@ -418,15 +434,17 @@ fun MessageItem(
                     )
                 }
 
-                Text(
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    text = SimpleDateFormat(
-                        "HH:mm",
-                        Locale.getDefault()
-                    ).format(Date(message.timestamp)),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                if (timestampVisible) {
+                    Text(
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        text = SimpleDateFormat(
+                            "HH:mm",
+                            Locale.getDefault()
+                        ).format(Date(message.timestamp)),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
         }
     }
@@ -586,6 +604,7 @@ fun ChatScreenPreview() {
         ChatMessage("3", "user2", System.currentTimeMillis() - 80000000, MessageType.TEXT, "Vreme vam je da pocnete farbati, vise niste sami", null, null, null),
         ChatMessage("3b", "user2", System.currentTimeMillis() - 70000000, MessageType.TEXT, "Pita vanja jel idete u kostariku", null, null, null),
         ChatMessage("4", "user2", System.currentTimeMillis() - 50000, MessageType.TEXT, "Jeste stigli", null, null, null),
+        ChatMessage("4b", "user2", System.currentTimeMillis() - 50000, MessageType.TEXT, "Jeste stigli", null, null, null),
         ChatMessage("5", "user1", System.currentTimeMillis() - 10000, MessageType.TEXT, "Evo upravo. Ja vadim stvari iz auta.", null, null, mapOf("user2" to "👍")),
         ChatMessage("6", "user1", System.currentTimeMillis() - 5000, MessageType.IMAGE, "Image Message", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Android_logo_2019_%28stacked%29.svg/2346px-Android_logo_2019_%28stacked%29.svg.png", null, null),
         ChatMessage("7", "user2", System.currentTimeMillis() - 2000, MessageType.VOICE, null, null, 45L, null),

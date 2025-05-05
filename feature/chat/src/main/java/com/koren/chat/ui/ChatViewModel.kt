@@ -34,13 +34,15 @@ class ChatViewModel @Inject constructor(
         var messageText by remember { mutableStateOf(TextFieldValue("")) }
         var showReactionPopup by remember { mutableStateOf(false) }
         var targetMessageIdForReaction by remember { mutableStateOf<String?>(null) }
+        var shownTimestamps by remember { mutableStateOf(emptySet<String>()) }
 
         return ChatUiState.Shown(
             currentUserId = currentUserId,
             messages = messages,
             messageText = messageText,
             showReactionPopup = showReactionPopup,
-            targetMessageIdForReaction = targetMessageIdForReaction
+            targetMessageIdForReaction = targetMessageIdForReaction,
+            shownTimestamps = shownTimestamps
         ) { event ->
             when (event) {
                 is ChatUiEvent.DismissReactionPopup -> {
@@ -58,6 +60,9 @@ class ChatViewModel @Inject constructor(
                     onSuccess = { messageText = TextFieldValue("") }
                 )
                 is ChatUiEvent.OnReactionSelected -> Unit
+                is ChatUiEvent.OnMessageClicked -> shownTimestamps =
+                    if (shownTimestamps.contains(event.messageId)) shownTimestamps - event.messageId
+                    else shownTimestamps + event.messageId
             }
         }
     }
