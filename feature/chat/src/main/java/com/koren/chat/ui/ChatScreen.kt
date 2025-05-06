@@ -6,7 +6,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -80,6 +79,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.koren.chat.ui.model.AttachmentOptions
+import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
 import com.koren.common.util.CollectSideEffects
@@ -146,8 +146,8 @@ private fun ChatScreenShownContent(
 ) {
     val listState = rememberLazyListState()
 
-    LaunchedEffect(uiState.messages.size) {
-        if (uiState.messages.isNotEmpty()) {
+    LaunchedEffect(uiState.chatItems.size) {
+        if (uiState.chatItems.isNotEmpty()) {
             listState.animateScrollToItem(0)
         }
     }
@@ -159,7 +159,7 @@ private fun ChatScreenShownContent(
     ) {
         MessageList(
             modifier = Modifier.weight(1f),
-            messages = uiState.messages,
+            chatItems = uiState.chatItems,
             currentUserId = uiState.currentUserId,
             onMessageClick = { messageId ->
                 uiState.eventSink(ChatUiEvent.OnMessageClicked(messageId))
@@ -296,7 +296,7 @@ private fun AttachmentsOverlay(
 @Composable
 fun MessageList(
     modifier: Modifier = Modifier,
-    messages: List<ChatMessage>,
+    chatItems: List<ChatItem>,
     currentUserId: String,
     listState: LazyListState = rememberLazyListState(),
     onMessageClick: (messageId: String) -> Unit,
@@ -304,8 +304,6 @@ fun MessageList(
     shownTimestamps: Set<String>,
     profilePicsMap: Map<String, String>
 ) {
-    var lastDisplayedDate: Calendar? = null
-
     LazyColumn(
         modifier = modifier.padding(horizontal = 8.dp),
         state = listState,
@@ -314,36 +312,38 @@ fun MessageList(
         reverseLayout = true
     ) {
         itemsIndexed(
-            key = { _, message -> message.id },
-            items = messages
-        ) { index, message ->
-            val showDateSeparator = shouldShowDateSeparator(lastDisplayedDate, message.timestamp)
-            if (showDateSeparator) {
-                val messageDate = Calendar.getInstance().apply { timeInMillis = message.timestamp }
-                DateSeparator(calendar = messageDate)
-                lastDisplayedDate = messageDate
+            key = { _, item -> item.id },
+            items = chatItems
+        ) { index, item ->
+            when (item) {
+                is ChatItem.DateSeparator -> {
+                    val calendar = Calendar.getInstance().apply { timeInMillis = item.timestamp }
+                    DateSeparator(calendar = calendar)
+                }
+                is ChatItem.MessageItem -> {
+                    val message = item.message
+                    val isPreviousMessageSameSender = when {
+                        index < chatItems.size - 1 -> {
+                            val prevItem = chatItems[index + 1]
+                            prevItem is ChatItem.MessageItem &&
+                                    prevItem.message.senderId == message.senderId
+                        }
+                        else -> false
+                    }
+
+                    MessageItem(
+                        message = message,
+                        isCurrentUser = message.senderId == currentUserId,
+                        isPreviousMessageSameSender = isPreviousMessageSameSender,
+                        onMessageClick = { onMessageClick(message.id) },
+                        onLongPress = { onMessageLongPress(message.id) },
+                        timestampVisible = shownTimestamps.contains(message.id),
+                        profilePic = profilePicsMap.getOrDefault(message.senderId, null)
+                    )
+                }
             }
-
-            val isPreviousMessageSameSender = index > 0 && messages[index - 1].senderId == message.senderId
-
-            MessageItem(
-                message = message,
-                isCurrentUser = message.senderId == currentUserId,
-                isPreviousMessageSameSender = isPreviousMessageSameSender,
-                onMessageClick = { onMessageClick(message.id) },
-                onLongPress = { onMessageLongPress(message.id) },
-                timestampVisible = shownTimestamps.contains(message.id),
-                profilePic = profilePicsMap.getOrDefault(message.senderId, null)
-            )
         }
     }
-}
-
-fun shouldShowDateSeparator(lastDisplayedDate: Calendar?, currentTimestamp: Long): Boolean {
-    if (lastDisplayedDate == null) return true
-    val currentCalendar = Calendar.getInstance().apply { timeInMillis = currentTimestamp }
-    return lastDisplayedDate.get(Calendar.YEAR) != currentCalendar.get(Calendar.YEAR) ||
-            lastDisplayedDate.get(Calendar.DAY_OF_YEAR) != currentCalendar.get(Calendar.DAY_OF_YEAR)
 }
 
 @Composable
@@ -713,24 +713,36 @@ fun ReactionSelectionDialog(
 @ThemePreview
 @Composable
 fun ChatScreenPreview() {
-    val sampleMessages = listOf(
-        ChatMessage("1", "user2", System.currentTimeMillis() - 100000000, MessageType.TEXT, "Jeste kupili boje za farbanje jaja", null, null, null),
-        ChatMessage("2", "user1", System.currentTimeMillis() - 90000000, MessageType.TEXT, "Ma kaki.", null, null, null),
-        ChatMessage("3", "user2", System.currentTimeMillis() - 80000000, MessageType.TEXT, "Vreme vam je da pocnete farbati, vise niste sami", null, null, null),
-        ChatMessage("3b", "user2", System.currentTimeMillis() - 70000000, MessageType.TEXT, "Pita vanja jel idete u kostariku", null, null, null),
-        ChatMessage("4", "user2", System.currentTimeMillis() - 50000, MessageType.TEXT, "Jeste stigli", null, null, null),
-        ChatMessage("4b", "user2", System.currentTimeMillis() - 50000, MessageType.TEXT, "Jeste stigli", null, null, null),
-        ChatMessage("5", "user1", System.currentTimeMillis() - 10000, MessageType.TEXT, "Evo upravo. Ja vadim stvari iz auta.", null, null, mapOf("user2" to "👍")),
-        ChatMessage("6", "user1", System.currentTimeMillis() - 5000, MessageType.IMAGE, "Image Message", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Android_logo_2019_%28stacked%29.svg/2346px-Android_logo_2019_%28stacked%29.svg.png", null, null),
-        ChatMessage("7", "user2", System.currentTimeMillis() - 2000, MessageType.VOICE, null, null, 45L, null),
+    val dayBeforeYesterday = System.currentTimeMillis() - (2 * 24 * 60 * 60 * 1000)
+    val yesterday = System.currentTimeMillis() - (24 * 60 * 60 * 1000)
+    val today = System.currentTimeMillis()
+
+    val chatItems = listOf(
+        ChatItem.DateSeparator(today),
+        ChatItem.MessageItem(ChatMessage("7", "user2", today - 2000, MessageType.VOICE, null, null, 45L, null)),
+        ChatItem.MessageItem(ChatMessage("6", "user1", today - 5000, MessageType.IMAGE, "Image Message", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Android_logo_2019_%28stacked%29.svg/2346px-Android_logo_2019_%28stacked%29.svg.png", null, null)),
+        ChatItem.MessageItem(ChatMessage("5", "user1", today - 10000, MessageType.TEXT, "Evo upravo. Ja vadim stvari iz auta.", null, null, mapOf("user2" to "👍"))),
+        ChatItem.DateSeparator(yesterday),
+        ChatItem.MessageItem(ChatMessage("4b", "user2", yesterday - 50000, MessageType.TEXT, "Jeste stigli", null, null, null)),
+        ChatItem.MessageItem(ChatMessage("4", "user2", yesterday - 60000, MessageType.TEXT, "Jeste stigli", null, null, null)),
+        ChatItem.DateSeparator(dayBeforeYesterday),
+        ChatItem.MessageItem(ChatMessage("3b", "user2", dayBeforeYesterday - 70000, MessageType.TEXT, "Pita vanja jel idete u kostariku", null, null, null)),
+        ChatItem.MessageItem(ChatMessage("3", "user2", dayBeforeYesterday - 80000, MessageType.TEXT, "Vreme vam je da pocnete farbati, vise niste sami", null, null, null)),
+        ChatItem.MessageItem(ChatMessage("2", "user1", dayBeforeYesterday - 90000, MessageType.TEXT, "Ma kaki.", null, null, null)),
+        ChatItem.MessageItem(ChatMessage("1", "user2", dayBeforeYesterday - 100000, MessageType.TEXT, "Jeste kupili boje za farbanje jaja", null, null, null))
     )
 
     KorenTheme {
         ChatScreenContent(
             uiState = ChatUiState.Shown(
                 currentUserId = "user1",
-                messages = sampleMessages,
+                chatItems = chatItems,
+                messageText = TextFieldValue(""),
+                showReactionPopup = false,
                 attachmentsOverlayShown = false,
+                profilePicsMap = mapOf(
+                    "user2" to "https://i.pravatar.cc/150?img=2"
+                ),
                 eventSink = {}
             )
         )

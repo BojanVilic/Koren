@@ -1,7 +1,7 @@
 package com.koren.chat.ui
 
 import androidx.compose.ui.text.input.TextFieldValue
-import com.koren.common.models.chat.ChatMessage
+import com.koren.common.models.chat.ChatItem
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
@@ -11,7 +11,7 @@ sealed interface ChatUiState : UiState {
     data object Loading : ChatUiState
     data class Shown(
         val currentUserId: String = "",
-        val messages: List<ChatMessage> = emptyList(),
+        val chatItems: List<ChatItem> = emptyList(),
         val messageText: TextFieldValue = TextFieldValue(""),
         val showReactionPopup: Boolean = false,
         val targetMessageIdForReaction: String? = null,
