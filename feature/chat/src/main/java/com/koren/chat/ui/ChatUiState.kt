@@ -1,5 +1,6 @@
 package com.koren.chat.ui
 
+import android.net.Uri
 import androidx.compose.ui.text.input.TextFieldValue
 import com.koren.common.models.chat.ChatItem
 import com.koren.common.util.EventHandler
@@ -18,6 +19,8 @@ sealed interface ChatUiState : UiState {
         val shownTimestamps: Set<String> = emptySet(),
         val attachmentsOverlayShown: Boolean = true,
         val profilePicsMap: Map<String, String> = emptyMap(),
+        val imageAttachments: Set<Uri> = emptySet(),
+        val sendingMessage: Boolean = false,
         override val eventSink: (ChatUiEvent) -> Unit
     ) : ChatUiState, EventHandler<ChatUiEvent>
 }
@@ -31,6 +34,8 @@ sealed interface ChatUiEvent : UiEvent {
     data class OnMessageClicked(val messageId: String) : ChatUiEvent
     data object ShowAttachmentsOverlay : ChatUiEvent
     data object CloseAttachmentsOverlay : ChatUiEvent
+    data class AddImageAttachment(val imageUri: Uri) : ChatUiEvent
+    data class RemoveImageAttachment(val imageUri: Uri) : ChatUiEvent
 }
 
 sealed interface ChatUiSideEffect : UiSideEffect {

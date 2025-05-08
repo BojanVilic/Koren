@@ -1,10 +1,12 @@
 package com.koren.data.repository
 
+import android.net.Uri
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
+import com.google.firebase.storage.FirebaseStorage
 import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
@@ -21,7 +23,8 @@ import javax.inject.Inject
 
 class DefaultChatRepository @Inject constructor(
     private val userSession: UserSession,
-    private val database: FirebaseDatabase
+    private val database: FirebaseDatabase,
+    private val firebaseStorage: FirebaseStorage
 ): ChatRepository {
 
     override fun getChatMessages(): Flow<List<ChatItem>> = callbackFlow {
@@ -147,14 +150,16 @@ class DefaultChatRepository @Inject constructor(
         }
     }
 
-    override suspend fun sendImageMessage(imageUrl: String): Result<Unit> {
+    override suspend fun sendImageMessage(images: Set<Uri>, messageText: String): Result<Unit> {
         val user = userSession.currentUser.first()
+        val messageId = UUID.randomUUID().toString()
         val message = ChatMessage(
-            id = UUID.randomUUID().toString(),
+            id = messageId,
             senderId = user.id,
             timestamp = System.currentTimeMillis(),
             messageType = MessageType.IMAGE,
-            mediaUrl = imageUrl
+            textContent = messageText,
+            mediaUrls = images.map { imageUri -> uploadChatMessageImage(user.familyId, imageUri, messageId) }
         )
 
         val chatRef = database.getReference("chats/${user.familyId}/${message.id}")
@@ -175,7 +180,7 @@ class DefaultChatRepository @Inject constructor(
             senderId = user.id,
             timestamp = System.currentTimeMillis(),
             messageType = MessageType.VIDEO,
-            mediaUrl = videoUrl,
+            mediaUrls = listOf(videoUrl),
             mediaDuration = duration
         )
 
@@ -197,7 +202,7 @@ class DefaultChatRepository @Inject constructor(
             senderId = user.id,
             timestamp = System.currentTimeMillis(),
             messageType = MessageType.VOICE,
-            mediaUrl = audioUrl,
+            mediaUrls = listOf(audioUrl),
             mediaDuration = duration
         )
 
@@ -210,5 +215,16 @@ class DefaultChatRepository @Inject constructor(
             Timber.e("Error sending audio message: ${e.message}")
             Result.failure(e)
         }
+    }
+
+    private suspend fun uploadChatMessageImage(
+        familyId: String,
+        pictureUri: Uri,
+        messageId: String
+    ): String {
+        val imageName = pictureUri.lastPathSegment ?: UUID.randomUUID().toString()
+        val storageRef = firebaseStorage.getReference("chats/$familyId/$messageId/$imageName.jpg")
+        storageRef.putFile(pictureUri).await()
+        return storageRef.downloadUrl.await().toString()
     }
 }

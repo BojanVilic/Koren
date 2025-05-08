@@ -10,7 +10,7 @@ data class ChatMessage(
     val timestamp: Long = 0L,
     val messageType: MessageType = MessageType.TEXT,
     val textContent: String? = null,
-    val mediaUrl: String? = null,
+    val mediaUrls: List<String>? = null,
     val mediaDuration: Long? = null,
     val reactions: Map<String, String>? = null
 )

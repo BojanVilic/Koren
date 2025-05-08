@@ -2,6 +2,11 @@
 
 package com.koren.chat.ui
 
+import android.net.Uri
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
@@ -19,6 +24,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +33,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
@@ -37,6 +44,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -72,8 +80,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.times
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -84,8 +96,10 @@ import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.Scrim
+import com.koren.designsystem.icon.Close
 import com.koren.designsystem.icon.Files
 import com.koren.designsystem.icon.Image
+import com.koren.designsystem.icon.ImageStack
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.icon.Video
 import com.koren.designsystem.icon.Voice
@@ -145,6 +159,14 @@ private fun ChatScreenShownContent(
     uiState: ChatUiState.Shown
 ) {
     val listState = rememberLazyListState()
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            uri?.let {
+                uiState.eventSink(ChatUiEvent.AddImageAttachment(it))
+            }
+        }
+    )
 
     LaunchedEffect(uiState.chatItems.size) {
         if (uiState.chatItems.isNotEmpty()) {
@@ -175,12 +197,16 @@ private fun ChatScreenShownContent(
         MessageInputArea(
             text = uiState.messageText,
             onTextChange = { uiState.eventSink(ChatUiEvent.OnMessageTextChanged(it)) },
+            sendingMessage = uiState.sendingMessage,
             onSendClick = {
-                if (uiState.messageText.text.isNotBlank())
-                    uiState.eventSink(ChatUiEvent.SendMessage)
+                uiState.eventSink(ChatUiEvent.SendMessage)
             },
             onAttachmentClick = { uiState.eventSink(ChatUiEvent.ShowAttachmentsOverlay) },
-            onMicClick = { }
+            onMicClick = { },
+            imageAttachments = uiState.imageAttachments,
+            onRemoveImageAttachment = { uri ->
+                uiState.eventSink(ChatUiEvent.RemoveImageAttachment(uri))
+            }
         )
 
         if (uiState.showReactionPopup && uiState.targetMessageIdForReaction != null) {
@@ -202,13 +228,17 @@ private fun ChatScreenShownContent(
         enter = fadeIn(),
         exit = fadeOut(),
     ) {
-        AttachmentsOverlay(uiState)
+        AttachmentsOverlay(
+            uiState = uiState,
+            imagePicker = imagePicker
+        )
     }
 }
 
 @Composable
 private fun AttachmentsOverlay(
-    uiState: ChatUiState.Shown
+    uiState: ChatUiState.Shown,
+    imagePicker: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>
 ) {
 
     val hapticFeedback = LocalHapticFeedback.current
@@ -243,6 +273,7 @@ private fun AttachmentsOverlay(
                             title = "Image",
                             onClick = {
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                             }
                         ),
                         AttachmentOptions(
@@ -287,9 +318,6 @@ private fun AttachmentsOverlay(
                 }
             }
         }
-
-
-
     }
 }
 
@@ -412,7 +440,8 @@ fun MessageItem(
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = arrangement
+        horizontalArrangement = arrangement,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         if (isCurrentUser.not()) {
             if (isPreviousMessageSameSender.not()) {
@@ -465,17 +494,57 @@ fun MessageItem(
                             }
 
                             MessageType.IMAGE -> {
-                                AsyncImage(
-                                    modifier = Modifier
-                                        .heightIn(max = 200.dp)
-                                        .clip(RoundedCornerShape(8.dp)),
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(message.mediaUrl)
-                                        .crossfade(true)
-                                        .build(),
-                                    contentDescription = "Sent image",
-                                    contentScale = ContentScale.Fit
-                                )
+                                val mediaUrls = message.mediaUrls
+                                if (!mediaUrls.isNullOrEmpty()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .heightIn(max = 200.dp)
+                                            .fillMaxWidth()
+                                    ) {
+                                        AsyncImage(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(8.dp)),
+                                            model = ImageRequest.Builder(LocalContext.current)
+                                                .data(mediaUrls.first())
+                                                .crossfade(true)
+                                                .build(),
+                                            contentDescription = "Sent image",
+                                            contentScale = ContentScale.Crop
+                                        )
+                                        if (mediaUrls.size > 1) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .align(Alignment.TopEnd)
+                                                    .padding(top = 4.dp, end = 4.dp)
+                                                    .background(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium)
+                                                    .padding(4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = mediaUrls.size.toString(),
+                                                    color = MaterialTheme.colorScheme.inverseSurface
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Icon(
+                                                    modifier = Modifier.size(16.dp),
+                                                    imageVector = KorenIcons.ImageStack,
+                                                    contentDescription = "Multiple images",
+                                                    tint = MaterialTheme.colorScheme.inverseSurface
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                message.textContent?.takeIf { it.isNotBlank() }?.let {
+                                    Text(
+                                        modifier = Modifier.padding(top = 4.dp),
+                                        text = it,
+                                        color = textColor,
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                }
                             }
 
                             MessageType.VIDEO -> {
@@ -484,7 +553,7 @@ fun MessageItem(
                                         modifier = Modifier
                                             .heightIn(max = 200.dp)
                                             .clip(RoundedCornerShape(8.dp)),
-                                        model = message.mediaUrl,
+                                        model = message.mediaUrls,
                                         contentDescription = "Sent video",
                                         contentScale = ContentScale.Fit
                                     )
@@ -574,57 +643,127 @@ fun formatDuration(seconds: Long): String {
 fun MessageInputArea(
     text: TextFieldValue,
     onTextChange: (TextFieldValue) -> Unit,
+    sendingMessage: Boolean,
     onSendClick: () -> Unit,
     onAttachmentClick: () -> Unit,
-    onMicClick: () -> Unit
+    onMicClick: () -> Unit,
+    imageAttachments: Set<Uri>,
+    onRemoveImageAttachment: (Uri) -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .weight(1f)
-                    .padding(horizontal = 8.dp),
-                value = text,
-                onValueChange = onTextChange,
-                placeholder = { Text("Message...") },
-                shape = RoundedCornerShape(24.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                maxLines = 4,
-                leadingIcon = {
-                    IconButton(onClick = onAttachmentClick) {
-                        Icon(Icons.Default.Add, contentDescription = "Attach file")
-                    }
-                },
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
-            )
+        Column {
+            AnimatedVisibility(
+                visible = imageAttachments.isNotEmpty(),
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(200)
+                ) + fadeOut()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .offset(y = 24.dp)
+                        .padding(start = 16.dp, end = 64.dp)
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(
+                        Modifier.padding(8.dp)
+                    ) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            imageAttachments.forEach { image ->
+                                Box(
+                                    modifier = Modifier.size(84.dp)
+                                ) {
+                                    AsyncImage(
+                                        modifier = Modifier
+                                            .size(64.dp)
+                                            .clip(MaterialTheme.shapes.medium),
+                                        model = ImageRequest.Builder(LocalContext.current)
+                                            .crossfade(true)
+                                            .data(image)
+                                            .build(),
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop
+                                    )
 
-            AnimatedSendMicButton(
-                text = text,
-                onSendClick = onSendClick,
-                onMicClick = onMicClick
-            )
+                                    Icon(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .offset {
+                                                IntOffset(0, -42)
+                                            }
+                                            .clip(CircleShape)
+                                            .align(Alignment.TopEnd)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            .clickable {
+                                                onRemoveImageAttachment(image)
+                                            },
+                                        imageVector = KorenIcons.Close,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .weight(1f)
+                        .padding(horizontal = 8.dp),
+                    value = text,
+                    onValueChange = onTextChange,
+                    placeholder = { Text("Message...") },
+                    shape = RoundedCornerShape(24.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ),
+                    maxLines = 4,
+                    leadingIcon = {
+                        IconButton(onClick = onAttachmentClick) {
+                            Icon(Icons.Default.Add, contentDescription = "Attach file")
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+                )
+
+                AnimatedSendMicButton(
+                    isSendButton = text.text.isNotBlank() || imageAttachments.isNotEmpty(),
+                    sendingMessage = sendingMessage,
+                    onSendClick = onSendClick,
+                    onMicClick = onMicClick
+                )
+            }
         }
     }
 }
 
 @Composable
 fun AnimatedSendMicButton(
-    text: TextFieldValue,
+    isSendButton: Boolean,
+    sendingMessage: Boolean,
     onSendClick: () -> Unit,
     onMicClick: () -> Unit
 ) {
-    val isSendButton = text.text.isNotBlank()
 
     val targetBackgroundColor =
         if (isSendButton) MaterialTheme.colorScheme.primary
@@ -652,29 +791,38 @@ fun AnimatedSendMicButton(
             .clip(CircleShape)
             .background(animatedBackgroundColor, CircleShape)
             .clickable(
+                enabled = !sendingMessage,
                 onClick = if (isSendButton) onSendClick else onMicClick
             ),
         contentAlignment = Alignment.Center
     ) {
-        AnimatedContent(
-            targetState = isSendButton,
-            transitionSpec = {
-                scaleIn(animationSpec = tween(durationMillis = 300)) +
-                fadeIn(animationSpec = tween(durationMillis = 200)) togetherWith
-                scaleOut(animationSpec = tween(durationMillis = 300)) +
-                fadeOut(animationSpec = tween(durationMillis = 200)) using
-                SizeTransform(clip = false)
-            },
-            label = "IconAnimation",
-            contentAlignment = Alignment.Center
-        ) { targetIsSend ->
-            Icon(
-                modifier = Modifier
-                    .padding(6.dp),
-                imageVector = if (targetIsSend) Icons.AutoMirrored.Filled.Send else KorenIcons.Voice,
-                contentDescription = if (targetIsSend) "Send message" else "Record voice message",
-                tint = animatedIconTintColor
+        if (sendingMessage) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = if (isSendButton) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+                strokeWidth = 3.dp
             )
+        } else {
+            AnimatedContent(
+                targetState = isSendButton,
+                transitionSpec = {
+                    scaleIn(animationSpec = tween(durationMillis = 300)) +
+                            fadeIn(animationSpec = tween(durationMillis = 200)) togetherWith
+                            scaleOut(animationSpec = tween(durationMillis = 300)) +
+                            fadeOut(animationSpec = tween(durationMillis = 200)) using
+                            SizeTransform(clip = false)
+                },
+                label = "IconAnimation",
+                contentAlignment = Alignment.Center
+            ) { targetIsSend ->
+                Icon(
+                    modifier = Modifier
+                        .padding(6.dp),
+                    imageVector = if (targetIsSend) Icons.AutoMirrored.Filled.Send else KorenIcons.Voice,
+                    contentDescription = if (targetIsSend) "Send message" else "Record voice message",
+                    tint = animatedIconTintColor
+                )
+            }
         }
     }
 }
@@ -691,7 +839,9 @@ fun ReactionSelectionDialog(
         title = { Text("React to message") },
         text = {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 reactions.forEach { reaction ->
@@ -720,7 +870,7 @@ fun ChatScreenPreview() {
     val chatItems = listOf(
         ChatItem.DateSeparator(today),
         ChatItem.MessageItem(ChatMessage("7", "user2", today - 2000, MessageType.VOICE, null, null, 45L, null)),
-        ChatItem.MessageItem(ChatMessage("6", "user1", today - 5000, MessageType.IMAGE, "Image Message", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Android_logo_2019_%28stacked%29.svg/2346px-Android_logo_2019_%28stacked%29.svg.png", null, null)),
+        ChatItem.MessageItem(ChatMessage("6", "user1", today - 5000, MessageType.IMAGE, "Image Message", listOf("https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Android_logo_2019_%28stacked%29.svg/2346px-Android_logo_2019_%28stacked%29.svg.png"), null, null)),
         ChatItem.MessageItem(ChatMessage("5", "user1", today - 10000, MessageType.TEXT, "Evo upravo. Ja vadim stvari iz auta.", null, null, mapOf("user2" to "👍"))),
         ChatItem.DateSeparator(yesterday),
         ChatItem.MessageItem(ChatMessage("4b", "user2", yesterday - 50000, MessageType.TEXT, "Jeste stigli", null, null, null)),
