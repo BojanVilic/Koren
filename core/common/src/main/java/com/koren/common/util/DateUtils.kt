@@ -7,6 +7,7 @@ import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 object DateUtils {
 
@@ -129,5 +130,11 @@ object DateUtils {
             DateUtils.MINUTE_IN_MILLIS,
             DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME
         ).toString()
+    }
+
+    fun formatDuration(seconds: Long): String {
+        val minutes = TimeUnit.SECONDS.toMinutes(seconds)
+        val remainingSeconds = seconds - TimeUnit.MINUTES.toSeconds(minutes)
+        return String.format(Locale.getDefault(),"%02d:%02d", minutes, remainingSeconds)
     }
 }
