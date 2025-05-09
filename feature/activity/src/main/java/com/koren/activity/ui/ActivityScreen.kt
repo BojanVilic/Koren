@@ -49,6 +49,7 @@ import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects
 import com.koren.common.util.DateUtils.toRelativeTime
 import com.koren.designsystem.components.LoadingContent
+import com.koren.designsystem.components.isEndReached
 import com.koren.designsystem.icon.Event
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.theme.KorenTheme
@@ -182,11 +183,6 @@ fun ShownContent(uiState: ActivityUiState.Shown) {
             }
         }
     }
-}
-
-fun LazyListState.isEndReached(buffer: Int = 3): Boolean {
-    val lastVisibleItemIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
-    return lastVisibleItemIndex >= layoutInfo.totalItemsCount - 1 - buffer
 }
 
 fun groupActivitiesByDay(activities: List<UserLocationActivity>): Map<String, List<UserLocationActivity>> {

@@ -21,6 +21,8 @@ sealed interface ChatUiState : UiState {
         val profilePicsMap: Map<String, String> = emptyMap(),
         val imageAttachments: Set<Uri> = emptySet(),
         val sendingMessage: Boolean = false,
+        val fetchingMore: Boolean = false,
+        val canFetchMore: Boolean = true,
         override val eventSink: (ChatUiEvent) -> Unit
     ) : ChatUiState, EventHandler<ChatUiEvent>
 }
@@ -36,6 +38,7 @@ sealed interface ChatUiEvent : UiEvent {
     data object CloseAttachmentsOverlay : ChatUiEvent
     data class AddImageAttachment(val imageUri: Uri) : ChatUiEvent
     data class RemoveImageAttachment(val imageUri: Uri) : ChatUiEvent
+    data object FetchMoreMessages : ChatUiEvent
 }
 
 sealed interface ChatUiSideEffect : UiSideEffect {

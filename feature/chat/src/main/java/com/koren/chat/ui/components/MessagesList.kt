@@ -7,24 +7,32 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.koren.chat.ui.ChatUiEvent
 import com.koren.chat.ui.ChatUiState
 import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
+import com.koren.designsystem.components.isEndReached
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
+import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -32,9 +40,27 @@ import java.util.Locale
 @Composable
 internal fun MessageList(
     modifier: Modifier = Modifier,
-    uiState: ChatUiState.Shown,
-    listState: LazyListState,
+    uiState: ChatUiState.Shown
 ) {
+    val listState = rememberLazyListState()
+
+    val endOfListReached by remember {
+        derivedStateOf {
+            listState.isEndReached()
+        }
+    }
+
+    LaunchedEffect(endOfListReached, uiState.fetchingMore, uiState.canFetchMore, uiState.chatItems.isNotEmpty()) {
+        if (endOfListReached && !uiState.fetchingMore && uiState.canFetchMore && uiState.chatItems.isNotEmpty()) {
+            uiState.eventSink(ChatUiEvent.FetchMoreMessages)
+        }
+    }
+
+//    LaunchedEffect(uiState.chatItems.size) {
+//        if (uiState.chatItems.isNotEmpty()) {
+//            listState.animateScrollToItem(0)
+//        }
+//    }
 
     LazyColumn(
         modifier = modifier.padding(horizontal = 8.dp),
@@ -73,6 +99,20 @@ internal fun MessageList(
                         profilePic = uiState.profilePicsMap.getOrDefault(message.senderId, null)
                     )
                 }
+            }
+        }
+
+        if (uiState.fetchingMore) {
+            item {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    text = stringResource(com.koren.designsystem.R.string.loading),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
@@ -154,8 +194,7 @@ fun MessageListPreview() {
                 imageAttachments = emptySet(),
                 sendingMessage = false,
                 eventSink = {}
-            ),
-            listState = rememberLazyListState()
+            )
         )
     }
 }

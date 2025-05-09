@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
     fun getChatMessages(): Flow<List<ChatItem>>
+    fun getOlderMessages(oldestLoadedNeg: Long): Flow<Pair<List<ChatItem>, Boolean>>
     suspend fun sendTextMessage(messageText: String): Result<Unit>
     suspend fun sendImageMessage(images: Set<Uri>, messageText: String): Result<Unit>
     suspend fun sendVideoMessage(videoUrl: String, duration: Long): Result<Unit>

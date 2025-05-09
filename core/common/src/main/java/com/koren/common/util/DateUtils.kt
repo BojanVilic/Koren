@@ -11,6 +11,10 @@ import java.util.concurrent.TimeUnit
 
 object DateUtils {
 
+    fun getNegativeTimeMillis(): Long {
+        return System.currentTimeMillis() * -1
+    }
+
     fun Long.convertToUtcWithLocalOffset(): Long {
         val userTimeZoneOffsetMillis = ZoneOffset.systemDefault().rules.getOffset(Instant.now()).totalSeconds * 1000L
         return this - userTimeZoneOffsetMillis
@@ -79,7 +83,6 @@ object DateUtils {
             ""
         }
     }
-
 
     fun Long?.toTime(
         atLocalTimeZone: Boolean = false

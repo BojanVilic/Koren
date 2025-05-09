@@ -4,6 +4,7 @@ import android.net.Uri
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.Query
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
 import com.google.firebase.storage.FirebaseStorage
@@ -11,10 +12,12 @@ import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
 import com.koren.common.services.UserSession
+import com.koren.common.util.DateUtils
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.util.Calendar
@@ -27,75 +30,65 @@ class DefaultChatRepository @Inject constructor(
     private val firebaseStorage: FirebaseStorage
 ): ChatRepository {
 
-    override fun getChatMessages(): Flow<List<ChatItem>> = callbackFlow {
-        val user = userSession.currentUser.first()
+    companion object {
+        private const val PAGE_SIZE = 15
+    }
 
-        val chatRef = database.getReference("chats/${user.familyId}")
+    override fun getChatMessages(): Flow<List<ChatItem>> =
+        listenPage(null).map { it.first }
+
+    override fun getOlderMessages(oldestLoadedNeg: Long): Flow<Pair<List<ChatItem>, Boolean>> =
+        listenPage(oldestLoadedNeg + 1)
+
+    private fun listenPage(startAtNeg: Long?): Flow<Pair<List<ChatItem>, Boolean>> = callbackFlow {
+        val familyId = userSession.currentUser.first().familyId
+        var query: Query = database.getReference("chats/$familyId")
             .orderByChild("timestamp")
-        val listener = object : ValueEventListener {
+            .limitToFirst(PAGE_SIZE)
+        startAtNeg?.let { query = query.startAt(it.toDouble()) }
+
+        val listener = query.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val messages = snapshot.children
+                val msgs = snapshot.children
                     .mapNotNull { it.getValue<ChatMessage>() }
-                    .reversed()
+                    .map { it.copy(timestamp = -it.timestamp) }
 
-                val chatItems = if (messages.isEmpty()) {
-                    emptyList()
-                } else {
-                    val items = mutableListOf<ChatItem>()
-
-                    for (i in messages.indices) {
-                        val currentMessage = messages[i]
-
-                        items.add(ChatItem.MessageItem(currentMessage))
-
-                        if (i < messages.size - 1) {
-                            val nextMessage = messages[i + 1]
-
-                            val currentDay = Calendar.getInstance().apply {
-                                timeInMillis = currentMessage.timestamp
-                                set(Calendar.HOUR_OF_DAY, 0)
-                                set(Calendar.MINUTE, 0)
-                                set(Calendar.SECOND, 0)
-                                set(Calendar.MILLISECOND, 0)
-                            }
-
-                            val nextDay = Calendar.getInstance().apply {
-                                timeInMillis = nextMessage.timestamp
-                                set(Calendar.HOUR_OF_DAY, 0)
-                                set(Calendar.MINUTE, 0)
-                                set(Calendar.SECOND, 0)
-                                set(Calendar.MILLISECOND, 0)
-                            }
-
-                            if (currentDay.get(Calendar.YEAR) != nextDay.get(Calendar.YEAR) ||
-                                currentDay.get(Calendar.DAY_OF_YEAR) != nextDay.get(Calendar.DAY_OF_YEAR)) {
-                                items.add(ChatItem.DateSeparator(currentMessage.timestamp))
-                            }
-                        } else {
-                            items.add(ChatItem.DateSeparator(currentMessage.timestamp))
-                        }
-                    }
-                    items
-                }
-
-                trySend(chatItems).isSuccess
+                val page = msgs.toChatItems()
+                val hasMore = msgs.size == PAGE_SIZE
+                trySend(page to hasMore).isSuccess
             }
 
-            override fun onCancelled(error: DatabaseError) {
-                Timber.e("Error fetching chat messages: ${error.message}")
+            override fun onCancelled(error: DatabaseError) = Timber.e(error.message)
+        })
+
+        awaitClose { query.removeEventListener(listener) }
+    }
+
+    private fun List<ChatMessage>.toChatItems(): List<ChatItem> = buildList {
+        this@toChatItems.forEachIndexed { idx, msg ->
+            add(ChatItem.MessageItem(msg))
+            val next = this@toChatItems.getOrNull(idx + 1)
+            if (next == null || !sameDay(msg, next)) {
+                add(ChatItem.DateSeparator(msg.timestamp))
             }
         }
-
-        chatRef.addValueEventListener(listener)
-        awaitClose { chatRef.removeEventListener(listener) }
     }
+
+    private fun sameDay(a: ChatMessage, b: ChatMessage): Boolean =
+        Calendar.getInstance().run {
+            timeInMillis = a.timestamp
+            val dayA = get(Calendar.DAY_OF_YEAR); val yearA = get(Calendar.YEAR)
+            timeInMillis = b.timestamp
+            val dayB = get(Calendar.DAY_OF_YEAR); val yearB = get(Calendar.YEAR)
+            dayA == dayB && yearA == yearB
+        }
 
     override suspend fun sendTextMessage(messageText: String): Result<Unit> {
         val user = userSession.currentUser.first()
         val message = ChatMessage(
             id = UUID.randomUUID().toString(),
             senderId = user.id,
-            timestamp = System.currentTimeMillis(),
+            timestamp = DateUtils.getNegativeTimeMillis(),
             messageType = MessageType.TEXT,
             textContent = messageText
         )
@@ -156,7 +149,7 @@ class DefaultChatRepository @Inject constructor(
         val message = ChatMessage(
             id = messageId,
             senderId = user.id,
-            timestamp = System.currentTimeMillis(),
+            timestamp = DateUtils.getNegativeTimeMillis(),
             messageType = MessageType.IMAGE,
             textContent = messageText,
             mediaUrls = images.map { imageUri -> uploadChatMessageImage(user.familyId, imageUri, messageId) }
@@ -178,7 +171,7 @@ class DefaultChatRepository @Inject constructor(
         val message = ChatMessage(
             id = UUID.randomUUID().toString(),
             senderId = user.id,
-            timestamp = System.currentTimeMillis(),
+            timestamp = DateUtils.getNegativeTimeMillis(),
             messageType = MessageType.VIDEO,
             mediaUrls = listOf(videoUrl),
             mediaDuration = duration
@@ -200,7 +193,7 @@ class DefaultChatRepository @Inject constructor(
         val message = ChatMessage(
             id = UUID.randomUUID().toString(),
             senderId = user.id,
-            timestamp = System.currentTimeMillis(),
+            timestamp = DateUtils.getNegativeTimeMillis(),
             messageType = MessageType.VOICE,
             mediaUrls = listOf(audioUrl),
             mediaDuration = duration

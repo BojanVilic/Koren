@@ -11,10 +11,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
@@ -79,7 +76,6 @@ private fun ChatScreenContent(
 private fun ChatScreenShownContent(
     uiState: ChatUiState.Shown
 ) {
-    val listState = rememberLazyListState()
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
@@ -89,12 +85,6 @@ private fun ChatScreenShownContent(
         }
     )
 
-    LaunchedEffect(uiState.chatItems.size) {
-        if (uiState.chatItems.isNotEmpty()) {
-            listState.animateScrollToItem(0)
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -102,8 +92,7 @@ private fun ChatScreenShownContent(
     ) {
         MessageList(
             modifier = Modifier.weight(1f),
-            uiState = uiState,
-            listState = listState
+            uiState = uiState
         )
 
         MessageInputArea(

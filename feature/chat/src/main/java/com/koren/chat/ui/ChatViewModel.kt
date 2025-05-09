@@ -2,6 +2,7 @@ package com.koren.chat.ui
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -10,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
+import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.MessageType
 import com.koren.common.services.UserSession
 import com.koren.common.util.MoleculeViewModel
@@ -17,8 +19,12 @@ import com.koren.data.repository.ChatRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,10 +38,10 @@ class ChatViewModel @Inject constructor(
 
     @Composable
     override fun produceState(): ChatUiState {
-        val chatItems by chatRepository.getChatMessages().collectAsState(initial = emptyList())
         val currentUserId by userSession.currentUser.map { it.id }.collectAsState(initial = "")
         val familyMembers by getAllFamilyMembersUseCase.invoke().collectAsState(initial = emptyList())
 
+        var chatItems by remember { mutableStateOf<List<ChatItem>>(emptyList()) }
         var messageText by remember { mutableStateOf(TextFieldValue("")) }
         var showReactionPopup by remember { mutableStateOf(false) }
         var targetMessageIdForReaction by remember { mutableStateOf<String?>(null) }
@@ -50,6 +56,15 @@ class ChatViewModel @Inject constructor(
         }
         var imageAttachments by remember { mutableStateOf(emptySet<Uri>()) }
         var sendingMessage by remember { mutableStateOf(false) }
+        var canFetchMore by remember { mutableStateOf(true) }
+        var fetchingMore by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
+            chatRepository.getChatMessages().collect { firstPage ->
+                chatItems = firstPage
+                fetchingMore = false
+            }
+        }
 
         return ChatUiState.Shown(
             currentUserId = currentUserId,
@@ -62,6 +77,8 @@ class ChatViewModel @Inject constructor(
             profilePicsMap = profilePicsMap,
             imageAttachments = imageAttachments,
             sendingMessage = sendingMessage,
+            fetchingMore = fetchingMore,
+            canFetchMore = canFetchMore
         ) { event ->
             when (event) {
                 is ChatUiEvent.DismissReactionPopup -> {
@@ -104,6 +121,21 @@ class ChatViewModel @Inject constructor(
                     attachmentsOptionsOpen = false
                 }
                 is ChatUiEvent.RemoveImageAttachment -> imageAttachments = imageAttachments.minus(event.imageUri)
+                is ChatUiEvent.FetchMoreMessages -> {
+                    if (canFetchMore) {
+                        fetchingMore = true
+                        (chatItems.filterIsInstance<ChatItem.MessageItem>().last() as? ChatItem.MessageItem)
+                            ?.let { fetchMoreMessages(
+                                lastTimestamp = -it.message.timestamp,
+                                onResult = { newItems, hasMore ->
+                                    chatItems = chatItems + newItems
+                                    canFetchMore = hasMore
+                                    fetchingMore = false
+                                }
+                            ) }
+                            ?: run { fetchingMore = false }
+                    }
+                }
             }
         }
     }
@@ -149,5 +181,16 @@ class ChatViewModel @Inject constructor(
             messageText.isNotBlank() -> MessageType.TEXT
             else -> MessageType.TEXT
         }
+    }
+
+    private fun fetchMoreMessages(
+        lastTimestamp: Long,
+        onResult: (List<ChatItem>, Boolean) -> Unit
+    ) {
+        chatRepository.getOlderMessages(lastTimestamp)
+            .onEach { (newItems, hasMore) ->
+                onResult(newItems, hasMore)
+            }
+            .launchIn(viewModelScope)
     }
 }
