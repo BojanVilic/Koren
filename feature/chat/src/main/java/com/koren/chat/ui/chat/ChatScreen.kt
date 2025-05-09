@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.chat.ui.chat.components.AttachmentsOverlay
@@ -100,15 +99,15 @@ private fun ChatScreenShownContent(
         )
 
         MessageInputArea(
-            text = uiState.messageText,
+            text = uiState.messageInputUiState.messageText,
             onTextChange = { uiState.eventSink(ChatUiEvent.OnMessageTextChanged(it)) },
-            sendingMessage = uiState.sendingMessage,
+            sendingMessage = uiState.messageInputUiState.sendingMessage,
             onSendClick = {
                 uiState.eventSink(ChatUiEvent.SendMessage)
             },
             onAttachmentClick = { uiState.eventSink(ChatUiEvent.ShowAttachmentsOverlay) },
             onMicClick = { },
-            imageAttachments = uiState.imageAttachments,
+            imageAttachments = uiState.messageInputUiState.imageAttachments,
             onRemoveImageAttachment = { uri ->
                 uiState.eventSink(ChatUiEvent.RemoveImageAttachment(uri))
             }
@@ -129,7 +128,7 @@ private fun ChatScreenShownContent(
 
     AnimatedVisibility(
         modifier = Modifier.imePadding(),
-        visible = uiState.attachmentsOverlayShown,
+        visible = uiState.messageInputUiState.attachmentsOverlayShown,
         enter = fadeIn(),
         exit = fadeOut(),
     ) {
@@ -167,9 +166,7 @@ fun ChatScreenPreview() {
             uiState = ChatUiState.Shown(
                 currentUserId = "user1",
                 chatItems = chatItems,
-                messageText = TextFieldValue(""),
                 showReactionPopup = false,
-                attachmentsOverlayShown = false,
                 profilePicsMap = mapOf(
                     "user2" to "https://i.pravatar.cc/150?img=2"
                 ),

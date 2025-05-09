@@ -9,14 +9,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FullScreenImageViewModel @Inject constructor(
-    private val savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle
 ) : MoleculeViewModel<FullScreenImageUiEvent, FullScreenImageUiState, FullScreenImageUiSideEffect>() {
+
+    private val mediaUrl = savedStateHandle.toRoute<FullScreenImageDestination>().mediaUrl
 
     override fun setInitialState(): FullScreenImageUiState = FullScreenImageUiState.Loading
 
     @Composable
     override fun produceState(): FullScreenImageUiState {
-        val mediaUrl = savedStateHandle.toRoute<FullScreenImageDestination>().mediaUrl
 
         return FullScreenImageUiState.Shown(
             mediaUrl = mediaUrl

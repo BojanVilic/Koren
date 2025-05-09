@@ -177,14 +177,10 @@ fun MessageListPreview() {
             uiState = ChatUiState.Shown(
                 currentUserId = "user1",
                 chatItems = chatItems,
-                messageText = TextFieldValue(""),
                 showReactionPopup = false,
                 targetMessageIdForReaction = null,
                 shownTimestamps = emptySet(),
-                attachmentsOverlayShown = false,
                 profilePicsMap = emptyMap(),
-                imageAttachments = emptySet(),
-                sendingMessage = false,
                 eventSink = {}
             )
         )

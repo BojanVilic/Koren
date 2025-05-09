@@ -139,14 +139,10 @@ private fun AttachmentsOverlayPreview() {
             uiState = ChatUiState.Shown(
                 currentUserId = "1",
                 chatItems = emptyList(),
-                messageText = TextFieldValue("Lorem ipsum dolor sit amet"),
                 showReactionPopup = false,
                 targetMessageIdForReaction = null,
                 shownTimestamps = emptySet(),
-                attachmentsOverlayShown = true,
                 profilePicsMap = emptyMap(),
-                imageAttachments = emptySet(),
-                sendingMessage = false,
                 eventSink = {}
             ),
             imagePicker = rememberLauncherForActivityResult(

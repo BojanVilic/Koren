@@ -1,6 +1,5 @@
 package com.koren.chat.ui.chat
 
-import android.net.Uri
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -9,18 +8,16 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import com.koren.common.models.chat.ChatItem
-import com.koren.common.models.chat.MessageType
 import com.koren.common.services.UserSession
 import com.koren.common.util.MoleculeViewModel
 import com.koren.data.repository.ChatRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -31,24 +28,24 @@ import javax.inject.Inject
 class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val userSession: UserSession,
-    private val getAllFamilyMembersUseCase: GetAllFamilyMembersUseCase
+    private val getAllFamilyMembersUseCase: GetAllFamilyMembersUseCase,
+    private val messageInputPresent: MessageInputPresent
 ): MoleculeViewModel<ChatUiEvent, ChatUiState, ChatUiSideEffect>() {
 
     override fun setInitialState(): ChatUiState = ChatUiState.Loading
+
+    private val events = MutableSharedFlow<ChatUiEvent>()
 
     @Composable
     override fun produceState(): ChatUiState {
         val currentUserId by userSession.currentUser.map { it.id }.collectAsState(initial = "")
         val familyMembers by getAllFamilyMembersUseCase.invoke().collectAsState(initial = emptyList())
         val listState = rememberLazyListState()
-        val coroutineScope = rememberCoroutineScope()
 
         var chatItems by remember { mutableStateOf<List<ChatItem>>(emptyList()) }
-        var messageText by remember { mutableStateOf(TextFieldValue("")) }
         var showReactionPopup by remember { mutableStateOf(false) }
         var targetMessageIdForReaction by remember { mutableStateOf<String?>(null) }
         var shownTimestamps by remember { mutableStateOf(emptySet<String>()) }
-        var attachmentsOptionsOpen by remember { mutableStateOf(false) }
         val profilePicsMap by remember {
             derivedStateOf {
                 familyMembers.associate { member ->
@@ -56,8 +53,6 @@ class ChatViewModel @Inject constructor(
                 }
             }
         }
-        var imageAttachments by remember { mutableStateOf(emptySet<Uri>()) }
-        var sendingMessage by remember { mutableStateOf(false) }
         var canFetchMore by remember { mutableStateOf(true) }
         var fetchingMore by remember { mutableStateOf(false) }
 
@@ -72,45 +67,23 @@ class ChatViewModel @Inject constructor(
             currentUserId = currentUserId,
             listState = listState,
             chatItems = chatItems,
-            messageText = messageText,
+            messageInputUiState = messageInputPresent.present(events, _sideEffects, listState),
             showReactionPopup = showReactionPopup,
             targetMessageIdForReaction = targetMessageIdForReaction,
             shownTimestamps = shownTimestamps,
-            attachmentsOverlayShown = attachmentsOptionsOpen,
             profilePicsMap = profilePicsMap,
-            imageAttachments = imageAttachments,
-            sendingMessage = sendingMessage,
             fetchingMore = fetchingMore,
             canFetchMore = canFetchMore
         ) { event ->
+            viewModelScope.launch { events.emit(event) }
             when (event) {
                 is ChatUiEvent.DismissReactionPopup -> {
                     showReactionPopup = false
                     targetMessageIdForReaction = null
                 }
-                is ChatUiEvent.OnMessageTextChanged -> messageText = event.text
                 is ChatUiEvent.OpenMessageReactions -> {
                     showReactionPopup = true
                     targetMessageIdForReaction = event.messageId
-                }
-                is ChatUiEvent.SendMessage -> {
-                    sendingMessage = true
-                    sendMessage(
-                        messageText = messageText.text,
-                        messageType = getMessageType(
-                            messageText = messageText.text,
-                            imageAttachments = imageAttachments
-                        ),
-                        imageAttachments = imageAttachments,
-                        onSuccess = {
-                            messageText = TextFieldValue("")
-                            imageAttachments = emptySet()
-                            sendingMessage = false
-                            coroutineScope.launch {
-                                listState.animateScrollToItem(0)
-                            }
-                        }
-                    )
                 }
                 is ChatUiEvent.OnReactionSelected -> addReactionToMessage(
                     messageId = event.messageId,
@@ -120,13 +93,6 @@ class ChatViewModel @Inject constructor(
                 is ChatUiEvent.OnMessageClicked -> shownTimestamps =
                     if (shownTimestamps.contains(event.messageId)) shownTimestamps - event.messageId
                     else shownTimestamps + event.messageId
-                is ChatUiEvent.ShowAttachmentsOverlay -> attachmentsOptionsOpen = true
-                is ChatUiEvent.CloseAttachmentsOverlay -> attachmentsOptionsOpen = false
-                is ChatUiEvent.AddImageAttachment -> {
-                    imageAttachments = imageAttachments + event.imageUri
-                    attachmentsOptionsOpen = false
-                }
-                is ChatUiEvent.RemoveImageAttachment -> imageAttachments = imageAttachments.minus(event.imageUri)
                 is ChatUiEvent.FetchMoreMessages -> {
                     if (canFetchMore) {
                         fetchingMore = true
@@ -151,26 +117,7 @@ class ChatViewModel @Inject constructor(
                     if (mediaUrls.size > 1) _sideEffects.emitSuspended(ChatUiSideEffect.NavigateToImageAttachment(event.message.id))
                     else _sideEffects.emitSuspended(ChatUiSideEffect.NavigateToFullScreenImage(mediaUrls.first()))
                 }
-            }
-        }
-    }
-
-    private fun sendMessage(
-        messageText: String,
-        messageType: MessageType,
-        imageAttachments: Set<Uri> = emptySet(),
-        onSuccess: () -> Unit
-    ) {
-        viewModelScope.launch(Dispatchers.Default) {
-            when (messageType) {
-                MessageType.TEXT -> chatRepository.sendTextMessage(messageText)
-                    .onSuccess { onSuccess() }
-                    .onFailure { _sideEffects.emitSuspended(ChatUiSideEffect.ShowError("The message was not delivered. Please try again.")) }
-                MessageType.IMAGE -> chatRepository.sendImageMessage(imageAttachments, messageText)
-                    .onSuccess { onSuccess() }
-                    .onFailure { _sideEffects.emitSuspended(ChatUiSideEffect.ShowError("The image was not delivered. Please try again.")) }
-                MessageType.VIDEO -> Unit
-                MessageType.VOICE -> Unit
+                else -> Unit
             }
         }
     }
@@ -184,17 +131,6 @@ class ChatViewModel @Inject constructor(
             chatRepository.addReactionToMessage(messageId, reaction)
                 .onSuccess { onSuccess() }
                 .onFailure { _sideEffects.emitSuspended(ChatUiSideEffect.ShowError("The reaction was not added. Please try again.")) }
-        }
-    }
-
-    private fun getMessageType(
-        messageText: String,
-        imageAttachments: Set<Uri>
-    ): MessageType {
-        return when {
-            imageAttachments.isNotEmpty() -> MessageType.IMAGE
-            messageText.isNotBlank() -> MessageType.TEXT
-            else -> MessageType.TEXT
         }
     }
 
