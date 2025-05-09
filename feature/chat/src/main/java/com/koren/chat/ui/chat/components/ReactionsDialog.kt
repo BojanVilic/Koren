@@ -1,4 +1,4 @@
-package com.koren.chat.ui.components
+package com.koren.chat.ui.chat.components
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement

@@ -1,8 +1,10 @@
-package com.koren.chat.ui
+package com.koren.chat.ui.chat
 
 import android.net.Uri
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.ui.text.input.TextFieldValue
 import com.koren.common.models.chat.ChatItem
+import com.koren.common.models.chat.ChatMessage
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
@@ -12,6 +14,7 @@ sealed interface ChatUiState : UiState {
     data object Loading : ChatUiState
     data class Shown(
         val currentUserId: String = "",
+        val listState: LazyListState = LazyListState(),
         val chatItems: List<ChatItem> = emptyList(),
         val messageText: TextFieldValue = TextFieldValue(""),
         val showReactionPopup: Boolean = false,
@@ -39,8 +42,11 @@ sealed interface ChatUiEvent : UiEvent {
     data class AddImageAttachment(val imageUri: Uri) : ChatUiEvent
     data class RemoveImageAttachment(val imageUri: Uri) : ChatUiEvent
     data object FetchMoreMessages : ChatUiEvent
+    data class OpenImageAttachment(val message: ChatMessage) : ChatUiEvent
 }
 
 sealed interface ChatUiSideEffect : UiSideEffect {
     data class ShowError(val message: String) : ChatUiSideEffect
+    data class NavigateToImageAttachment(val messageId: String) : ChatUiSideEffect
+    data class NavigateToFullScreenImage(val mediaUrl: String) : ChatUiSideEffect
 }

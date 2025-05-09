@@ -1,6 +1,7 @@
-package com.koren.chat.ui
+package com.koren.chat.ui.chat
 
 import android.net.Uri
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -8,6 +9,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
@@ -19,12 +21,10 @@ import com.koren.data.repository.ChatRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -40,6 +40,8 @@ class ChatViewModel @Inject constructor(
     override fun produceState(): ChatUiState {
         val currentUserId by userSession.currentUser.map { it.id }.collectAsState(initial = "")
         val familyMembers by getAllFamilyMembersUseCase.invoke().collectAsState(initial = emptyList())
+        val listState = rememberLazyListState()
+        val coroutineScope = rememberCoroutineScope()
 
         var chatItems by remember { mutableStateOf<List<ChatItem>>(emptyList()) }
         var messageText by remember { mutableStateOf(TextFieldValue("")) }
@@ -68,6 +70,7 @@ class ChatViewModel @Inject constructor(
 
         return ChatUiState.Shown(
             currentUserId = currentUserId,
+            listState = listState,
             chatItems = chatItems,
             messageText = messageText,
             showReactionPopup = showReactionPopup,
@@ -103,6 +106,9 @@ class ChatViewModel @Inject constructor(
                             messageText = TextFieldValue("")
                             imageAttachments = emptySet()
                             sendingMessage = false
+                            coroutineScope.launch {
+                                listState.animateScrollToItem(0)
+                            }
                         }
                     )
                 }
@@ -124,17 +130,26 @@ class ChatViewModel @Inject constructor(
                 is ChatUiEvent.FetchMoreMessages -> {
                     if (canFetchMore) {
                         fetchingMore = true
-                        (chatItems.filterIsInstance<ChatItem.MessageItem>().last() as? ChatItem.MessageItem)
-                            ?.let { fetchMoreMessages(
-                                lastTimestamp = -it.message.timestamp,
-                                onResult = { newItems, hasMore ->
-                                    chatItems = chatItems + newItems
-                                    canFetchMore = hasMore
-                                    fetchingMore = false
-                                }
-                            ) }
+                        (chatItems.filterIsInstance<ChatItem.MessageItem>()
+                            .last() as? ChatItem.MessageItem)
+                            ?.let {
+                                fetchMoreMessages(
+                                    lastTimestamp = -it.message.timestamp,
+                                    onResult = { newItems, hasMore ->
+                                        chatItems = chatItems + newItems
+                                        canFetchMore = hasMore
+                                        fetchingMore = false
+                                    }
+                                )
+                            }
                             ?: run { fetchingMore = false }
                     }
+                }
+                is ChatUiEvent.OpenImageAttachment -> {
+                    val mediaUrls = event.message.mediaUrls
+                    if (mediaUrls.isNullOrEmpty()) return@Shown
+                    if (mediaUrls.size > 1) _sideEffects.emitSuspended(ChatUiSideEffect.NavigateToImageAttachment(event.message.id))
+                    else _sideEffects.emitSuspended(ChatUiSideEffect.NavigateToFullScreenImage(mediaUrls.first()))
                 }
             }
         }

@@ -1,4 +1,4 @@
-package com.koren.chat.ui.components
+package com.koren.chat.ui.chat.components
 
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -34,8 +34,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.koren.chat.ui.ChatUiEvent
-import com.koren.chat.ui.ChatUiState
+import com.koren.chat.ui.chat.ChatUiEvent
+import com.koren.chat.ui.chat.ChatUiState
 import com.koren.chat.ui.model.AttachmentOptions
 import com.koren.designsystem.components.Scrim
 import com.koren.designsystem.icon.Files

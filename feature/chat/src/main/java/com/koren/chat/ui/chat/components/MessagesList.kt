@@ -1,4 +1,4 @@
-package com.koren.chat.ui.components
+package com.koren.chat.ui.chat.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,15 +23,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.koren.chat.ui.ChatUiEvent
-import com.koren.chat.ui.ChatUiState
+import com.koren.chat.ui.chat.ChatUiEvent
+import com.koren.chat.ui.chat.ChatUiState
 import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
 import com.koren.designsystem.components.isEndReached
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
-import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -42,11 +40,10 @@ internal fun MessageList(
     modifier: Modifier = Modifier,
     uiState: ChatUiState.Shown
 ) {
-    val listState = rememberLazyListState()
 
     val endOfListReached by remember {
         derivedStateOf {
-            listState.isEndReached()
+            uiState.listState.isEndReached()
         }
     }
 
@@ -56,15 +53,9 @@ internal fun MessageList(
         }
     }
 
-//    LaunchedEffect(uiState.chatItems.size) {
-//        if (uiState.chatItems.isNotEmpty()) {
-//            listState.animateScrollToItem(0)
-//        }
-//    }
-
     LazyColumn(
         modifier = modifier.padding(horizontal = 8.dp),
-        state = listState,
+        state = uiState.listState,
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(vertical = 8.dp),
         reverseLayout = true
@@ -96,7 +87,8 @@ internal fun MessageList(
                         onMessageClick = { uiState.eventSink(ChatUiEvent.OnMessageClicked(message.id)) },
                         onLongPress = { uiState.eventSink(ChatUiEvent.OpenMessageReactions(message.id)) },
                         timestampVisible = uiState.shownTimestamps.contains(message.id),
-                        profilePic = uiState.profilePicsMap.getOrDefault(message.senderId, null)
+                        profilePic = uiState.profilePicsMap.getOrDefault(message.senderId, null),
+                        onImageClicked = { uiState.eventSink(ChatUiEvent.OpenImageAttachment(it)) }
                     )
                 }
             }

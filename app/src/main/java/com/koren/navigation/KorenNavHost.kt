@@ -23,7 +23,7 @@ import com.koren.calendar.ui.add_entry.AddEntryDestination
 import com.koren.calendar.ui.add_entry.AddEntryScreen
 import com.koren.calendar.ui.calendar.CalendarDestination
 import com.koren.chat.navigation.chatScreen
-import com.koren.chat.ui.ChatDestination
+import com.koren.chat.ui.chat.ChatDestination
 import com.koren.common.models.calendar.Day
 import com.koren.designsystem.components.bottom_sheet.BottomSheetNavigator
 import com.koren.designsystem.components.bottom_sheet.ModalBottomSheetLayout

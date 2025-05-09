@@ -1,4 +1,4 @@
-package com.koren.chat.ui.components
+package com.koren.chat.ui.chat.components
 
 import android.net.Uri
 import androidx.compose.animation.AnimatedContent

@@ -1,7 +1,8 @@
-package com.koren.chat.ui.components
+package com.koren.chat.ui.chat.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,7 +54,8 @@ internal fun MessageItem(
     onMessageClick: (String) -> Unit,
     onLongPress: () -> Unit,
     timestampVisible: Boolean,
-    profilePic: String? = null
+    profilePic: String? = null,
+    onImageClicked: (message: ChatMessage) -> Unit
 ) {
     val arrangement =
         if (isCurrentUser) Arrangement.End
@@ -88,7 +90,8 @@ internal fun MessageItem(
             onLongPress = onLongPress,
             backgroundColor = backgroundColor,
             textColor = textColor,
-            timestampVisible = timestampVisible
+            timestampVisible = timestampVisible,
+            onImageClicked = onImageClicked
         )
     }
 }
@@ -101,7 +104,8 @@ private fun MessageBubble(
     onLongPress: () -> Unit,
     backgroundColor: Color,
     textColor: Color,
-    timestampVisible: Boolean
+    timestampVisible: Boolean,
+    onImageClicked: (message: ChatMessage) -> Unit
 ) {
     Column {
         Column(
@@ -124,7 +128,7 @@ private fun MessageBubble(
                 ) {
                     when (message.messageType) {
                         MessageType.TEXT -> TextMessage(message.textContent, textColor)
-                        MessageType.IMAGE -> ImageMessage(message = message, textColor = textColor)
+                        MessageType.IMAGE -> ImageMessage(message = message, textColor = textColor, onClick = onImageClicked)
                         MessageType.VIDEO -> VideoMessage(message = message)
                         MessageType.VOICE -> VoiceMessage(textColor = textColor, message = message)
                     }
@@ -157,7 +161,8 @@ private fun TextMessage(
 @Composable
 private fun ImageMessage(
     message: ChatMessage,
-    textColor: Color
+    textColor: Color,
+    onClick: (message: ChatMessage) -> Unit
 ) {
     val mediaUrls = message.mediaUrls
     if (!mediaUrls.isNullOrEmpty()) {
@@ -169,7 +174,10 @@ private fun ImageMessage(
             AsyncImage(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp)),
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable {
+                        onClick(message)
+                    },
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(mediaUrls.first())
                     .crossfade(true)
@@ -350,7 +358,8 @@ private fun PreviewTextMessage() {
             onMessageClick = {},
             onLongPress = {},
             timestampVisible = true,
-            profilePic = "https://i.pravatar.cc/150?img=2"
+            profilePic = "https://i.pravatar.cc/150?img=2",
+            onImageClicked = {}
         )
     }
 }
@@ -372,7 +381,8 @@ private fun PreviewImageMessage() {
             isPreviousMessageSameSender = false,
             onMessageClick = {},
             onLongPress = {},
-            timestampVisible = true
+            timestampVisible = true,
+            onImageClicked = {}
         )
     }
 }
@@ -394,7 +404,8 @@ private fun PreviewVideoMessage() {
             onMessageClick = {},
             onLongPress = {},
             timestampVisible = true,
-            profilePic = "https://i.pravatar.cc/150?img=2"
+            profilePic = "https://i.pravatar.cc/150?img=2",
+            onImageClicked = {}
         )
     }
 }
@@ -415,7 +426,8 @@ private fun PreviewVoiceMessage() {
             isPreviousMessageSameSender = false,
             onMessageClick = {},
             onLongPress = {},
-            timestampVisible = true
+            timestampVisible = true,
+            onImageClicked = {}
         )
     }
 }

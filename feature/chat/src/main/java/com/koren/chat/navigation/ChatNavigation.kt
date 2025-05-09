@@ -4,8 +4,12 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.koren.chat.ui.ChatDestination
-import com.koren.chat.ui.ChatScreen
+import com.koren.chat.ui.attachments_list.AttachmentsListDestination
+import com.koren.chat.ui.attachments_list.AttachmentsListScreen
+import com.koren.chat.ui.chat.ChatDestination
+import com.koren.chat.ui.chat.ChatScreen
+import com.koren.chat.ui.full_screen_image.FullScreenImageDestination
+import com.koren.chat.ui.full_screen_image.FullScreenImageScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -20,6 +24,25 @@ fun NavGraphBuilder.chatScreen(
     ) {
         composable<ChatDestination> {
             ChatScreen(
+                onShowSnackbar = onShowSnackbar,
+                onNavigateToImageAttachment = { messageId ->
+                    navController.navigate(AttachmentsListDestination(messageId))
+                },
+                onNavigateToFullScreenImage = { mediaUrl ->
+                    navController.navigate(FullScreenImageDestination(mediaUrl))
+                }
+            )
+        }
+        composable<AttachmentsListDestination> {
+            AttachmentsListScreen(
+                onShowSnackbar = onShowSnackbar,
+                navigateToFullScreenImage = { mediaUrl ->
+                    navController.navigate(FullScreenImageDestination(mediaUrl))
+                }
+            )
+        }
+        composable<FullScreenImageDestination> {
+            FullScreenImageScreen(
                 onShowSnackbar = onShowSnackbar
             )
         }

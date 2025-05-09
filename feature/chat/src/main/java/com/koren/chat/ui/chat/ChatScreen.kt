@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalFoundationApi::class)
 
-package com.koren.chat.ui
+package com.koren.chat.ui.chat
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,10 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.koren.chat.ui.components.AttachmentsOverlay
-import com.koren.chat.ui.components.MessageInputArea
-import com.koren.chat.ui.components.MessageList
-import com.koren.chat.ui.components.ReactionSelectionDialog
+import com.koren.chat.ui.chat.components.AttachmentsOverlay
+import com.koren.chat.ui.chat.components.MessageInputArea
+import com.koren.chat.ui.chat.components.MessageList
+import com.koren.chat.ui.chat.components.ReactionSelectionDialog
 import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
@@ -38,7 +38,9 @@ object ChatDestination
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
-    onShowSnackbar: suspend (message: String) -> Unit
+    onShowSnackbar: suspend (message: String) -> Unit,
+    onNavigateToImageAttachment: (messageId: String) -> Unit,
+    onNavigateToFullScreenImage: (mediaUrl: String) -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
@@ -54,6 +56,8 @@ fun ChatScreen(
     ) { uiSideEffect ->
         when (uiSideEffect) {
             is ChatUiSideEffect.ShowError -> onShowSnackbar(uiSideEffect.message)
+            is ChatUiSideEffect.NavigateToImageAttachment -> onNavigateToImageAttachment(uiSideEffect.messageId)
+            is ChatUiSideEffect.NavigateToFullScreenImage -> onNavigateToFullScreenImage(uiSideEffect.mediaUrl)
         }
     }
 
