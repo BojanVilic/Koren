@@ -11,6 +11,7 @@ data class MessageInputUiState(
     val sendingMessage: Boolean = false,
     val imageAttachments: Set<Uri> = emptySet(),
     val attachmentsOverlayShown: Boolean = true,
+    val videoAttachment: Uri? = null,
     override val eventSink: (MessageInputUiEvent) -> Unit = {}
 ) : UiState, EventHandler<MessageInputUiEvent>
 
@@ -19,6 +20,8 @@ sealed interface MessageInputUiEvent : UiEvent {
     data class OnMessageTextChanged(val text: TextFieldValue) : MessageInputUiEvent
     data class AddImageAttachment(val imageUri: Uri) : MessageInputUiEvent
     data class RemoveImageAttachment(val imageUri: Uri) : MessageInputUiEvent
+    data class AddVideoAttachment(val videoUri: Uri) : MessageInputUiEvent
+    data object RemoveVideoAttachment : MessageInputUiEvent
     data object ShowAttachmentsOverlay : MessageInputUiEvent
     data object CloseAttachmentsOverlay : MessageInputUiEvent
 }

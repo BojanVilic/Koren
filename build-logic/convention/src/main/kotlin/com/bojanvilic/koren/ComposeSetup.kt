@@ -32,6 +32,8 @@ internal fun Project.configureComposeSetup(
             add("implementation", libs.findLibrary("androidx-compose-navigation").get())
             add("implementation", libs.findLibrary("hilt-navigation-compose").get())
             add("implementation", libs.findLibrary("coil-compose").get())
+            add("implementation", libs.findLibrary("coil-network-okhttp").get())
+            add("implementation", libs.findLibrary("coil-video").get())
 
             add("implementation", libs.findLibrary("androidx-compose-ui").get())
             add("implementation", libs.findLibrary("androidx-compose-ui-graphics").get())

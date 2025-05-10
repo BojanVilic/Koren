@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.TextFieldValue
 import com.koren.chat.ui.chat.ChatUiSideEffect
@@ -32,12 +33,15 @@ class MessageInputPresenter @Inject constructor(
         var sendingMessage by remember { mutableStateOf(false) }
         var imageAttachments by remember { mutableStateOf(emptySet<Uri>()) }
         var attachmentsOptionsOpen by remember { mutableStateOf(false) }
+        var videoAttachment by remember { mutableStateOf<Uri?>(null) }
+        val coroutineScope = rememberCoroutineScope()
 
         return MessageInputUiState(
             messageText = messageText,
             sendingMessage = sendingMessage,
             imageAttachments = imageAttachments,
-            attachmentsOverlayShown = attachmentsOptionsOpen
+            attachmentsOverlayShown = attachmentsOptionsOpen,
+            videoAttachment = videoAttachment
         ) { event ->
             when (event) {
                 is MessageInputUiEvent.OnMessageTextChanged -> messageText = event.text
@@ -55,7 +59,7 @@ class MessageInputPresenter @Inject constructor(
                                 messageText = TextFieldValue("")
                                 imageAttachments = emptySet()
                                 sendingMessage = false
-                                scope.launch {
+                                coroutineScope.launch(Dispatchers.IO) {
                                     listState.animateScrollToItem(0)
                                 }
                             },
@@ -75,6 +79,8 @@ class MessageInputPresenter @Inject constructor(
                 is MessageInputUiEvent.RemoveImageAttachment -> imageAttachments = imageAttachments.minus(event.imageUri)
                 is MessageInputUiEvent.ShowAttachmentsOverlay -> attachmentsOptionsOpen = true
                 is MessageInputUiEvent.CloseAttachmentsOverlay -> attachmentsOptionsOpen = false
+                is MessageInputUiEvent.AddVideoAttachment -> videoAttachment = event.videoUri
+                is MessageInputUiEvent.RemoveVideoAttachment -> videoAttachment = null
             }
         }
     }

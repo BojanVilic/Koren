@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage // Assuming Coil is used for image loading
+import coil3.compose.AsyncImage // Assuming Coil is used for image loading
 import com.koren.designsystem.theme.KorenTheme // Assuming KorenTheme is defined
 import com.koren.designsystem.theme.ThemePreview // Assuming ThemePreview is defined
 import java.util.Date // Using java.util.Date for simplicity with timestamp

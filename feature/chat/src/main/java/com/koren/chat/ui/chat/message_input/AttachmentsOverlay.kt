@@ -45,7 +45,8 @@ import com.koren.designsystem.theme.ThemePreview
 @Composable
 internal fun AttachmentsOverlay(
     uiState: MessageInputUiState,
-    imagePicker: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>
+    imagePicker: ManagedActivityResultLauncher<PickVisualMediaRequest, List<@JvmSuppressWildcards Uri>>,
+    videoPicker: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>
 ) {
 
     val hapticFeedback = LocalHapticFeedback.current
@@ -88,6 +89,7 @@ internal fun AttachmentsOverlay(
                             title = "Video",
                             onClick = {
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                videoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
                             }
                         ),
                         AttachmentOptions(
@@ -135,6 +137,10 @@ private fun AttachmentsOverlayPreview() {
         AttachmentsOverlay(
             uiState = MessageInputUiState(),
             imagePicker = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.PickMultipleVisualMedia(),
+                onResult = {}
+            ),
+            videoPicker = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.PickVisualMedia(),
                 onResult = {}
             )

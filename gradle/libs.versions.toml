@@ -3,7 +3,6 @@ minSdkVersion = "28"
 targetSdkVersion = "35"
 
 agp = "8.7.3"
-coilCompose = "2.7.0"
 coreSplashscreen = "1.0.1"
 firebaseDatabase = "21.0.0"
 kotlin = "2.0.10"
@@ -43,6 +42,7 @@ uiTextGoogleFonts = "1.7.8"
 moleculeRuntime = "2.0.0"
 androidMapsUtils = "2.2.5"
 firebaseMessagingKtx = "24.1.1"
+coil = "3.1.0"
 
 [libraries]
 android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version.ref = "androidMapsUtils" }
@@ -51,7 +51,9 @@ androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", versi
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
-coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+coil-video = { module = "io.coil-kt.coil3:coil-video", version.ref = "coil" }
 firebase-database = { module = "com.google.firebase:firebase-database", version.ref = "firebaseDatabase" }
 firebase-storage = { module = "com.google.firebase:firebase-storage", version.ref = "firebaseDatabase" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }

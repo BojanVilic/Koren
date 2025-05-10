@@ -13,12 +13,14 @@ import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
 import com.koren.common.services.UserSession
 import com.koren.common.util.DateUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.Calendar
 import java.util.UUID
@@ -96,7 +98,9 @@ class DefaultChatRepository @Inject constructor(
         val chatRef = database.getReference("chats/${user.familyId}/${message.id}")
 
         return try {
-            chatRef.setValue(message).await()
+            withContext(Dispatchers.Default) {
+                chatRef.setValue(message).await()
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Timber.e("Error sending message: ${e.message}")

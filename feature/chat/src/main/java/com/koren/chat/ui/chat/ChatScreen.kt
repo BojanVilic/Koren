@@ -15,12 +15,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.chat.ui.chat.message_input.AttachmentsOverlay
 import com.koren.chat.ui.chat.message_input.MessageInputArea
-import com.koren.chat.ui.chat.messages_window.MessageList
-import com.koren.chat.ui.chat.messages_window.ReactionSelectionDialog
 import com.koren.chat.ui.chat.message_input.MessageInputUiEvent
 import com.koren.chat.ui.chat.message_input.MessageInputUiState
+import com.koren.chat.ui.chat.messages_window.MessageList
 import com.koren.chat.ui.chat.messages_window.MessagesWindowUiEvent
 import com.koren.chat.ui.chat.messages_window.MessagesWindowUiState
+import com.koren.chat.ui.chat.messages_window.ReactionSelectionDialog
 import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
@@ -81,10 +81,19 @@ private fun ChatScreenShownContent(
     uiState: ChatUiState.Shown
 ) {
     val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 10),
+        onResult = { uris ->
+            uris.forEach { uri ->
+                uiState.messageInputUiState.eventSink(MessageInputUiEvent.AddImageAttachment(uri))
+            }
+        }
+    )
+
+    val videoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             uri?.let {
-                uiState.messageInputUiState.eventSink(MessageInputUiEvent.AddImageAttachment(it))
+                uiState.messageInputUiState.eventSink(MessageInputUiEvent.AddVideoAttachment(it))
             }
         }
     )
@@ -116,7 +125,8 @@ private fun ChatScreenShownContent(
     ) {
         AttachmentsOverlay(
             uiState = uiState.messageInputUiState,
-            imagePicker = imagePicker
+            imagePicker = imagePicker,
+            videoPicker = videoPicker
         )
     }
 }

@@ -46,16 +46,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import coil3.ImageLoader
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.video.VideoFrameDecoder
 import com.koren.designsystem.icon.Close
 import com.koren.designsystem.icon.KorenIcons
+import com.koren.designsystem.icon.Video
 import com.koren.designsystem.icon.Voice
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
@@ -64,12 +69,15 @@ import com.koren.designsystem.theme.ThemePreview
 internal fun MessageInputArea(
     uiState: MessageInputUiState,
 ) {
+
+    val showAttachmentsRow = uiState.imageAttachments.isNotEmpty() || uiState.videoAttachment != null
+
     Surface(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
             AnimatedVisibility(
-                visible = uiState.imageAttachments.isNotEmpty(),
+                visible = showAttachmentsRow,
                 enter = slideInVertically(initialOffsetY = { it }),
                 exit = slideOutVertically(
                     targetOffsetY = { it },
@@ -92,44 +100,8 @@ internal fun MessageInputArea(
                             modifier = Modifier.horizontalScroll(rememberScrollState()),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            uiState.imageAttachments.forEach { image ->
-                                Box(
-                                    modifier = Modifier.size(84.dp)
-                                ) {
-                                    AsyncImage(
-                                        modifier = Modifier
-                                            .size(64.dp)
-                                            .clip(MaterialTheme.shapes.medium),
-                                        model = ImageRequest.Builder(LocalContext.current)
-                                            .crossfade(true)
-                                            .data(image)
-                                            .build(),
-                                        contentDescription = null,
-                                        contentScale = ContentScale.Crop
-                                    )
-
-                                    Icon(
-                                        modifier = Modifier
-                                            .size(28.dp)
-                                            .offset {
-                                                IntOffset(0, -42)
-                                            }
-                                            .clip(CircleShape)
-                                            .align(Alignment.TopEnd)
-                                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                                            .clickable {
-                                                uiState.eventSink(
-                                                    MessageInputUiEvent.RemoveImageAttachment(
-                                                        image
-                                                    )
-                                                )
-                                            },
-                                        imageVector = KorenIcons.Close,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
+                            VideoAttachment(uiState = uiState)
+                            ImageAttachments(uiState = uiState)
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                     }
@@ -177,6 +149,115 @@ internal fun MessageInputArea(
     }
 }
 
+@Composable
+private fun ImageAttachments(
+    uiState: MessageInputUiState
+) {
+    uiState.imageAttachments.forEach { image ->
+        Box(
+            modifier = Modifier.size(84.dp)
+        ) {
+            AsyncImage(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(MaterialTheme.shapes.medium),
+                model = ImageRequest.Builder(LocalContext.current)
+                    .crossfade(true)
+                    .data(image)
+                    .build(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop
+            )
+
+            Icon(
+                modifier = Modifier
+                    .size(28.dp)
+                    .offset {
+                        IntOffset(0, -42)
+                    }
+                    .clip(CircleShape)
+                    .align(Alignment.TopEnd)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable {
+                        uiState.eventSink(
+                            MessageInputUiEvent.RemoveImageAttachment(
+                                image
+                            )
+                        )
+                    },
+                imageVector = KorenIcons.Close,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+}
+
+@Composable
+private fun VideoAttachment(
+    uiState: MessageInputUiState
+) {
+    if (uiState.videoAttachment != null) {
+        Box(
+            modifier = Modifier.size(84.dp)
+        ) {
+
+            val context = LocalContext.current
+
+            val imageLoader = ImageLoader.Builder(context)
+                .components {
+                    add(VideoFrameDecoder.Factory())
+                }
+                .build()
+
+            val request = ImageRequest.Builder(context)
+                .data(uiState.videoAttachment)
+                .size(256, 256)
+                .build()
+
+            AsyncImage(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(MaterialTheme.shapes.medium),
+                model = request,
+                imageLoader = imageLoader,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.4f)),
+                error = ColorPainter(MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.4f))
+            )
+
+            Box(
+                modifier = Modifier
+                    .padding(end = 21.dp, bottom = 21.dp)
+                    .size(24.dp)
+                    .align(Alignment.Center)
+                    .background(Color.Black.copy(alpha = 0.5f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = KorenIcons.Video,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+
+            Icon(
+                modifier = Modifier
+                    .size(28.dp)
+                    .offset { IntOffset(0, -42) }
+                    .clip(CircleShape)
+                    .align(Alignment.TopEnd)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { uiState.eventSink(MessageInputUiEvent.RemoveVideoAttachment) },
+                imageVector = KorenIcons.Close,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+}
 
 @Composable
 private fun AnimatedSendMicButton(

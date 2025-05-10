@@ -6,7 +6,6 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.location.Location
 import android.os.Looper
 import androidx.core.app.ActivityCompat.checkSelfPermission
-import coil.util.CoilUtils.result
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -22,7 +21,6 @@ import com.google.android.libraries.places.api.model.PlaceTypes
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse
-import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.getValue
