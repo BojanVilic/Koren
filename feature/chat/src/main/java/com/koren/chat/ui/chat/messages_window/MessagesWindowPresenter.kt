@@ -16,6 +16,7 @@ import com.koren.data.repository.ChatRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -60,7 +61,9 @@ class MessagesWindowPresenter @Inject constructor(
                 fetchingMore = false
             }
         }
-        
+
+        if (currentUserId.isBlank()) return MessagesWindowUiState.Loading
+
         return MessagesWindowUiState.Shown(
             currentUserId = currentUserId,
             listState = listState,

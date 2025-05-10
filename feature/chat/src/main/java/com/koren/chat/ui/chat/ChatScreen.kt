@@ -95,7 +95,7 @@ private fun ChatScreenShownContent(
             .imePadding()
     ) {
         when (uiState.messagesWindowUiState) {
-            is MessagesWindowUiState.Loading -> LoadingContent()
+            is MessagesWindowUiState.Loading -> LoadingContent(modifier = Modifier.weight(1f))
             is MessagesWindowUiState.Shown -> MessageList(
                 modifier = Modifier.weight(1f),
                 uiState = uiState.messagesWindowUiState
@@ -103,9 +103,8 @@ private fun ChatScreenShownContent(
         }
 
         MessageInputArea(uiState = uiState.messageInputUiState)
-        when (uiState.messagesWindowUiState) {
-            is MessagesWindowUiState.Loading -> LoadingContent()
-            is MessagesWindowUiState.Shown -> ReactionsArea(uiState = uiState.messagesWindowUiState)
+        if (uiState.messagesWindowUiState is MessagesWindowUiState.Shown) {
+            ReactionsArea(uiState = uiState.messagesWindowUiState)
         }
     }
 
