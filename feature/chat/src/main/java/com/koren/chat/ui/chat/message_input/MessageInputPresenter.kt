@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.TextFieldValue
 import com.koren.chat.ui.chat.ChatUiSideEffect
@@ -17,21 +16,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class MessageInputPresenter @Inject constructor(
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val scope: CoroutineScope
 ) {
 
     @Composable
     fun present(
         sideEffects: MutableSharedFlow<ChatUiSideEffect>,
         listState: LazyListState,
-        viewModelScope: CoroutineScope
     ): MessageInputUiState {
 
-        val coroutineScope = rememberCoroutineScope()
         var messageText by remember { mutableStateOf(TextFieldValue("")) }
         var sendingMessage by remember { mutableStateOf(false) }
         var imageAttachments by remember { mutableStateOf(emptySet<Uri>()) }
@@ -46,7 +42,7 @@ class MessageInputPresenter @Inject constructor(
             when (event) {
                 is MessageInputUiEvent.OnMessageTextChanged -> messageText = event.text
                 is MessageInputUiEvent.SendMessage -> {
-                    coroutineScope.launch(Dispatchers.Default) {
+                    scope.launch(Dispatchers.Default) {
                         sendingMessage = true
                         sendMessage(
                             messageText = messageText.text,
@@ -59,12 +55,12 @@ class MessageInputPresenter @Inject constructor(
                                 messageText = TextFieldValue("")
                                 imageAttachments = emptySet()
                                 sendingMessage = false
-                                coroutineScope.launch {
+                                scope.launch {
                                     listState.animateScrollToItem(0)
                                 }
                             },
                             onFailure = { errorMessage ->
-                                coroutineScope.launch {
+                                scope.launch {
                                     sideEffects.emit(ChatUiSideEffect.ShowError(errorMessage))
                                 }
                                 sendingMessage = false

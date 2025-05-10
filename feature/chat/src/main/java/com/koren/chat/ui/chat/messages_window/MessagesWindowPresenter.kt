@@ -16,27 +16,24 @@ import com.koren.data.repository.ChatRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class MessagesWindowPresenter @Inject constructor(
     private val chatRepository: ChatRepository,
     private val userSession: UserSession,
     private val getAllFamilyMembersUseCase: GetAllFamilyMembersUseCase,
+    private val scope: CoroutineScope
 ) {
     
     @Composable
     fun present(
         sideEffects: MutableSharedFlow<ChatUiSideEffect>,
-        listState: LazyListState,
-        viewModelScope: CoroutineScope
+        listState: LazyListState
     ): MessagesWindowUiState {
         val currentUserId by userSession.currentUser.map { it.id }.collectAsState(initial = "")
         val familyMembers by getAllFamilyMembersUseCase.invoke().collectAsState(initial = emptyList())
@@ -89,9 +86,8 @@ class MessagesWindowPresenter @Inject constructor(
                     reaction = event.reaction,
                     onSuccess = { showReactionPopup = false },
                     onFailure = { errorMessage ->
-                        viewModelScope.launch { sideEffects.emit(ChatUiSideEffect.ShowError(errorMessage)) }
-                    },
-                    viewModelScope = viewModelScope
+                        scope.launch { sideEffects.emit(ChatUiSideEffect.ShowError(errorMessage)) }
+                    }
                 )
                 is MessagesWindowUiEvent.OnMessageClicked -> shownTimestamps =
                     if (shownTimestamps.contains(event.messageId)) shownTimestamps - event.messageId
@@ -108,8 +104,7 @@ class MessagesWindowPresenter @Inject constructor(
                                         chatItems = chatItems + newItems
                                         canFetchMore = hasMore
                                         fetchingMore = false
-                                    },
-                                    viewModelScope = viewModelScope
+                                    }
                                 )
                             }
                             ?: run { fetchingMore = false }
@@ -118,8 +113,8 @@ class MessagesWindowPresenter @Inject constructor(
                 is MessagesWindowUiEvent.OpenImageAttachment -> {
                     val mediaUrls = event.message.mediaUrls
                     if (mediaUrls.isNullOrEmpty()) return@Shown
-                    if (mediaUrls.size > 1) viewModelScope.launch { sideEffects.emit(ChatUiSideEffect.NavigateToImageAttachment(event.message.id)) }
-                    else viewModelScope.launch { sideEffects.emit(ChatUiSideEffect.NavigateToFullScreenImage(mediaUrls.first())) }
+                    if (mediaUrls.size > 1) scope.launch { sideEffects.emit(ChatUiSideEffect.NavigateToImageAttachment(event.message.id)) }
+                    else scope.launch { sideEffects.emit(ChatUiSideEffect.NavigateToFullScreenImage(mediaUrls.first())) }
                 }
             }
         }
@@ -129,10 +124,9 @@ class MessagesWindowPresenter @Inject constructor(
         messageId: String,
         reaction: String,
         onSuccess: () -> Unit,
-        onFailure: (String) -> Unit,
-        viewModelScope: CoroutineScope
+        onFailure: (String) -> Unit
     ) {
-        viewModelScope.launch(Dispatchers.Default) {
+        scope.launch(Dispatchers.Default) {
             chatRepository.addReactionToMessage(messageId, reaction)
                 .onSuccess { onSuccess() }
                 .onFailure { onFailure("The reaction was not added. Please try again.") }
@@ -141,13 +135,12 @@ class MessagesWindowPresenter @Inject constructor(
 
     private fun fetchMoreMessages(
         lastTimestamp: Long,
-        onResult: (List<ChatItem>, Boolean) -> Unit,
-        viewModelScope: CoroutineScope
+        onResult: (List<ChatItem>, Boolean) -> Unit
     ) {
         chatRepository.getOlderMessages(lastTimestamp)
             .onEach { (newItems, hasMore) ->
                 onResult(newItems, hasMore)
             }
-            .launchIn(viewModelScope)
+            .launchIn(scope)
     }
 }
