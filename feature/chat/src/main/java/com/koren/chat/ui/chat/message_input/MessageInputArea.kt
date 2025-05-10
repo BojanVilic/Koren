@@ -1,4 +1,4 @@
-package com.koren.chat.ui.chat.components
+package com.koren.chat.ui.chat.message_input
 
 import android.net.Uri
 import androidx.compose.animation.AnimatedContent
@@ -62,21 +62,14 @@ import com.koren.designsystem.theme.ThemePreview
 
 @Composable
 internal fun MessageInputArea(
-    text: TextFieldValue,
-    onTextChange: (TextFieldValue) -> Unit,
-    sendingMessage: Boolean,
-    onSendClick: () -> Unit,
-    onAttachmentClick: () -> Unit,
-    onMicClick: () -> Unit,
-    imageAttachments: Set<Uri>,
-    onRemoveImageAttachment: (Uri) -> Unit
+    uiState: MessageInputUiState,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
             AnimatedVisibility(
-                visible = imageAttachments.isNotEmpty(),
+                visible = uiState.imageAttachments.isNotEmpty(),
                 enter = slideInVertically(initialOffsetY = { it }),
                 exit = slideOutVertically(
                     targetOffsetY = { it },
@@ -99,7 +92,7 @@ internal fun MessageInputArea(
                             modifier = Modifier.horizontalScroll(rememberScrollState()),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            imageAttachments.forEach { image ->
+                            uiState.imageAttachments.forEach { image ->
                                 Box(
                                     modifier = Modifier.size(84.dp)
                                 ) {
@@ -125,7 +118,11 @@ internal fun MessageInputArea(
                                             .align(Alignment.TopEnd)
                                             .background(MaterialTheme.colorScheme.surfaceVariant)
                                             .clickable {
-                                                onRemoveImageAttachment(image)
+                                                uiState.eventSink(
+                                                    MessageInputUiEvent.RemoveImageAttachment(
+                                                        image
+                                                    )
+                                                )
                                             },
                                         imageVector = KorenIcons.Close,
                                         contentDescription = null,
@@ -148,8 +145,10 @@ internal fun MessageInputArea(
                         .clip(CircleShape)
                         .weight(1f)
                         .padding(horizontal = 8.dp),
-                    value = text,
-                    onValueChange = onTextChange,
+                    value = uiState.messageText,
+                    onValueChange = {
+                        uiState.eventSink(MessageInputUiEvent.OnMessageTextChanged(it))
+                    },
                     placeholder = { Text("Message...") },
                     shape = RoundedCornerShape(24.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -160,7 +159,7 @@ internal fun MessageInputArea(
                     ),
                     maxLines = 4,
                     leadingIcon = {
-                        IconButton(onClick = onAttachmentClick) {
+                        IconButton(onClick = { uiState.eventSink(MessageInputUiEvent.ShowAttachmentsOverlay) }) {
                             Icon(Icons.Default.Add, contentDescription = "Attach file")
                         }
                     },
@@ -168,10 +167,10 @@ internal fun MessageInputArea(
                 )
 
                 AnimatedSendMicButton(
-                    isSendButton = text.text.isNotBlank() || imageAttachments.isNotEmpty(),
-                    sendingMessage = sendingMessage,
-                    onSendClick = onSendClick,
-                    onMicClick = onMicClick
+                    isSendButton = uiState.messageText.text.isNotBlank() || uiState.imageAttachments.isNotEmpty(),
+                    sendingMessage = uiState.sendingMessage,
+                    onSendClick = { uiState.eventSink(MessageInputUiEvent.SendMessage) },
+                    onMicClick = { }
                 )
             }
         }
@@ -255,14 +254,13 @@ private fun MessageInputAreaPreview() {
     KorenTheme {
         Surface {
             MessageInputArea(
-                text = TextFieldValue(""),
-                onTextChange = {},
-                sendingMessage = false,
-                onSendClick = {},
-                onAttachmentClick = {},
-                onMicClick = {},
-                imageAttachments = emptySet(),
-                onRemoveImageAttachment = {}
+                uiState = MessageInputUiState(
+                    messageText = TextFieldValue(""),
+                    sendingMessage = false,
+                    imageAttachments = emptySet(),
+                    attachmentsOverlayShown = false,
+                    eventSink = {}
+                )
             )
         }
     }
@@ -274,14 +272,13 @@ private fun MessageInputAreaSendingPreview() {
     KorenTheme {
         Surface {
             MessageInputArea(
-                text = TextFieldValue(""),
-                onTextChange = {},
-                sendingMessage = true,
-                onSendClick = {},
-                onAttachmentClick = {},
-                onMicClick = {},
-                imageAttachments = emptySet(),
-                onRemoveImageAttachment = {}
+                uiState = MessageInputUiState(
+                    messageText = TextFieldValue(""),
+                    sendingMessage = true,
+                    imageAttachments = emptySet(),
+                    attachmentsOverlayShown = false,
+                    eventSink = {}
+                )
             )
         }
     }
@@ -293,14 +290,13 @@ private fun MessageInputAreaWithAttachmentPreview() {
     KorenTheme {
         Surface {
             MessageInputArea(
-                text = TextFieldValue(""),
-                onTextChange = {},
-                sendingMessage = false,
-                onSendClick = {},
-                onAttachmentClick = {},
-                onMicClick = {},
-                imageAttachments = setOf(Uri.EMPTY),
-                onRemoveImageAttachment = {}
+                uiState = MessageInputUiState(
+                    messageText = TextFieldValue(""),
+                    sendingMessage = false,
+                    imageAttachments = setOf(Uri.EMPTY),
+                    attachmentsOverlayShown = false,
+                    eventSink = {}
+                )
             )
         }
     }
@@ -312,14 +308,13 @@ private fun MessageInputAreaWithTextPreview() {
     KorenTheme {
         Surface {
             MessageInputArea(
-                text = TextFieldValue("Hello"),
-                onTextChange = {},
-                sendingMessage = false,
-                onSendClick = {},
-                onAttachmentClick = {},
-                onMicClick = {},
-                imageAttachments = emptySet(),
-                onRemoveImageAttachment = {}
+                uiState = MessageInputUiState(
+                    messageText = TextFieldValue("Hello"),
+                    sendingMessage = false,
+                    imageAttachments = emptySet(),
+                    attachmentsOverlayShown = false,
+                    eventSink = {}
+                )
             )
         }
     }

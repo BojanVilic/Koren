@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalFoundationApi::class)
-
 package com.koren.chat.ui.chat
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -7,7 +5,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
@@ -16,10 +13,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.koren.chat.ui.chat.components.AttachmentsOverlay
-import com.koren.chat.ui.chat.components.MessageInputArea
-import com.koren.chat.ui.chat.components.MessageList
-import com.koren.chat.ui.chat.components.ReactionSelectionDialog
+import com.koren.chat.ui.chat.message_input.AttachmentsOverlay
+import com.koren.chat.ui.chat.message_input.MessageInputArea
+import com.koren.chat.ui.chat.messages_window.MessageList
+import com.koren.chat.ui.chat.messages_window.ReactionSelectionDialog
+import com.koren.chat.ui.chat.message_input.MessageInputUiEvent
+import com.koren.chat.ui.chat.message_input.MessageInputUiState
+import com.koren.chat.ui.chat.messages_window.MessagesWindowUiEvent
+import com.koren.chat.ui.chat.messages_window.MessagesWindowUiState
 import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
@@ -83,7 +84,7 @@ private fun ChatScreenShownContent(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             uri?.let {
-                uiState.eventSink(ChatUiEvent.AddImageAttachment(it))
+                uiState.messageInputUiState.eventSink(MessageInputUiEvent.AddImageAttachment(it))
             }
         }
     )
@@ -93,36 +94,18 @@ private fun ChatScreenShownContent(
             .fillMaxSize()
             .imePadding()
     ) {
-        MessageList(
-            modifier = Modifier.weight(1f),
-            uiState = uiState
-        )
-
-        MessageInputArea(
-            text = uiState.messageInputUiState.messageText,
-            onTextChange = { uiState.eventSink(ChatUiEvent.OnMessageTextChanged(it)) },
-            sendingMessage = uiState.messageInputUiState.sendingMessage,
-            onSendClick = {
-                uiState.eventSink(ChatUiEvent.SendMessage)
-            },
-            onAttachmentClick = { uiState.eventSink(ChatUiEvent.ShowAttachmentsOverlay) },
-            onMicClick = { },
-            imageAttachments = uiState.messageInputUiState.imageAttachments,
-            onRemoveImageAttachment = { uri ->
-                uiState.eventSink(ChatUiEvent.RemoveImageAttachment(uri))
-            }
-        )
-
-        if (uiState.showReactionPopup && uiState.targetMessageIdForReaction != null) {
-            ReactionSelectionDialog(
-                onDismissRequest = { uiState.eventSink(ChatUiEvent.DismissReactionPopup) },
-                onReactionSelected = { reaction ->
-                    uiState.targetMessageIdForReaction.let { msgId ->
-                        uiState.eventSink(ChatUiEvent.OnReactionSelected(msgId, reaction))
-                    }
-                    uiState.eventSink(ChatUiEvent.DismissReactionPopup)
-                }
+        when (uiState.messagesWindowUiState) {
+            is MessagesWindowUiState.Loading -> LoadingContent()
+            is MessagesWindowUiState.Shown -> MessageList(
+                modifier = Modifier.weight(1f),
+                uiState = uiState.messagesWindowUiState
             )
+        }
+
+        MessageInputArea(uiState = uiState.messageInputUiState)
+        when (uiState.messagesWindowUiState) {
+            is MessagesWindowUiState.Loading -> LoadingContent()
+            is MessagesWindowUiState.Shown -> ReactionsArea(uiState = uiState.messagesWindowUiState)
         }
     }
 
@@ -133,8 +116,23 @@ private fun ChatScreenShownContent(
         exit = fadeOut(),
     ) {
         AttachmentsOverlay(
-            uiState = uiState,
+            uiState = uiState.messageInputUiState,
             imagePicker = imagePicker
+        )
+    }
+}
+
+@Composable
+private fun ReactionsArea(uiState: MessagesWindowUiState.Shown) {
+    if (uiState.showReactionPopup && uiState.targetMessageIdForReaction != null) {
+        ReactionSelectionDialog(
+            onDismissRequest = { uiState.eventSink(MessagesWindowUiEvent.DismissReactionPopup) },
+            onReactionSelected = { reaction ->
+                uiState.targetMessageIdForReaction.let { msgId ->
+                    uiState.eventSink(MessagesWindowUiEvent.OnReactionSelected(msgId, reaction))
+                }
+                uiState.eventSink(MessagesWindowUiEvent.DismissReactionPopup)
+            }
         )
     }
 }
@@ -164,13 +162,16 @@ fun ChatScreenPreview() {
     KorenTheme {
         ChatScreenContent(
             uiState = ChatUiState.Shown(
-                currentUserId = "user1",
-                chatItems = chatItems,
-                showReactionPopup = false,
-                profilePicsMap = mapOf(
-                    "user2" to "https://i.pravatar.cc/150?img=2"
+                messagesWindowUiState = MessagesWindowUiState.Shown(
+                    currentUserId = "user1",
+                    chatItems = chatItems,
+                    showReactionPopup = false,
+                    targetMessageIdForReaction = null,
+                    shownTimestamps = emptySet(),
+                    profilePicsMap = emptyMap(),
+                    eventSink = {}
                 ),
-                eventSink = {}
+                messageInputUiState = MessageInputUiState()
             )
         )
     }

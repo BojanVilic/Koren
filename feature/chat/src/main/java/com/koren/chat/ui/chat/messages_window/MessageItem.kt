@@ -1,4 +1,4 @@
-package com.koren.chat.ui.chat.components
+package com.koren.chat.ui.chat.messages_window
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

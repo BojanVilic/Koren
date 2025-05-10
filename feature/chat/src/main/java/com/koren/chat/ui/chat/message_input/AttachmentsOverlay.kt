@@ -1,4 +1,4 @@
-package com.koren.chat.ui.chat.components
+package com.koren.chat.ui.chat.message_input
 
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -32,10 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.koren.chat.ui.chat.ChatUiEvent
-import com.koren.chat.ui.chat.ChatUiState
 import com.koren.chat.ui.model.AttachmentOptions
 import com.koren.designsystem.components.Scrim
 import com.koren.designsystem.icon.Files
@@ -47,7 +44,7 @@ import com.koren.designsystem.theme.ThemePreview
 
 @Composable
 internal fun AttachmentsOverlay(
-    uiState: ChatUiState.Shown,
+    uiState: MessageInputUiState,
     imagePicker: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>
 ) {
 
@@ -59,7 +56,7 @@ internal fun AttachmentsOverlay(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Scrim(onClick = { uiState.eventSink(ChatUiEvent.CloseAttachmentsOverlay) })
+        Scrim(onClick = { uiState.eventSink(MessageInputUiEvent.CloseAttachmentsOverlay) })
 
         AnimatedVisibility(
             modifier = Modifier.align(Alignment.BottomEnd),
@@ -108,7 +105,7 @@ internal fun AttachmentsOverlay(
                                 .fillMaxWidth()
                                 .clickable {
                                     attachmentItem.onClick()
-                                    uiState.eventSink(ChatUiEvent.CloseAttachmentsOverlay)
+                                    uiState.eventSink(MessageInputUiEvent.CloseAttachmentsOverlay)
                                 }
                                 .padding(horizontal = 16.dp, vertical = 24.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -136,15 +133,7 @@ internal fun AttachmentsOverlay(
 private fun AttachmentsOverlayPreview() {
     KorenTheme {
         AttachmentsOverlay(
-            uiState = ChatUiState.Shown(
-                currentUserId = "1",
-                chatItems = emptyList(),
-                showReactionPopup = false,
-                targetMessageIdForReaction = null,
-                shownTimestamps = emptySet(),
-                profilePicsMap = emptyMap(),
-                eventSink = {}
-            ),
+            uiState = MessageInputUiState(),
             imagePicker = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.PickVisualMedia(),
                 onResult = {}

@@ -1,4 +1,4 @@
-package com.koren.chat.ui.chat.components
+package com.koren.chat.ui.chat.messages_window
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,11 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.koren.chat.ui.chat.ChatUiEvent
-import com.koren.chat.ui.chat.ChatUiState
 import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
@@ -38,7 +35,7 @@ import java.util.Locale
 @Composable
 internal fun MessageList(
     modifier: Modifier = Modifier,
-    uiState: ChatUiState.Shown
+    uiState: MessagesWindowUiState.Shown
 ) {
 
     val endOfListReached by remember {
@@ -49,7 +46,7 @@ internal fun MessageList(
 
     LaunchedEffect(endOfListReached, uiState.fetchingMore, uiState.canFetchMore, uiState.chatItems.isNotEmpty()) {
         if (endOfListReached && !uiState.fetchingMore && uiState.canFetchMore && uiState.chatItems.isNotEmpty()) {
-            uiState.eventSink(ChatUiEvent.FetchMoreMessages)
+            uiState.eventSink(MessagesWindowUiEvent.FetchMoreMessages)
         }
     }
 
@@ -84,11 +81,11 @@ internal fun MessageList(
                         message = message,
                         isCurrentUser = message.senderId == uiState.currentUserId,
                         isPreviousMessageSameSender = isPreviousMessageSameSender,
-                        onMessageClick = { uiState.eventSink(ChatUiEvent.OnMessageClicked(message.id)) },
-                        onLongPress = { uiState.eventSink(ChatUiEvent.OpenMessageReactions(message.id)) },
+                        onMessageClick = { uiState.eventSink(MessagesWindowUiEvent.OnMessageClicked(message.id)) },
+                        onLongPress = { uiState.eventSink(MessagesWindowUiEvent.OpenMessageReactions(message.id)) },
                         timestampVisible = uiState.shownTimestamps.contains(message.id),
                         profilePic = uiState.profilePicsMap.getOrDefault(message.senderId, null),
-                        onImageClicked = { uiState.eventSink(ChatUiEvent.OpenImageAttachment(it)) }
+                        onImageClicked = { uiState.eventSink(MessagesWindowUiEvent.OpenImageAttachment(it)) }
                     )
                 }
             }
@@ -174,7 +171,7 @@ fun MessageListPreview() {
     KorenTheme {
         MessageList(
             modifier = Modifier.fillMaxWidth(),
-            uiState = ChatUiState.Shown(
+            uiState = MessagesWindowUiState.Shown(
                 currentUserId = "user1",
                 chatItems = chatItems,
                 showReactionPopup = false,

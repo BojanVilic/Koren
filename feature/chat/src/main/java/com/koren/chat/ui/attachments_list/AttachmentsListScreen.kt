@@ -43,13 +43,20 @@ fun AttachmentsListScreen(
     onShowSnackbar: suspend (message: String) -> Unit,
     navigateToFullScreenImage: (String) -> Unit
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val mediaUrls = when (uiState) {
+        is AttachmentsListUiState.Loading -> emptyList()
+        is AttachmentsListUiState.Shown -> (uiState as AttachmentsListUiState.Shown).mediaUrls
+    }
+
     LocalScaffoldStateProvider.current.setScaffoldState(
         ScaffoldState(
+            title = "Attachments (${mediaUrls.size})",
+            isTopBarVisible = true,
             isBottomBarVisible = false
         )
     )
-
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     CollectSideEffects(viewModel) { sideEffect ->
         when (sideEffect) {
@@ -86,15 +93,6 @@ private fun AttachmentsListScreenShownContent(
         )
     } else {
         Column {
-            Text(
-                text = "Attachments (${mediaUrls.size})",
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                textAlign = TextAlign.Center
-            )
-
             LazyVerticalGrid(
                 modifier = Modifier
                     .padding(16.dp)
