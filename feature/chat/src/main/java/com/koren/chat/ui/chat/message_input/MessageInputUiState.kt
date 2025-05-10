@@ -1,0 +1,24 @@
+package com.koren.chat.ui.chat.message_input
+
+import android.net.Uri
+import androidx.compose.ui.text.input.TextFieldValue
+import com.koren.common.util.EventHandler
+import com.koren.common.util.UiEvent
+import com.koren.common.util.UiState
+
+data class MessageInputUiState(
+    val messageText: TextFieldValue = TextFieldValue(""),
+    val sendingMessage: Boolean = false,
+    val imageAttachments: Set<Uri> = emptySet(),
+    val attachmentsOverlayShown: Boolean = true,
+    override val eventSink: (MessageInputUiEvent) -> Unit = {}
+) : UiState, EventHandler<MessageInputUiEvent>
+
+sealed interface MessageInputUiEvent : UiEvent {
+    data object SendMessage : MessageInputUiEvent
+    data class OnMessageTextChanged(val text: TextFieldValue) : MessageInputUiEvent
+    data class AddImageAttachment(val imageUri: Uri) : MessageInputUiEvent
+    data class RemoveImageAttachment(val imageUri: Uri) : MessageInputUiEvent
+    data object ShowAttachmentsOverlay : MessageInputUiEvent
+    data object CloseAttachmentsOverlay : MessageInputUiEvent
+}

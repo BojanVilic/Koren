@@ -1,28 +1,31 @@
 package com.koren.chat.ui.attachments_list
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.toRoute
-import com.koren.chat.ui.full_screen_image.FullScreenImageUiEvent
-import com.koren.chat.ui.full_screen_image.FullScreenImageUiSideEffect
-import com.koren.chat.ui.full_screen_image.FullScreenImageUiState
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import com.koren.common.util.MoleculeViewModel
 import com.koren.common.util.orUnknownError
 import com.koren.domain.GetAttachmentForMessageUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 @HiltViewModel
 class AttachmentsListViewModel @Inject constructor(
     private val getAttachmentForMessageUseCase: GetAttachmentForMessageUseCase,
-    private val savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle
 ) : MoleculeViewModel<AttachmentsListUiEvent, AttachmentsListUiState, AttachmentsListUiSideEffect>() {
+
+    private val messageId = savedStateHandle.toRoute<AttachmentsListDestination>().messageId
 
     override fun setInitialState(): AttachmentsListUiState = AttachmentsListUiState.Loading
 
     @Composable
     override fun produceState(): AttachmentsListUiState {
-        val messageId = savedStateHandle.toRoute<AttachmentsListDestination>().messageId
         var mediaUrls by remember { mutableStateOf<List<String>>(emptyList()) }
 
         LaunchedEffect(Unit) {
