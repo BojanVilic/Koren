@@ -8,7 +8,7 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.BottomSheetScaffold
@@ -43,11 +42,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.graphics.shapes.CornerRounding
+import androidx.graphics.shapes.RoundedPolygon
+import androidx.graphics.shapes.toPath
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -402,13 +411,12 @@ private fun PinImage(
     displayName: String,
     painter: AsyncImagePainter
 ) {
-    val shape = RoundedCornerShape(20.dp, 20.dp, 20.dp, 0.dp)
 
     Box(
         modifier = Modifier
-            .size(64.dp)
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.primary)
+            .size(width = 86.dp, height = 86.dp)
+            .clip(PinShape)
+            .border(3.dp, MaterialTheme.colorScheme.primary, PinShape)
             .padding(4.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -429,6 +437,53 @@ private fun PinImage(
                 style = MaterialTheme.typography.bodyMedium
             )
         }
+    }
+}
+
+object PinShape : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density
+    ): Outline {
+        // Ensure the ratio is within a reasonable range to prevent visual issues.
+        val saneHeadHeightToWidthRatio = 0.6f.coerceIn(0.1f, 0.75f)
+
+        // Calculate the actual height of the curved 'head' part of the pin.
+        // This is measured from the very top of the pin (y=0) to the "shoulders".
+        val actualHeadHeight = size.width * saneHeadHeightToWidthRatio
+
+        // Vertices of the base polygon (before rounding)
+        // P0: Bottom tip
+        // P1: Left "shoulder" (y-coordinate is actualHeadHeight)
+        // P2: Top-center of the arc (y-coordinate is 0f)
+        // P3: Right "shoulder" (y-coordinate is actualHeadHeight)
+        val polygonVertices = floatArrayOf(
+            size.width / 2f, size.height,        // P0 (Tip)
+            0f, actualHeadHeight,                // P1 (Left Shoulder)
+            size.width / 2f, 0f,                 // P2 (Top-Center of Arc, at y=0)
+            size.width, actualHeadHeight         // P3 (Right Shoulder)
+        )
+
+        // The rounding radius for the top corners (P1, P2, P3).
+        // To make these corners form a continuous smooth curve that defines the head,
+        // the radius should generally be equal to the actualHeadHeight.
+        val topCornerRoundingRadius = actualHeadHeight
+
+        val perVertexRounding = listOf(
+            CornerRounding(radius = 0f, smoothing = 0f),              // P0 (Tip) - Sharp corner
+            CornerRounding(radius = topCornerRoundingRadius, smoothing = 0f), // P1 (Left Shoulder)
+            CornerRounding(radius = topCornerRoundingRadius, smoothing = 0f), // P2 (Top-Center)
+            CornerRounding(radius = topCornerRoundingRadius, smoothing = 0f)  // P3 (Right Shoulder)
+        )
+
+        val roundedPolygon = RoundedPolygon(
+            vertices = polygonVertices,
+            perVertexRounding = perVertexRounding
+        )
+
+        val composePath: Path = roundedPolygon.toPath().asComposePath()
+        return Outline.Generic(composePath)
     }
 }
 
