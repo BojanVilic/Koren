@@ -236,15 +236,20 @@ private fun VideoMessage(
     onVideoClick: (message: ChatMessage) -> Unit
 ) {
     Box(contentAlignment = Alignment.Center) {
-        Box(
+        AsyncImage(
             modifier = Modifier
                 .height(200.dp)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .clip(MaterialTheme.shapes.medium)
                 .clickable {
                     onVideoClick(message)
                 },
+            model = message.mediaUrls?.first(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.4f)),
+            error = ColorPainter(MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.4f))
         )
         Icon(
             modifier = Modifier

@@ -1,5 +1,6 @@
 package com.koren.chat.ui.chat.message_input
 
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.ui.text.input.TextFieldValue
 import com.koren.common.util.EventHandler
@@ -13,6 +14,7 @@ data class MessageInputUiState(
     val attachmentsOverlayShown: Boolean = true,
     val videoAttachment: Uri? = null,
     val videoDuration: Long = 0L,
+    val videoThumbnail: Bitmap? = null,
     override val eventSink: (MessageInputUiEvent) -> Unit = {}
 ) : UiState, EventHandler<MessageInputUiEvent>
 

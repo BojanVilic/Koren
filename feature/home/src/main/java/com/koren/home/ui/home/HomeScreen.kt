@@ -274,7 +274,7 @@ fun AnimatedFabIcon(
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val rotationAngle by animateFloatAsState(
-        targetValue = if (actionsOpen) 45f else 0f,
+        targetValue = if (actionsOpen) 225f else 0f,
         animationSpec = tween(durationMillis = 600)
     )
 

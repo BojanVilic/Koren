@@ -1,6 +1,8 @@
 package com.koren.chat.ui.chat.message_input
 
+import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Base64
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
@@ -41,7 +43,11 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,6 +63,7 @@ import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import coil3.toBitmap
 import coil3.video.VideoFrameDecoder
 import com.koren.designsystem.icon.Close
 import com.koren.designsystem.icon.KorenIcons
@@ -64,6 +71,9 @@ import com.koren.designsystem.icon.Video
 import com.koren.designsystem.icon.Voice
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 
 @Composable
 internal fun MessageInputArea(
@@ -197,30 +207,16 @@ private fun ImageAttachments(
 private fun VideoAttachment(
     uiState: MessageInputUiState
 ) {
+
     if (uiState.videoAttachment != null) {
         Box(
             modifier = Modifier.size(84.dp)
         ) {
-
-            val context = LocalContext.current
-
-            val imageLoader = ImageLoader.Builder(context)
-                .components {
-                    add(VideoFrameDecoder.Factory())
-                }
-                .build()
-
-            val request = ImageRequest.Builder(context)
-                .data(uiState.videoAttachment)
-                .size(256, 256)
-                .build()
-
             AsyncImage(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(MaterialTheme.shapes.medium),
-                model = request,
-                imageLoader = imageLoader,
+                model = uiState.videoThumbnail,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.4f)),

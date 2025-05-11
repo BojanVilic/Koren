@@ -12,5 +12,6 @@ data class ChatMessage(
     val textContent: String? = null,
     val mediaUrls: List<String>? = null,
     val mediaDuration: Long? = null,
+    val thumbnailUrl: String? = null,
     val reactions: Map<String, String>? = null
 )
