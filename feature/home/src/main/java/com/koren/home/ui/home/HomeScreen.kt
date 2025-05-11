@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -48,12 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -67,7 +61,6 @@ import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.invitation.InvitationStatus
 import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects
-import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.components.Scrim
 import com.koren.designsystem.icon.KorenIcons
@@ -97,11 +90,13 @@ fun HomeScreen(
     navigateToChat: () -> Unit
 ) {
 
-    val scaffoldStateProvider = LocalScaffoldStateProvider.current
-    DisposableEffectWithLifecycle(
-        onStart = { scaffoldStateProvider.setScaffoldState(ScaffoldState(isTopBarVisible = false, isBottomBarVisible = true)) },
-        onResume = { scaffoldStateProvider.setScaffoldState(ScaffoldState(isTopBarVisible = false, isBottomBarVisible = true)) }
-    )
+    LocalScaffoldStateProvider.current
+        .setScaffoldState(
+            state = ScaffoldState(
+                isTopBarVisible = false,
+                isBottomBarVisible = true
+            )
+        )
 
     val state by homeViewModel.uiState.collectAsStateWithLifecycle()
 
