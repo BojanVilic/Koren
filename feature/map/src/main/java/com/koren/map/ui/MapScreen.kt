@@ -34,9 +34,12 @@ import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -198,6 +201,8 @@ private fun ShownContent(
         }
     }
 
+    var mapReady by remember { mutableStateOf(false) }
+
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetContent = {
@@ -210,25 +215,27 @@ private fun ShownContent(
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = uiState.cameraPosition,
-                uiSettings = MapUiSettings(zoomControlsEnabled = false)
+                uiSettings = MapUiSettings(zoomControlsEnabled = false),
+                onMapLoaded = { mapReady = true }
             ) {
                 uiState.familyMembers.filter { it.lastLocation != null }.forEach { member ->
                     val markerState = rememberMarkerState(
                         position = LatLng(member.lastLocation?.latitude?: 0.0, member.lastLocation?.longitude?: 0.0)
                     )
-                    Pin(
+                    ProfilePicPin(
                         imageUrl = member.profilePictureUrl,
                         displayName = member.displayName,
                         location = member.lastLocation ?: UserLocation(),
                         onClick = {
                             uiState.eventSink(MapEvent.FamilyMemberClicked(member))
                         },
-                        markerState = markerState
+                        markerState = markerState,
+                        mapReady = mapReady
                     )
                 }
 
                 uiState.savedLocations.forEach { location ->
-                    Pin(
+                    SavedLocationPin(
                         imageResource = LocationIcon.fromString(location.iconName).drawableResId,
                         displayName = location.name,
                         latitude = location.latitude,
@@ -240,7 +247,8 @@ private fun ShownContent(
                                     location.longitude
                                 )
                             )
-                        }
+                        },
+                        mapReady = mapReady
                     )
                 }
             }
@@ -310,12 +318,13 @@ private fun ActionBottomSheetContent(
 }
 
 @Composable
-private fun Pin(
+private fun SavedLocationPin(
     @DrawableRes imageResource: Int,
     displayName: String,
     latitude: Double,
     longitude: Double,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    mapReady: Boolean
 ) {
     val markerState = remember { MarkerState(position = LatLng(latitude, longitude)) }
     val painter = rememberAsyncImagePainter(
@@ -324,9 +333,10 @@ private fun Pin(
             .allowHardware(false)
             .build()
     )
+    val painterState by painter.state.collectAsState()
 
     MarkerComposable(
-        keys = arrayOf(displayName, painter.state),
+        keys = arrayOf(displayName, painterState, mapReady),
         state = markerState,
         title = displayName,
         onClick = {
@@ -339,12 +349,13 @@ private fun Pin(
 }
 
 @Composable
-private fun Pin(
+private fun ProfilePicPin(
     imageUrl: String?,
     displayName: String,
     location: UserLocation,
     onClick: () -> Unit,
-    markerState: MarkerState
+    markerState: MarkerState,
+    mapReady: Boolean
 ) {
     val painter = rememberAsyncImagePainter(
         ImageRequest.Builder(LocalContext.current)
@@ -352,13 +363,10 @@ private fun Pin(
             .allowHardware(false)
             .build()
     )
-
-    LaunchedEffect(location.latitude, location.longitude) {
-        markerState.position = LatLng(location.latitude, location.longitude)
-    }
+    val painterState by painter.state.collectAsState()
 
     MarkerComposable(
-        keys = arrayOf(location.latitude, location.longitude, displayName, painter.state),
+        keys = arrayOf(location.latitude, location.longitude, displayName, painterState, mapReady),
         state = markerState,
         title = displayName,
         onClick = {
