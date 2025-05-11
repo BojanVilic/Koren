@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.chat.ui.chat.message_input.AttachmentsOverlay
@@ -31,6 +32,8 @@ import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import kotlinx.serialization.Serializable
+import timber.log.Timber
+import kotlin.time.Duration.Companion.milliseconds
 
 @Serializable
 object ChatDestination
@@ -40,7 +43,8 @@ fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
     onShowSnackbar: suspend (message: String) -> Unit,
     onNavigateToImageAttachment: (messageId: String) -> Unit,
-    onNavigateToFullScreenImage: (mediaUrl: String) -> Unit
+    onNavigateToFullScreenImage: (mediaUrl: String) -> Unit,
+    onNavigateToFullScreenVideo: (mediaUrl: String) -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
@@ -58,6 +62,7 @@ fun ChatScreen(
             is ChatUiSideEffect.ShowError -> onShowSnackbar(uiSideEffect.message)
             is ChatUiSideEffect.NavigateToImageAttachment -> onNavigateToImageAttachment(uiSideEffect.messageId)
             is ChatUiSideEffect.NavigateToFullScreenImage -> onNavigateToFullScreenImage(uiSideEffect.mediaUrl)
+            is ChatUiSideEffect.NavigateToFullScreenVideo -> onNavigateToFullScreenVideo(uiSideEffect.videoUrl)
         }
     }
 
@@ -80,6 +85,8 @@ private fun ChatScreenContent(
 private fun ChatScreenShownContent(
     uiState: ChatUiState.Shown
 ) {
+    val context = LocalContext.current
+
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 10),
         onResult = { uris ->
@@ -93,7 +100,17 @@ private fun ChatScreenShownContent(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             uri?.let {
-                uiState.messageInputUiState.eventSink(MessageInputUiEvent.AddVideoAttachment(it))
+                val retriever = android.media.MediaMetadataRetriever()
+                try {
+                    retriever.setDataSource(context, uri)
+                    val durationString = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
+                    val durationInSeconds = durationString?.toLongOrNull()?.milliseconds?.inWholeSeconds?: 0
+                    uiState.messageInputUiState.eventSink(MessageInputUiEvent.AddVideoAttachment(uri, durationInSeconds))
+                } catch (e: Exception) {
+                    Timber.e("Error retrieving video duration: ${e.message}")
+                } finally {
+                    retriever.release()
+                }
             }
         }
     )

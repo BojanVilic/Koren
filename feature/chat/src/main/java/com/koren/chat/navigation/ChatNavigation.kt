@@ -10,6 +10,8 @@ import com.koren.chat.ui.chat.ChatDestination
 import com.koren.chat.ui.chat.ChatScreen
 import com.koren.chat.ui.full_screen_image.FullScreenImageDestination
 import com.koren.chat.ui.full_screen_image.FullScreenImageScreen
+import com.koren.chat.ui.full_screen_video.FullScreenVideoDestination
+import com.koren.chat.ui.full_screen_video.FullScreenVideoScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -30,6 +32,9 @@ fun NavGraphBuilder.chatScreen(
                 },
                 onNavigateToFullScreenImage = { mediaUrl ->
                     navController.navigate(FullScreenImageDestination(mediaUrl))
+                },
+                onNavigateToFullScreenVideo = { mediaUrl ->
+                    navController.navigate(FullScreenVideoDestination(mediaUrl))
                 }
             )
         }
@@ -43,6 +48,12 @@ fun NavGraphBuilder.chatScreen(
         }
         composable<FullScreenImageDestination> {
             FullScreenImageScreen(
+                onShowSnackbar = onShowSnackbar
+            )
+        }
+
+        composable<FullScreenVideoDestination> {
+            FullScreenVideoScreen(
                 onShowSnackbar = onShowSnackbar
             )
         }

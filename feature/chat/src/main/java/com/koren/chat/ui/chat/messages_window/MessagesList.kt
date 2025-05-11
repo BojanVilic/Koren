@@ -85,7 +85,8 @@ internal fun MessageList(
                         onLongPress = { uiState.eventSink(MessagesWindowUiEvent.OpenMessageReactions(message.id)) },
                         timestampVisible = uiState.shownTimestamps.contains(message.id),
                         profilePic = uiState.profilePicsMap.getOrDefault(message.senderId, null),
-                        onImageClicked = { uiState.eventSink(MessagesWindowUiEvent.OpenImageAttachment(it)) }
+                        onImageClicked = { uiState.eventSink(MessagesWindowUiEvent.OpenImageAttachment(it)) },
+                        onVideoClicked = { uiState.eventSink(MessagesWindowUiEvent.OpenVideoAttachment(it)) }
                     )
                 }
             }
@@ -106,7 +107,6 @@ internal fun MessageList(
         }
     }
 }
-
 
 @Composable
 fun DateSeparator(calendar: Calendar) {

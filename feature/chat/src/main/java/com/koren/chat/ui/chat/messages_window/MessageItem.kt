@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -57,7 +58,8 @@ internal fun MessageItem(
     onLongPress: () -> Unit,
     timestampVisible: Boolean,
     profilePic: String? = null,
-    onImageClicked: (message: ChatMessage) -> Unit
+    onImageClicked: (message: ChatMessage) -> Unit,
+    onVideoClicked: (message: ChatMessage) -> Unit
 ) {
     val arrangement =
         if (isCurrentUser) Arrangement.End
@@ -93,7 +95,8 @@ internal fun MessageItem(
             backgroundColor = backgroundColor,
             textColor = textColor,
             timestampVisible = timestampVisible,
-            onImageClicked = onImageClicked
+            onImageClicked = onImageClicked,
+            onVideoClicked = onVideoClicked
         )
     }
 }
@@ -107,7 +110,8 @@ private fun MessageBubble(
     backgroundColor: Color,
     textColor: Color,
     timestampVisible: Boolean,
-    onImageClicked: (message: ChatMessage) -> Unit
+    onImageClicked: (message: ChatMessage) -> Unit,
+    onVideoClicked: (message: ChatMessage) -> Unit
 ) {
     Column {
         Column(
@@ -131,7 +135,7 @@ private fun MessageBubble(
                     when (message.messageType) {
                         MessageType.TEXT -> TextMessage(message.textContent, textColor)
                         MessageType.IMAGE -> ImageMessage(message = message, textColor = textColor, onClick = onImageClicked)
-                        MessageType.VIDEO -> VideoMessage(message = message)
+                        MessageType.VIDEO -> VideoMessage(message = message, onVideoClick = onVideoClicked)
                         MessageType.VOICE -> VoiceMessage(textColor = textColor, message = message)
                     }
                 }
@@ -227,15 +231,20 @@ private fun ImageMessage(
 }
 
 @Composable
-private fun VideoMessage(message: ChatMessage) {
+private fun VideoMessage(
+    message: ChatMessage,
+    onVideoClick: (message: ChatMessage) -> Unit
+) {
     Box(contentAlignment = Alignment.Center) {
-        AsyncImage(
+        Box(
             modifier = Modifier
-                .heightIn(max = 200.dp)
-                .clip(RoundedCornerShape(8.dp)),
-            model = message.mediaUrls,
-            contentDescription = "Sent video",
-            contentScale = ContentScale.Fit
+                .height(200.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .clickable {
+                    onVideoClick(message)
+                },
         )
         Icon(
             modifier = Modifier
@@ -243,7 +252,10 @@ private fun VideoMessage(message: ChatMessage) {
                 .background(
                     Color.Black.copy(alpha = 0.4f),
                     RoundedCornerShape(50)
-                ),
+                )
+                .clickable {
+                    onVideoClick(message)
+                },
             imageVector = Icons.Default.PlayArrow,
             contentDescription = "Play video",
             tint = Color.White
@@ -362,7 +374,8 @@ private fun PreviewTextMessage() {
             onLongPress = {},
             timestampVisible = true,
             profilePic = "https://i.pravatar.cc/150?img=2",
-            onImageClicked = {}
+            onImageClicked = {},
+            onVideoClicked = {}
         )
     }
 }
@@ -385,7 +398,8 @@ private fun PreviewImageMessage() {
             onMessageClick = {},
             onLongPress = {},
             timestampVisible = true,
-            onImageClicked = {}
+            onImageClicked = {},
+            onVideoClicked = {}
         )
     }
 }
@@ -408,7 +422,8 @@ private fun PreviewVideoMessage() {
             onLongPress = {},
             timestampVisible = true,
             profilePic = "https://i.pravatar.cc/150?img=2",
-            onImageClicked = {}
+            onImageClicked = {},
+            onVideoClicked = {}
         )
     }
 }
@@ -430,7 +445,8 @@ private fun PreviewVoiceMessage() {
             onMessageClick = {},
             onLongPress = {},
             timestampVisible = true,
-            onImageClicked = {}
+            onImageClicked = {},
+            onVideoClicked = {}
         )
     }
 }

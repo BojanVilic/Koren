@@ -116,6 +116,11 @@ class MessagesWindowPresenter @Inject constructor(
                     if (mediaUrls.size > 1) scope.launch { sideEffects.emit(ChatUiSideEffect.NavigateToImageAttachment(event.message.id)) }
                     else scope.launch { sideEffects.emit(ChatUiSideEffect.NavigateToFullScreenImage(mediaUrls.first())) }
                 }
+                is MessagesWindowUiEvent.OpenVideoAttachment -> {
+                    val mediaUrls = event.message.mediaUrls
+                    if (mediaUrls.isNullOrEmpty()) return@Shown
+                    else scope.launch { sideEffects.emit(ChatUiSideEffect.NavigateToFullScreenVideo(mediaUrls.first())) }
+                }
             }
         }
     }

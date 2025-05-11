@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -29,19 +30,22 @@ class MessageInputPresenter @Inject constructor(
         listState: LazyListState,
     ): MessageInputUiState {
 
+        val coroutineScope = rememberCoroutineScope()
+
         var messageText by remember { mutableStateOf(TextFieldValue("")) }
         var sendingMessage by remember { mutableStateOf(false) }
         var imageAttachments by remember { mutableStateOf(emptySet<Uri>()) }
         var attachmentsOptionsOpen by remember { mutableStateOf(false) }
         var videoAttachment by remember { mutableStateOf<Uri?>(null) }
-        val coroutineScope = rememberCoroutineScope()
+        var videoDuration by remember { mutableLongStateOf(0L) }
 
         return MessageInputUiState(
             messageText = messageText,
             sendingMessage = sendingMessage,
             imageAttachments = imageAttachments,
             attachmentsOverlayShown = attachmentsOptionsOpen,
-            videoAttachment = videoAttachment
+            videoAttachment = videoAttachment,
+            videoDuration = videoDuration
         ) { event ->
             when (event) {
                 is MessageInputUiEvent.OnMessageTextChanged -> messageText = event.text
@@ -50,10 +54,6 @@ class MessageInputPresenter @Inject constructor(
                         sendingMessage = true
                         sendMessage(
                             messageText = messageText.text,
-                            messageType = getMessageType(
-                                messageText = messageText.text,
-                                imageAttachments = imageAttachments
-                            ),
                             imageAttachments = imageAttachments,
                             onSuccess = {
                                 messageText = TextFieldValue("")
@@ -68,7 +68,9 @@ class MessageInputPresenter @Inject constructor(
                                     sideEffects.emit(ChatUiSideEffect.ShowError(errorMessage))
                                 }
                                 sendingMessage = false
-                            }
+                            },
+                            videoUri = videoAttachment,
+                            videoDuration = videoDuration
                         )
                     }
                 }
@@ -79,7 +81,10 @@ class MessageInputPresenter @Inject constructor(
                 is MessageInputUiEvent.RemoveImageAttachment -> imageAttachments = imageAttachments.minus(event.imageUri)
                 is MessageInputUiEvent.ShowAttachmentsOverlay -> attachmentsOptionsOpen = true
                 is MessageInputUiEvent.CloseAttachmentsOverlay -> attachmentsOptionsOpen = false
-                is MessageInputUiEvent.AddVideoAttachment -> videoAttachment = event.videoUri
+                is MessageInputUiEvent.AddVideoAttachment -> {
+                    videoAttachment = event.videoUri
+                    videoDuration = event.duration
+                }
                 is MessageInputUiEvent.RemoveVideoAttachment -> videoAttachment = null
             }
         }
@@ -87,11 +92,13 @@ class MessageInputPresenter @Inject constructor(
 
     private suspend fun sendMessage(
         messageText: String,
-        messageType: MessageType,
         imageAttachments: Set<Uri> = emptySet(),
         onSuccess: () -> Unit,
-        onFailure: (errorMessage: String) -> Unit
+        onFailure: (errorMessage: String) -> Unit,
+        videoUri: Uri? = null,
+        videoDuration: Long = 0L
     ) {
+        val messageType = getMessageType(messageText, imageAttachments, videoUri)
         when (messageType) {
             MessageType.TEXT -> chatRepository.sendTextMessage(messageText)
                 .onSuccess { onSuccess() }
@@ -99,16 +106,20 @@ class MessageInputPresenter @Inject constructor(
             MessageType.IMAGE -> chatRepository.sendImageMessage(imageAttachments, messageText)
                 .onSuccess { onSuccess() }
                 .onFailure { onFailure("The image was not delivered. Please try again.") }
-            MessageType.VIDEO -> Unit
+            MessageType.VIDEO -> chatRepository.sendVideoMessage(videoUri?: Uri.EMPTY, videoDuration)
+                .onSuccess { onSuccess() }
+                .onFailure { onFailure("The video was not delivered. Please try again.") }
             MessageType.VOICE -> Unit
         }
     }
 
     private fun getMessageType(
         messageText: String,
-        imageAttachments: Set<Uri>
+        imageAttachments: Set<Uri>,
+        videoAttachment: Uri? = null
     ): MessageType {
         return when {
+            videoAttachment != null -> MessageType.VIDEO
             imageAttachments.isNotEmpty() -> MessageType.IMAGE
             messageText.isNotBlank() -> MessageType.TEXT
             else -> MessageType.TEXT

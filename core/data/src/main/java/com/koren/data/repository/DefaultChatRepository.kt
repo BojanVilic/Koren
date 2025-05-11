@@ -170,14 +170,19 @@ class DefaultChatRepository @Inject constructor(
         }
     }
 
-    override suspend fun sendVideoMessage(videoUrl: String, duration: Long): Result<Unit> {
+    override suspend fun sendVideoMessage(videoUri: Uri, duration: Long): Result<Unit> {
         val user = userSession.currentUser.first()
+        val messageId = UUID.randomUUID().toString()
         val message = ChatMessage(
-            id = UUID.randomUUID().toString(),
+            id = messageId,
             senderId = user.id,
             timestamp = DateUtils.getNegativeTimeMillis(),
             messageType = MessageType.VIDEO,
-            mediaUrls = listOf(videoUrl),
+            mediaUrls = listOf(
+                withContext(Dispatchers.IO) {
+                    uploadChatMessageVideo(user.familyId, videoUri, messageId)
+                }
+            ),
             mediaDuration = duration
         )
 
@@ -222,6 +227,26 @@ class DefaultChatRepository @Inject constructor(
         val imageName = pictureUri.lastPathSegment ?: UUID.randomUUID().toString()
         val storageRef = firebaseStorage.getReference("chats/$familyId/$messageId/$imageName.jpg")
         storageRef.putFile(pictureUri).await()
+        return storageRef.downloadUrl.await().toString()
+    }
+
+    private suspend fun uploadChatMessageVideo(
+        familyId: String,
+        videoUri: Uri,
+        messageId: String
+    ): String {
+        val videoName = videoUri.lastPathSegment ?: UUID.randomUUID().toString()
+        val storageRef = firebaseStorage.getReference("chats/$familyId/$messageId/$videoName.mp4")
+
+        val uploadTask = storageRef.putFile(videoUri)
+
+        uploadTask.addOnProgressListener { taskSnapshot ->
+            val progress = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount)
+            Timber.d("Upload is $progress% done")
+        }.addOnFailureListener { exception ->
+            Timber.e(exception, "Upload failed")
+        }.await()
+
         return storageRef.downloadUrl.await().toString()
     }
 }

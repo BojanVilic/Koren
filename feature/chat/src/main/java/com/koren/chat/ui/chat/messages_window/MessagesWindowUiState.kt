@@ -30,4 +30,5 @@ sealed interface MessagesWindowUiEvent : UiEvent {
     data class OnMessageClicked(val messageId: String) : MessagesWindowUiEvent
     data object FetchMoreMessages : MessagesWindowUiEvent
     data class OpenImageAttachment(val message: ChatMessage) : MessagesWindowUiEvent
+    data class OpenVideoAttachment(val message: ChatMessage) : MessagesWindowUiEvent
 }
