@@ -5,6 +5,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.koren.R
 import com.koren.account.ui.account.AccountDestination
 import com.koren.activity.ui.ActivityDestination
+import com.koren.designsystem.icon.AccountSelected
+import com.koren.designsystem.icon.AccountUnselected
 import com.koren.designsystem.icon.ActivitySelected
 import com.koren.designsystem.icon.ActivityUnselected
 import com.koren.designsystem.icon.HomeSelected
@@ -45,8 +47,8 @@ data object ActivityTopLevelRoute : TopLevelRoute(
 
 data object AccountTopLevelRoute : TopLevelRoute(
     route = AccountDestination,
-    selectedIcon = KorenIcons.ActivitySelected,
-    unselectedIcon = KorenIcons.ActivityUnselected,
+    selectedIcon = KorenIcons.AccountSelected,
+    unselectedIcon = KorenIcons.AccountUnselected,
     titleTextId = R.string.account_label
 )
 
