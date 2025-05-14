@@ -44,6 +44,9 @@ class MessageInputPresenter @Inject constructor(
         var videoAttachment by remember { mutableStateOf<Uri?>(null) }
         var videoDuration by remember { mutableLongStateOf(0L) }
         var videoThumbnail by remember { mutableStateOf<Bitmap?>(null) }
+        var voiceMessageMode by remember { mutableStateOf(false) }
+        var voiceMessageRecording by remember { mutableStateOf(false) }
+        var voiceMessageDuration by remember { mutableLongStateOf(0L) }
 
         LaunchedEffect(videoAttachment) {
             videoAttachment?.let { uri ->
@@ -64,7 +67,10 @@ class MessageInputPresenter @Inject constructor(
             attachmentsOverlayShown = attachmentsOptionsOpen,
             videoAttachment = videoAttachment,
             videoDuration = videoDuration,
-            videoThumbnail = videoThumbnail
+            videoThumbnail = videoThumbnail,
+            voiceMessageMode = voiceMessageMode,
+            voiceMessageRecording = voiceMessageRecording,
+            voiceMessageDuration = voiceMessageDuration
         ) { event ->
             when (event) {
                 is MessageInputUiEvent.OnMessageTextChanged -> messageText = event.text
@@ -106,6 +112,21 @@ class MessageInputPresenter @Inject constructor(
                     videoDuration = event.duration
                 }
                 is MessageInputUiEvent.RemoveVideoAttachment -> videoAttachment = null
+                is MessageInputUiEvent.ToggleVoiceRecorder -> {
+                    if (voiceMessageRecording) {
+                        voiceMessageRecording = false
+                        scope.launch(Dispatchers.IO) {
+                            // Stop recording logic here
+                        }
+                    }
+                    voiceMessageMode = !voiceMessageMode
+                }
+                is MessageInputUiEvent.StartRecording -> {
+                    voiceMessageRecording = true
+                    scope.launch(Dispatchers.IO) {
+                        // Start recording logic here
+                    }
+                }
             }
         }
     }

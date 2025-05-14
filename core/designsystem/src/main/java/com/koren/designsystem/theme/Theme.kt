@@ -4,6 +4,7 @@ package com.koren.designsystem.theme
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
@@ -102,7 +103,11 @@ fun KorenTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
+
+    val dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val colorScheme = when {
+//        dynamicColor && darkTheme -> dynamicDarkColorScheme(LocalContext.current)
+//        dynamicColor && !darkTheme -> dynamicLightColorScheme(LocalContext.current)
         darkTheme -> darkScheme
         else -> lightScheme
     }

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "312203129156",
+    "firebase_url": "https://koren-e5223-default-rtdb.firebaseio.com",
+    "project_id": "koren-e5223",
+    "storage_bucket": "koren-e5223.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:312203129156:android:dc385c10e6415abea46711",
+        "android_client_info": {
+          "package_name": "com.koren"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "312203129156-rquk9gq7onmqsmhsqnhhjlh47jbu79rb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.koren",
+            "certificate_hash": "fc0b3b717eb84959cd2f625f354ac886ad06c681"
+          }
+        },
+        {
+          "client_id": "312203129156-tvhd71qr3ogir2epdidmmqhmpql65ihb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClhvdwrqfQyh3awIZrQhMD1F_IhskW6Sg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "312203129156-tvhd71qr3ogir2epdidmmqhmpql65ihb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

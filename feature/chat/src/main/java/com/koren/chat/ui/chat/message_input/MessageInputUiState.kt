@@ -15,6 +15,9 @@ data class MessageInputUiState(
     val videoAttachment: Uri? = null,
     val videoDuration: Long = 0L,
     val videoThumbnail: Bitmap? = null,
+    val voiceMessageMode: Boolean = false,
+    val voiceMessageRecording: Boolean = false,
+    val voiceMessageDuration: Long = 0L,
     override val eventSink: (MessageInputUiEvent) -> Unit = {}
 ) : UiState, EventHandler<MessageInputUiEvent>
 
@@ -27,4 +30,6 @@ sealed interface MessageInputUiEvent : UiEvent {
     data object RemoveVideoAttachment : MessageInputUiEvent
     data object ShowAttachmentsOverlay : MessageInputUiEvent
     data object CloseAttachmentsOverlay : MessageInputUiEvent
+    data object ToggleVoiceRecorder : MessageInputUiEvent
+    data object StartRecording : MessageInputUiEvent
 }
