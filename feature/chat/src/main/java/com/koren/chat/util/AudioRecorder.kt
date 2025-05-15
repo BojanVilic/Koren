@@ -5,7 +5,13 @@ import java.io.File
 
 internal typealias Seconds = Long
 
+sealed interface RecordingStatus {
+    data object Idle : RecordingStatus
+    data class Recording(val durationSeconds: Seconds) : RecordingStatus
+    data class Error(val message: String) : RecordingStatus
+}
+
 interface AudioRecorder {
-    fun startRecording(): Flow<Seconds>
+    fun startRecording(): Flow<RecordingStatus>
     fun stopRecording(): File?
 }

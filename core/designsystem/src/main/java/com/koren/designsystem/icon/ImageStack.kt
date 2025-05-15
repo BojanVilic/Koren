@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.dp
 val KorenIcons.ImageStack: ImageVector by lazy(LazyThreadSafetyMode.NONE) {
     ImageVector.Builder(
         name = "ImageStack",
-        defaultWidth = 800.dp,
-        defaultHeight = 800.dp,
+        defaultWidth = 32.dp,
+        defaultHeight = 32.dp,
         viewportWidth = 576f,
         viewportHeight = 576f
     ).apply {

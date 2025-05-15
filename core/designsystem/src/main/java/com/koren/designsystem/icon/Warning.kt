@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.dp
 val KorenIcons.Warning: ImageVector by lazy(LazyThreadSafetyMode.NONE) {
     ImageVector.Builder(
         name = "Warning",
-        defaultWidth = 800.dp,
-        defaultHeight = 800.dp,
+        defaultWidth = 32.dp,
+        defaultHeight = 32.dp,
         viewportWidth = 1024f,
         viewportHeight = 1024f
     ).apply {

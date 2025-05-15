@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntOffset
@@ -68,6 +69,7 @@ internal fun MessageInputArea(
     uiState: MessageInputUiState,
 ) {
 
+    val keyboardController = LocalSoftwareKeyboardController.current
     val showAttachmentsRow = uiState.imageAttachments.isNotEmpty() || uiState.videoAttachment != null
 
     Surface(
@@ -136,11 +138,14 @@ internal fun MessageInputArea(
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
                 )
 
-                AnimatedSendMicButton(
+                AnimatedSendButton(
                     isSendButton = uiState.messageText.text.isNotBlank() || uiState.imageAttachments.isNotEmpty(),
                     sendingMessage = uiState.sendingMessage,
                     onSendClick = { uiState.eventSink(MessageInputUiEvent.SendMessage) },
-                    onMicClick = { uiState.eventSink(MessageInputUiEvent.ToggleVoiceRecorder) }
+                    onVoiceMessageClick = {
+                        keyboardController?.hide()
+                        uiState.eventSink(MessageInputUiEvent.ToggleVoiceRecorder)
+                    }
                 )
             }
 
@@ -248,11 +253,11 @@ private fun VideoAttachment(
 }
 
 @Composable
-private fun AnimatedSendMicButton(
+private fun AnimatedSendButton(
     isSendButton: Boolean,
     sendingMessage: Boolean,
     onSendClick: () -> Unit,
-    onMicClick: () -> Unit
+    onVoiceMessageClick: () -> Unit
 ) {
 
     val targetBackgroundColor =
@@ -282,7 +287,7 @@ private fun AnimatedSendMicButton(
             .background(animatedBackgroundColor, CircleShape)
             .clickable(
                 enabled = !sendingMessage,
-                onClick = if (isSendButton) onSendClick else onMicClick
+                onClick = if (isSendButton) onSendClick else onVoiceMessageClick
             ),
         contentAlignment = Alignment.Center
     ) {

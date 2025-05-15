@@ -3,9 +3,11 @@ package com.koren.chat.ui.chat.message_input
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.ui.text.input.TextFieldValue
+import com.koren.chat.util.RecordingStatus
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiState
+import java.io.File
 
 data class MessageInputUiState(
     val messageText: TextFieldValue = TextFieldValue(""),
@@ -17,7 +19,10 @@ data class MessageInputUiState(
     val videoThumbnail: Bitmap? = null,
     val voiceMessageMode: Boolean = false,
     val voiceMessageRecording: Boolean = false,
+    val audioRecordingStatus: RecordingStatus = RecordingStatus.Idle,
+    val voiceMessageFile: File? = null,
     val voiceMessageDuration: Long = 0L,
+    val playbackState: PlaybackState = PlaybackState.STOPPED,
     override val eventSink: (MessageInputUiEvent) -> Unit = {}
 ) : UiState, EventHandler<MessageInputUiEvent>
 
@@ -32,4 +37,17 @@ sealed interface MessageInputUiEvent : UiEvent {
     data object CloseAttachmentsOverlay : MessageInputUiEvent
     data object ToggleVoiceRecorder : MessageInputUiEvent
     data object StartRecording : MessageInputUiEvent
+    data object StopRecording : MessageInputUiEvent
+    data object AttachVoiceMessage : MessageInputUiEvent
+    data object RemoveVoiceMessage : MessageInputUiEvent
+    data object RestartRecording : MessageInputUiEvent
+    data object StartPlayback : MessageInputUiEvent
+    data object PausePlayback : MessageInputUiEvent
+    data object ResumePlayback : MessageInputUiEvent
+}
+
+enum class PlaybackState {
+    PLAYING,
+    PAUSED,
+    STOPPED
 }
