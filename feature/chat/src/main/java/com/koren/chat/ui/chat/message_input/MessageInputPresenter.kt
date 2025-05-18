@@ -13,27 +13,22 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.TextFieldValue
 import com.koren.chat.ui.chat.ChatUiSideEffect
-import com.koren.chat.util.AudioPlayer
-import com.koren.chat.util.AudioRecorder
-import com.koren.chat.util.RecordingStatus
+import com.koren.chat.ui.chat.message_input.voice_message.VoiceMessagePresenter
 import com.koren.chat.util.ThumbnailGenerator
 import com.koren.common.models.chat.MessageType
 import com.koren.data.repository.ChatRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import javax.inject.Inject
 
 class MessageInputPresenter @Inject constructor(
     private val chatRepository: ChatRepository,
     private val scope: CoroutineScope,
     private val thumbnailGenerator: ThumbnailGenerator,
-    private val audioRecorder: AudioRecorder,
-    private val audioPlayer: AudioPlayer
+    private val voiceMessagePresenter: VoiceMessagePresenter
 ) {
 
     @Composable
@@ -50,12 +45,6 @@ class MessageInputPresenter @Inject constructor(
         var videoAttachment by remember { mutableStateOf<Uri?>(null) }
         var videoDuration by remember { mutableLongStateOf(0L) }
         var videoThumbnail by remember { mutableStateOf<Bitmap?>(null) }
-        var voiceMessageMode by remember { mutableStateOf(false) }
-        var voiceMessageRecording by remember { mutableStateOf(false) }
-        var audioRecordingStatus by remember { mutableStateOf<RecordingStatus>(RecordingStatus.Idle) }
-        var voiceMessageFile by remember { mutableStateOf<File?>(null) }
-        var voiceMessageDuration by remember { mutableLongStateOf(0L) }
-        var playbackState by remember { mutableStateOf(PlaybackState.STOPPED) }
 
         LaunchedEffect(videoAttachment) {
             videoAttachment?.let { uri ->
@@ -77,12 +66,7 @@ class MessageInputPresenter @Inject constructor(
             videoAttachment = videoAttachment,
             videoDuration = videoDuration,
             videoThumbnail = videoThumbnail,
-            voiceMessageMode = voiceMessageMode,
-            voiceMessageRecording = voiceMessageRecording,
-            audioRecordingStatus = audioRecordingStatus,
-            voiceMessageFile = voiceMessageFile,
-            voiceMessageDuration = voiceMessageDuration,
-            playbackState = playbackState
+            voiceMessageUiState = voiceMessagePresenter.present()
         ) { event ->
             when (event) {
                 is MessageInputUiEvent.OnMessageTextChanged -> messageText = event.text
@@ -124,54 +108,6 @@ class MessageInputPresenter @Inject constructor(
                     videoDuration = event.duration
                 }
                 is MessageInputUiEvent.RemoveVideoAttachment -> videoAttachment = null
-                is MessageInputUiEvent.ToggleVoiceRecorder -> {
-                    if (voiceMessageRecording) {
-                        voiceMessageRecording = false
-                        scope.launch(Dispatchers.IO) {
-                            voiceMessageFile = audioRecorder.stopRecording()
-                        }
-                    }
-                    voiceMessageMode = !voiceMessageMode
-                }
-                is MessageInputUiEvent.StartRecording -> {
-                    voiceMessageRecording = true
-                    scope.launch(Dispatchers.IO) {
-                        audioRecorder.startRecording()
-                            .filterIsInstance<RecordingStatus.Recording>()
-                            .collect {
-                                voiceMessageDuration = it.durationSeconds
-                                audioRecordingStatus = it
-                            }
-                    }
-                }
-                is MessageInputUiEvent.StopRecording -> voiceMessageFile = audioRecorder.stopRecording()
-                is MessageInputUiEvent.AttachVoiceMessage -> voiceMessageRecording = false
-                is MessageInputUiEvent.RemoveVoiceMessage -> {
-                    voiceMessageFile = null
-                    voiceMessageDuration = 0L
-                }
-                is MessageInputUiEvent.RestartRecording -> {
-                    voiceMessageFile = null
-                    voiceMessageDuration = 0L
-                    voiceMessageRecording = false
-                }
-                is MessageInputUiEvent.StartPlayback -> voiceMessageFile?.let {
-                    audioPlayer.playFile(
-                        file = it,
-                        onCompletion = {
-                            playbackState = PlaybackState.STOPPED
-                        }
-                    )
-                    playbackState = PlaybackState.PLAYING
-                }
-                is MessageInputUiEvent.PausePlayback -> {
-                    audioPlayer.pause()
-                    playbackState = PlaybackState.PAUSED
-                }
-                is MessageInputUiEvent.ResumePlayback -> {
-                    audioPlayer.resume()
-                    playbackState = PlaybackState.PLAYING
-                }
             }
         }
     }

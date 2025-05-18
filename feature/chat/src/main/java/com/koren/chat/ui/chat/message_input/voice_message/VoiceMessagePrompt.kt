@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalPermissionsApi::class)
 
-package com.koren.chat.ui.chat.message_input
+package com.koren.chat.ui.chat.message_input.voice_message
 
 import android.Manifest.permission.RECORD_AUDIO
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -64,7 +64,7 @@ import java.io.File
 
 @Composable
 internal fun VoiceRecorderAre(
-    uiState: MessageInputUiState
+    uiState: VoiceMessageUiState
 ) {
     when {
         uiState.voiceMessageFile != null -> VoiceMessagePlayback(uiState)
@@ -75,7 +75,7 @@ internal fun VoiceRecorderAre(
 
 @Composable
 internal fun StartRecordingPrompt(
-    uiState: MessageInputUiState
+    uiState: VoiceMessageUiState
 ) {
     val permissionState = rememberPermissionState(RECORD_AUDIO)
 
@@ -86,7 +86,7 @@ internal fun StartRecordingPrompt(
                 .fillMaxHeight(0.3f)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             onClick = {
-                if (permissionState.status.isGranted) uiState.eventSink(MessageInputUiEvent.StartRecording)
+                if (permissionState.status.isGranted) uiState.eventSink(VoiceMessageUiEvent.StartRecording)
                 else permissionState.launchPermissionRequest()
             }
         ) {
@@ -123,7 +123,7 @@ internal fun StartRecordingPrompt(
                 Button(
                     modifier = Modifier
                         .weight(1f),
-                    onClick = { uiState.eventSink(MessageInputUiEvent.ToggleVoiceRecorder) }
+                    onClick = { uiState.eventSink(VoiceMessageUiEvent.ToggleVoiceRecorder) }
                 ) {
                     Icon(
                         modifier = Modifier.size(24.dp),
@@ -141,7 +141,7 @@ internal fun StartRecordingPrompt(
                     modifier = Modifier
                         .weight(1f),
                     onClick = {
-                        if (permissionState.status.isGranted) uiState.eventSink(MessageInputUiEvent.StartRecording)
+                        if (permissionState.status.isGranted) uiState.eventSink(VoiceMessageUiEvent.StartRecording)
                         else permissionState.launchPermissionRequest()
                     }
                 ) {
@@ -163,7 +163,7 @@ internal fun StartRecordingPrompt(
 
 @Composable
 internal fun VoiceRecorder(
-    uiState: MessageInputUiState
+    uiState: VoiceMessageUiState
 ) {
     Column {
         Card(
@@ -222,7 +222,7 @@ internal fun VoiceRecorder(
                 Button(
                     modifier = Modifier
                         .weight(1f),
-                    onClick = { uiState.eventSink(MessageInputUiEvent.ToggleVoiceRecorder) }
+                    onClick = { uiState.eventSink(VoiceMessageUiEvent.ToggleVoiceRecorder) }
                 ) {
                     Icon(
                         modifier = Modifier.size(24.dp),
@@ -239,7 +239,7 @@ internal fun VoiceRecorder(
                 OutlinedButton(
                     modifier = Modifier
                         .weight(1f),
-                    onClick = { uiState.eventSink(MessageInputUiEvent.StopRecording) }
+                    onClick = { uiState.eventSink(VoiceMessageUiEvent.StopRecording) }
                 ) {
                     Icon(
                         modifier = Modifier.size(24.dp),
@@ -313,7 +313,7 @@ fun RippleDot() {
 }
 
 @Composable
-fun VoiceMessagePlayback(uiState: MessageInputUiState) {
+fun VoiceMessagePlayback(uiState: VoiceMessageUiState) {
     val voiceMessageFile = uiState.voiceMessageFile
     val progress = 0.5f
 
@@ -334,9 +334,9 @@ fun VoiceMessagePlayback(uiState: MessageInputUiState) {
                     IconButton(
                         onClick = {
                             when (uiState.playbackState) {
-                                PlaybackState.PLAYING -> uiState.eventSink(MessageInputUiEvent.PausePlayback)
-                                PlaybackState.PAUSED -> uiState.eventSink(MessageInputUiEvent.ResumePlayback)
-                                PlaybackState.STOPPED -> uiState.eventSink(MessageInputUiEvent.StartPlayback)
+                                PlaybackState.PLAYING -> uiState.eventSink(VoiceMessageUiEvent.PausePlayback)
+                                PlaybackState.PAUSED -> uiState.eventSink(VoiceMessageUiEvent.ResumePlayback)
+                                PlaybackState.STOPPED -> uiState.eventSink(VoiceMessageUiEvent.StartPlayback)
                             }
                         }
                     ) {
@@ -371,7 +371,7 @@ fun VoiceMessagePlayback(uiState: MessageInputUiState) {
                 ) {
                     Button(
                         modifier = Modifier.weight(1f),
-                        onClick = { uiState.eventSink(MessageInputUiEvent.AttachVoiceMessage) }
+                        onClick = { uiState.eventSink(VoiceMessageUiEvent.AttachVoiceMessage) }
                     ) {
                         Icon(
                             modifier = Modifier.size(24.dp),
@@ -387,7 +387,7 @@ fun VoiceMessagePlayback(uiState: MessageInputUiState) {
 
                     OutlinedButton(
                         modifier = Modifier.weight(1f),
-                        onClick = { uiState.eventSink(MessageInputUiEvent.RestartRecording) }
+                        onClick = { uiState.eventSink(VoiceMessageUiEvent.RestartRecording) }
                     ) {
                         Icon(
                             modifier = Modifier.size(24.dp),
@@ -411,9 +411,9 @@ private fun VoiceMessagePlaybackPreview() {
             modifier = Modifier.fillMaxSize()
         ) {
             VoiceMessagePlayback(
-                uiState = MessageInputUiState(
-                    voiceMessageMode = true,
+                uiState = VoiceMessageUiState(
                     voiceMessageFile = File.createTempFile("test", "test"),
+                    playbackState = PlaybackState.PLAYING,
                     eventSink = {}
                 )
             )
@@ -429,7 +429,7 @@ private fun StartRecordingPromptPreview() {
             modifier = Modifier.fillMaxSize()
         ) {
             StartRecordingPrompt(
-                uiState = MessageInputUiState(
+                uiState = VoiceMessageUiState(
                     voiceMessageMode = true,
                     eventSink = {}
                 )
@@ -446,7 +446,7 @@ private fun VoiceRecorderPreview() {
             modifier = Modifier.fillMaxSize()
         ) {
             VoiceRecorder(
-                uiState = MessageInputUiState(
+                uiState = VoiceMessageUiState(
                     voiceMessageMode = true,
                     eventSink = {}
                 )

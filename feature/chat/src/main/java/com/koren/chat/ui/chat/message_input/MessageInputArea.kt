@@ -57,6 +57,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.koren.chat.ui.chat.message_input.voice_message.VoiceMessageUiEvent
+import com.koren.chat.ui.chat.message_input.voice_message.VoiceRecorderAre
 import com.koren.designsystem.icon.Close
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.icon.Video
@@ -144,13 +146,13 @@ internal fun MessageInputArea(
                     onSendClick = { uiState.eventSink(MessageInputUiEvent.SendMessage) },
                     onVoiceMessageClick = {
                         keyboardController?.hide()
-                        uiState.eventSink(MessageInputUiEvent.ToggleVoiceRecorder)
+                        uiState.voiceMessageUiState.eventSink(VoiceMessageUiEvent.ToggleVoiceRecorder)
                     }
                 )
             }
 
-            AnimatedVisibility(uiState.voiceMessageMode) {
-                VoiceRecorderAre(uiState = uiState)
+            AnimatedVisibility(uiState.voiceMessageUiState.voiceMessageMode) {
+                VoiceRecorderAre(uiState = uiState.voiceMessageUiState)
             }
         }
     }
