@@ -140,4 +140,10 @@ object DateUtils {
         val remainingSeconds = seconds - TimeUnit.MINUTES.toSeconds(minutes)
         return String.format(Locale.getDefault(),"%02d:%02d", minutes, remainingSeconds)
     }
+
+    fun formatDuration(seconds: Int): String {
+        val minutes = TimeUnit.SECONDS.toMinutes(seconds.toLong())
+        val remainingSeconds = seconds - TimeUnit.MINUTES.toSeconds(minutes)
+        return String.format(Locale.getDefault(),"%02d:%02d", minutes, remainingSeconds)
+    }
 }

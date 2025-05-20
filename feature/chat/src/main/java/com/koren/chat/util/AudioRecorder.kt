@@ -3,7 +3,7 @@ package com.koren.chat.util
 import kotlinx.coroutines.flow.Flow
 import java.io.File
 
-internal typealias Seconds = Long
+internal typealias Seconds = Int
 
 sealed interface RecordingStatus {
     data object Idle : RecordingStatus

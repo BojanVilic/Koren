@@ -120,7 +120,7 @@ internal fun StartRecordingPrompt(
                 modifier = Modifier.padding(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Button(
+                OutlinedButton(
                     modifier = Modifier
                         .weight(1f),
                     onClick = { uiState.eventSink(VoiceMessageUiEvent.ToggleVoiceRecorder) }
@@ -137,7 +137,7 @@ internal fun StartRecordingPrompt(
                     )
                 }
 
-                OutlinedButton(
+                Button(
                     modifier = Modifier
                         .weight(1f),
                     onClick = {
@@ -145,6 +145,7 @@ internal fun StartRecordingPrompt(
                         else permissionState.launchPermissionRequest()
                     }
                 ) {
+
                     Icon(
                         modifier = Modifier.size(24.dp),
                         imageVector = KorenIcons.Mic,
@@ -219,7 +220,7 @@ internal fun VoiceRecorder(
                 modifier = Modifier.padding(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Button(
+                OutlinedButton(
                     modifier = Modifier
                         .weight(1f),
                     onClick = { uiState.eventSink(VoiceMessageUiEvent.ToggleVoiceRecorder) }
@@ -236,7 +237,7 @@ internal fun VoiceRecorder(
                     )
                 }
 
-                OutlinedButton(
+                Button(
                     modifier = Modifier
                         .weight(1f),
                     onClick = { uiState.eventSink(VoiceMessageUiEvent.StopRecording) }
@@ -315,7 +316,6 @@ fun RippleDot() {
 @Composable
 fun VoiceMessagePlayback(uiState: VoiceMessageUiState) {
     val voiceMessageFile = uiState.voiceMessageFile
-    val progress = 0.5f
 
     if (voiceMessageFile != null) {
         Column {
@@ -347,14 +347,16 @@ fun VoiceMessagePlayback(uiState: VoiceMessageUiState) {
                         )
                     }
                     Slider(
-                        value = progress,
-                        onValueChange = { /* Handle seek logic */ },
                         modifier = Modifier.weight(1f),
+                        value = uiState.playbackPosition,
+                        onValueChange = { progress ->
+                            uiState.eventSink(VoiceMessageUiEvent.SeekTo(progress))
+                        },
                         valueRange = 0f..1f
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = DateUtils.formatDuration(uiState.voiceMessageDuration),
+                        text = DateUtils.formatDuration(uiState.duration),
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -369,6 +371,19 @@ fun VoiceMessagePlayback(uiState: VoiceMessageUiState) {
                     modifier = Modifier.padding(12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    OutlinedButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = { uiState.eventSink(VoiceMessageUiEvent.RestartRecording) }
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(24.dp),
+                            imageVector = KorenIcons.Restart,
+                            contentDescription = "Restart"
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "Restart")
+                    }
+
                     Button(
                         modifier = Modifier.weight(1f),
                         onClick = { uiState.eventSink(VoiceMessageUiEvent.AttachVoiceMessage) }
@@ -383,19 +398,6 @@ fun VoiceMessagePlayback(uiState: VoiceMessageUiState) {
                             text = "Attach",
                             style = MaterialTheme.typography.titleMedium
                         )
-                    }
-
-                    OutlinedButton(
-                        modifier = Modifier.weight(1f),
-                        onClick = { uiState.eventSink(VoiceMessageUiEvent.RestartRecording) }
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(24.dp),
-                            imageVector = KorenIcons.Restart,
-                            contentDescription = "Restart"
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Restart")
                     }
                 }
             }

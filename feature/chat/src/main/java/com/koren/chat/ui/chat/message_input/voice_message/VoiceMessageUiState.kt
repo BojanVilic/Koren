@@ -11,8 +11,10 @@ data class VoiceMessageUiState(
     val voiceMessageMode: Boolean = false,
     val voiceMessageRecording: Boolean = false,
     val audioRecordingStatus: RecordingStatus = RecordingStatus.Idle,
-    val voiceMessageDuration: Long = 0L,
+    val playbackPosition: Float = 0f,
+    val duration: Int = 0,
     val playbackState: PlaybackState = PlaybackState.STOPPED,
+    val attached: Boolean = false,
     override val eventSink: (VoiceMessageUiEvent) -> Unit = {}
 ): UiState, EventHandler<VoiceMessageUiEvent>
 
@@ -27,6 +29,7 @@ sealed interface VoiceMessageUiEvent : UiEvent {
     data object RemoveVoiceMessage : VoiceMessageUiEvent
     data object RestartRecording : VoiceMessageUiEvent
     data object ToggleVoiceRecorder : VoiceMessageUiEvent
+    data class SeekTo(val progress: Float) : VoiceMessageUiEvent
 }
 
 enum class PlaybackState {

@@ -2,7 +2,8 @@ package com.koren.chat.ui.chat.message_input.voice_message
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -28,24 +29,39 @@ class VoiceMessagePresenter @Inject constructor(
         var voiceMessageRecording by remember { mutableStateOf(false) }
         var audioRecordingStatus by remember { mutableStateOf<RecordingStatus>(RecordingStatus.Idle) }
         var voiceMessageFile by remember { mutableStateOf<File?>(null) }
-        var voiceMessageDuration by remember { mutableLongStateOf(0L) }
+        var playbackPosition by remember { mutableFloatStateOf(0f) }
+        var duration by remember { mutableIntStateOf(0) }
         var playbackState by remember { mutableStateOf(PlaybackState.STOPPED) }
+        var attached by remember { mutableStateOf(false) }
+        var pendingSeekPosition by remember { mutableStateOf<Float?>(null) }
 
         return VoiceMessageUiState(
             voiceMessageFile = voiceMessageFile,
             voiceMessageMode = voiceMessageMode,
             voiceMessageRecording = voiceMessageRecording,
             audioRecordingStatus = audioRecordingStatus,
-            voiceMessageDuration = voiceMessageDuration,
-            playbackState = playbackState
+            playbackPosition = playbackPosition,
+            duration = duration,
+            playbackState = playbackState,
+            attached = attached
         ) { event ->
             when (event) {
                 is VoiceMessageUiEvent.StartPlayback -> {
-                    voiceMessageFile?.let {
-                        audioPlayer.playFile(it) {
-                            playbackState = PlaybackState.STOPPED
+                    voiceMessageFile?.let { file ->
+                        scope.launch {
+                            audioPlayer.playFile(
+                                file = file,
+                                onCompletion = {
+                                    playbackState = PlaybackState.STOPPED
+                                    playbackPosition = 0f
+                                },
+                                startPosition = pendingSeekPosition?.let { (it * duration * 1000).toInt() }
+                            ).collect { progress ->
+                                playbackPosition = progress
+                            }
                         }
                         playbackState = PlaybackState.PLAYING
+                        pendingSeekPosition = null
                     }
                 }
                 is VoiceMessageUiEvent.PausePlayback -> {
@@ -59,6 +75,7 @@ class VoiceMessagePresenter @Inject constructor(
                 is VoiceMessageUiEvent.StopPlayback -> {
                     audioPlayer.stop()
                     playbackState = PlaybackState.STOPPED
+                    playbackPosition = 0f
                 }
                 is VoiceMessageUiEvent.ToggleVoiceRecorder -> {
                     if (voiceMessageRecording) {
@@ -75,21 +92,36 @@ class VoiceMessagePresenter @Inject constructor(
                         audioRecorder.startRecording()
                             .filterIsInstance<RecordingStatus.Recording>()
                             .collect {
-                                voiceMessageDuration = it.durationSeconds
+                                duration = it.durationSeconds
                                 audioRecordingStatus = it
                             }
                     }
                 }
                 is VoiceMessageUiEvent.StopRecording -> voiceMessageFile = audioRecorder.stopRecording()
-                is VoiceMessageUiEvent.AttachVoiceMessage -> voiceMessageRecording = false
+                is VoiceMessageUiEvent.AttachVoiceMessage -> {
+                    voiceMessageRecording = false
+                    attached = true
+                    voiceMessageMode = false
+                }
                 is VoiceMessageUiEvent.RemoveVoiceMessage -> {
                     voiceMessageFile = null
-                    voiceMessageDuration = 0L
+                    duration = 0
+                    voiceMessageRecording = false
                 }
                 is VoiceMessageUiEvent.RestartRecording -> {
                     voiceMessageFile = null
-                    voiceMessageDuration = 0L
+                    duration = 0
                     voiceMessageRecording = false
+                    attached = false
+                }
+                is VoiceMessageUiEvent.SeekTo -> {
+                    val seekPosition = event.progress
+                    if (playbackState == PlaybackState.PLAYING || playbackState == PlaybackState.PAUSED) {
+                        audioPlayer.seekTo((seekPosition * duration * 1000).toInt())
+                    } else {
+                        pendingSeekPosition = seekPosition
+                    }
+                    playbackPosition = seekPosition
                 }
             }
         }

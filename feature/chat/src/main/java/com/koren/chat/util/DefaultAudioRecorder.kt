@@ -61,12 +61,12 @@ class DefaultAudioRecorder @Inject constructor(
 
             voiceMessageFile = outputFile
             recordingStartTime = System.currentTimeMillis()
-            trySend(RecordingStatus.Recording(0L))
+            trySend(RecordingStatus.Recording(0))
 
             val durationEmitterJob = launch {
                 while (isActive && mediaRecorder == currentRecorder) {
                     val elapsedMillis = System.currentTimeMillis() - recordingStartTime
-                    trySend(RecordingStatus.Recording(elapsedMillis / 1000))
+                    trySend(RecordingStatus.Recording((elapsedMillis / 1000).toInt()))
                     delay(1000L)
                 }
             }

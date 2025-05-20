@@ -4,6 +4,12 @@ import android.content.Context
 import android.media.MediaPlayer
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
@@ -14,15 +20,38 @@ class DefaultAudioPlayer @Inject constructor(
 
     private var player: MediaPlayer? = null
 
-    override fun playFile(file: File, onCompletion: () -> Unit) {
-        MediaPlayer.create(context, file.toUri()).apply {
+    override fun playFile(file: File, onCompletion: () -> Unit, startPosition: Int?): Flow<Float> = callbackFlow {
+        val mediaPlayer = MediaPlayer.create(context, file.toUri()).apply {
             player = this
             setOnCompletionListener {
+                trySend(1f)
                 release()
                 onCompletion()
                 player = null
+                close()
             }
+            startPosition?.let { seekTo(it) }
             start()
+        }
+
+        val duration = mediaPlayer.duration
+        if (duration <= 0) {
+            close(IllegalStateException("Invalid media duration"))
+            return@callbackFlow
+        }
+
+        val positionUpdateJob = launch {
+            while (isActive && mediaPlayer.isPlaying) {
+                val currentPosition = mediaPlayer.currentPosition
+                trySend(currentPosition / duration.toFloat())
+                delay(500L)
+            }
+        }
+
+        awaitClose {
+            positionUpdateJob.cancel()
+            mediaPlayer.release()
+            player = null
         }
     }
 
@@ -38,5 +67,9 @@ class DefaultAudioPlayer @Inject constructor(
         player?.stop()
         player?.release()
         player = null
+    }
+
+    override fun seekTo(position: Int) {
+        player?.seekTo(position)
     }
 }
