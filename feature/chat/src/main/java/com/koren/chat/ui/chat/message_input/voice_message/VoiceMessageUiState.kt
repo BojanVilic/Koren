@@ -30,6 +30,7 @@ sealed interface VoiceMessageUiEvent : UiEvent {
     data object RestartRecording : VoiceMessageUiEvent
     data object ToggleVoiceRecorder : VoiceMessageUiEvent
     data class SeekTo(val progress: Float) : VoiceMessageUiEvent
+    data object Reset : VoiceMessageUiEvent
 }
 
 enum class PlaybackState {

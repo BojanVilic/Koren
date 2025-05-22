@@ -2,6 +2,7 @@ package com.koren.data.repository
 
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.core.net.toUri
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -24,6 +25,7 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.util.Calendar
 import java.util.UUID
 import javax.inject.Inject
@@ -207,15 +209,21 @@ class DefaultChatRepository @Inject constructor(
         }
     }
 
-    override suspend fun sendAudioMessage(audioUrl: String, duration: Long): Result<Unit> {
+    override suspend fun sendAudioMessage(audioFile: File, duration: Int): Result<Unit> {
         val user = userSession.currentUser.first()
+        val messageId = UUID.randomUUID().toString()
+
+        val audioUrl = withContext(Dispatchers.IO) {
+            uploadVoiceMessage(user.familyId, audioFile, messageId)
+        }
+
         val message = ChatMessage(
-            id = UUID.randomUUID().toString(),
+            id = messageId,
             senderId = user.id,
             timestamp = DateUtils.getNegativeTimeMillis(),
             messageType = MessageType.VOICE,
             mediaUrls = listOf(audioUrl),
-            mediaDuration = duration
+            mediaDuration = duration.toLong()
         )
 
         val chatRef = database.getReference("chats/${user.familyId}/${message.id}")
@@ -276,6 +284,28 @@ class DefaultChatRepository @Inject constructor(
 
         withContext(Dispatchers.IO) {
             storageRef.putBytes(thumbnailData).await()
+        }
+
+        return storageRef.downloadUrl.await().toString()
+    }
+
+    private suspend fun uploadVoiceMessage(
+        familyId: String,
+        audioFile: File,
+        messageId: String
+    ): String {
+        val fileName = "${messageId}_voice.mp3"
+        val storageRef = firebaseStorage.getReference("chats/$familyId/$messageId/$fileName")
+
+        val uploadTask = storageRef.putFile(audioFile.toUri())
+
+        withContext(Dispatchers.IO) {
+            uploadTask.addOnProgressListener { taskSnapshot ->
+                val progress = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount)
+                Timber.d("Voice upload is $progress% done")
+            }.addOnFailureListener { exception ->
+                Timber.e(exception, "Voice upload failed")
+            }.await()
         }
 
         return storageRef.downloadUrl.await().toString()

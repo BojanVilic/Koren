@@ -152,8 +152,14 @@ internal fun MessageInputArea(
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
                 )
 
+                val isSendButton =
+                    uiState.messageText.text.isNotBlank() ||
+                    uiState.imageAttachments.isNotEmpty() ||
+                    uiState.videoAttachment != null ||
+                    (uiState.voiceMessageUiState.voiceMessageFile != null && uiState.voiceMessageUiState.attached)
+
                 AnimatedSendButton(
-                    isSendButton = uiState.messageText.text.isNotBlank() || uiState.imageAttachments.isNotEmpty(),
+                    isSendButton = isSendButton,
                     sendingMessage = uiState.sendingMessage,
                     onSendClick = { uiState.eventSink(MessageInputUiEvent.SendMessage) },
                     onVoiceMessageClick = {

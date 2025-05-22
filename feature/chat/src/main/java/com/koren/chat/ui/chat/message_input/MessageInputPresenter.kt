@@ -14,6 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.TextFieldValue
 import com.koren.chat.ui.chat.ChatUiSideEffect
 import com.koren.chat.ui.chat.message_input.voice_message.VoiceMessagePresenter
+import com.koren.chat.ui.chat.message_input.voice_message.VoiceMessageUiEvent
+import com.koren.chat.ui.chat.message_input.voice_message.VoiceMessageUiState
 import com.koren.chat.util.ThumbnailGenerator
 import com.koren.common.models.chat.MessageType
 import com.koren.data.repository.ChatRepository
@@ -45,6 +47,7 @@ class MessageInputPresenter @Inject constructor(
         var videoAttachment by remember { mutableStateOf<Uri?>(null) }
         var videoDuration by remember { mutableLongStateOf(0L) }
         var videoThumbnail by remember { mutableStateOf<Bitmap?>(null) }
+        val voiceMessageUiState = voiceMessagePresenter.present()
 
         LaunchedEffect(videoAttachment) {
             videoAttachment?.let { uri ->
@@ -66,7 +69,7 @@ class MessageInputPresenter @Inject constructor(
             videoAttachment = videoAttachment,
             videoDuration = videoDuration,
             videoThumbnail = videoThumbnail,
-            voiceMessageUiState = voiceMessagePresenter.present()
+            voiceMessageUiState = voiceMessageUiState
         ) { event ->
             when (event) {
                 is MessageInputUiEvent.OnMessageTextChanged -> messageText = event.text
@@ -83,6 +86,10 @@ class MessageInputPresenter @Inject constructor(
                                 coroutineScope.launch(Dispatchers.IO) {
                                     listState.animateScrollToItem(0)
                                 }
+                                videoAttachment = null
+                                videoDuration = 0L
+                                videoThumbnail = null
+                                voiceMessageUiState.eventSink(VoiceMessageUiEvent.Reset)
                             },
                             onFailure = { errorMessage ->
                                 scope.launch {
@@ -92,7 +99,8 @@ class MessageInputPresenter @Inject constructor(
                             },
                             videoUri = videoAttachment,
                             videoDuration = videoDuration,
-                            videoThumbnailUri = videoThumbnail
+                            videoThumbnailUri = videoThumbnail,
+                            voiceMessageUiState = voiceMessageUiState
                         )
                     }
                 }
@@ -119,9 +127,10 @@ class MessageInputPresenter @Inject constructor(
         onFailure: (errorMessage: String) -> Unit,
         videoUri: Uri? = null,
         videoDuration: Long = 0L,
-        videoThumbnailUri: Bitmap? = null
+        videoThumbnailUri: Bitmap? = null,
+        voiceMessageUiState: VoiceMessageUiState? = null
     ) {
-        val messageType = getMessageType(messageText, imageAttachments, videoUri)
+        val messageType = getMessageType(messageText, imageAttachments, videoUri, voiceMessageUiState)
         when (messageType) {
             MessageType.TEXT -> chatRepository.sendTextMessage(messageText)
                 .onSuccess { onSuccess() }
@@ -132,16 +141,22 @@ class MessageInputPresenter @Inject constructor(
             MessageType.VIDEO -> chatRepository.sendVideoMessage(videoUri ?: Uri.EMPTY, videoThumbnailUri, videoDuration)
                 .onSuccess { onSuccess() }
                 .onFailure { onFailure("The video was not delivered. Please try again.") }
-            MessageType.VOICE -> Unit
+            MessageType.VOICE -> voiceMessageUiState?.voiceMessageFile?.let { audioFile ->
+                chatRepository.sendAudioMessage(audioFile, voiceMessageUiState.duration)
+                    .onSuccess { onSuccess() }
+                    .onFailure { onFailure("The voice message was not delivered. Please try again.") }
+            } ?: onFailure("Voice message file not found")
         }
     }
 
     private fun getMessageType(
         messageText: String,
         imageAttachments: Set<Uri>,
-        videoAttachment: Uri? = null
+        videoAttachment: Uri? = null,
+        voiceMessageUiState: VoiceMessageUiState? = null
     ): MessageType {
         return when {
+            voiceMessageUiState?.attached == true && voiceMessageUiState.voiceMessageFile != null -> MessageType.VOICE
             videoAttachment != null -> MessageType.VIDEO
             imageAttachments.isNotEmpty() -> MessageType.IMAGE
             messageText.isNotBlank() -> MessageType.TEXT

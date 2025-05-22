@@ -123,6 +123,17 @@ class VoiceMessagePresenter @Inject constructor(
                     }
                     playbackPosition = seekPosition
                 }
+                is VoiceMessageUiEvent.Reset -> {
+                    voiceMessageFile = null
+                    duration = 0
+                    playbackPosition = 0f
+                    playbackState = PlaybackState.STOPPED
+                    audioPlayer.stop()
+                    audioRecorder.stopRecording()
+                    voiceMessageRecording = false
+                    voiceMessageMode = false
+                    attached = false
+                }
             }
         }
     }
