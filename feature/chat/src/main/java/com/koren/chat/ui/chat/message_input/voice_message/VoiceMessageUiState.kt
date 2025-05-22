@@ -22,7 +22,6 @@ sealed interface VoiceMessageUiEvent : UiEvent {
     data object StartPlayback : VoiceMessageUiEvent
     data object PausePlayback : VoiceMessageUiEvent
     data object ResumePlayback : VoiceMessageUiEvent
-    data object StopPlayback : VoiceMessageUiEvent
     data object StartRecording : VoiceMessageUiEvent
     data object StopRecording : VoiceMessageUiEvent
     data object AttachVoiceMessage : VoiceMessageUiEvent

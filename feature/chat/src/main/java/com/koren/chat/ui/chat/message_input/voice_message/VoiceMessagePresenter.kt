@@ -72,11 +72,6 @@ class VoiceMessagePresenter @Inject constructor(
                     audioPlayer.resume()
                     playbackState = PlaybackState.PLAYING
                 }
-                is VoiceMessageUiEvent.StopPlayback -> {
-                    audioPlayer.stop()
-                    playbackState = PlaybackState.STOPPED
-                    playbackPosition = 0f
-                }
                 is VoiceMessageUiEvent.ToggleVoiceRecorder -> {
                     if (voiceMessageRecording) {
                         voiceMessageRecording = false

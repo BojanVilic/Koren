@@ -21,6 +21,11 @@ class DefaultAudioPlayer @Inject constructor(
     private var player: MediaPlayer? = null
 
     override fun playFile(file: File, onCompletion: () -> Unit, startPosition: Int?): Flow<Float> = callbackFlow {
+        if (!file.exists() || file.length() == 0L) {
+            close(IllegalStateException("Audio file doesn't exist or is empty"))
+            return@callbackFlow
+        }
+
         val mediaPlayer = MediaPlayer.create(context, file.toUri()).apply {
             player = this
             setOnCompletionListener {
@@ -71,5 +76,9 @@ class DefaultAudioPlayer @Inject constructor(
 
     override fun seekTo(position: Int) {
         player?.seekTo(position)
+    }
+
+    override fun getDuration(): Int {
+        return player?.duration ?: 0
     }
 }

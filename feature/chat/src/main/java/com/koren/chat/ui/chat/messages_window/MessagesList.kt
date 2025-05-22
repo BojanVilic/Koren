@@ -81,12 +81,7 @@ internal fun MessageList(
                         message = message,
                         isCurrentUser = message.senderId == uiState.currentUserId,
                         isPreviousMessageSameSender = isPreviousMessageSameSender,
-                        onMessageClick = { uiState.eventSink(MessagesWindowUiEvent.OnMessageClicked(message.id)) },
-                        onLongPress = { uiState.eventSink(MessagesWindowUiEvent.OpenMessageReactions(message.id)) },
-                        timestampVisible = uiState.shownTimestamps.contains(message.id),
-                        profilePic = uiState.profilePicsMap.getOrDefault(message.senderId, null),
-                        onImageClicked = { uiState.eventSink(MessagesWindowUiEvent.OpenImageAttachment(it)) },
-                        onVideoClicked = { uiState.eventSink(MessagesWindowUiEvent.OpenVideoAttachment(it)) }
+                        uiState = uiState
                     )
                 }
             }

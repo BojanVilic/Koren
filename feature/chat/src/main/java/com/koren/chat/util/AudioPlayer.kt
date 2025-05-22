@@ -9,4 +9,5 @@ interface AudioPlayer {
     fun resume()
     fun stop()
     fun seekTo(position: Int)
+    fun getDuration(): Int
 }

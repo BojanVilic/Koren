@@ -1,7 +1,9 @@
 package com.koren.chat.di
 
+import com.koren.common.services.AudioFileManager
 import com.koren.chat.util.AudioPlayer
 import com.koren.chat.util.AudioRecorder
+import com.koren.chat.util.DefaultAudioFileManager
 import com.koren.chat.util.DefaultAudioPlayer
 import com.koren.chat.util.DefaultAudioRecorder
 import com.koren.chat.util.DefaultThumbnailGenerator
@@ -33,4 +35,10 @@ abstract class SingletonModule {
     abstract fun bindAudioPlayer(
         audioPlayer: DefaultAudioPlayer
     ): AudioPlayer
+
+    @Singleton
+    @Binds
+    abstract fun bindAudioFileManager(
+        audioFileManager: DefaultAudioFileManager
+    ): AudioFileManager
 }

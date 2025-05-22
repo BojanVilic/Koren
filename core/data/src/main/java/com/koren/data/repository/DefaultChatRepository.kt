@@ -13,6 +13,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
+import com.koren.common.services.AudioFileManager
 import com.koren.common.services.UserSession
 import com.koren.common.util.DateUtils
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +27,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.IOException
 import java.util.Calendar
 import java.util.UUID
 import javax.inject.Inject
@@ -33,7 +35,8 @@ import javax.inject.Inject
 class DefaultChatRepository @Inject constructor(
     private val userSession: UserSession,
     private val database: FirebaseDatabase,
-    private val firebaseStorage: FirebaseStorage
+    private val firebaseStorage: FirebaseStorage,
+    private val audioFileManager: AudioFileManager
 ): ChatRepository {
 
     companion object {
@@ -233,6 +236,29 @@ class DefaultChatRepository @Inject constructor(
             Result.success(Unit)
         } catch (e: Exception) {
             Timber.e("Error sending audio message: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    // In DefaultChatRepository.kt
+    override suspend fun downloadAudioMessage(url: String): Result<File> {
+        return try {
+            val localFile = audioFileManager.getCacheFile(url)
+
+            if (!localFile.exists() || localFile.length() == 0L) {
+                val httpsReference = FirebaseStorage.getInstance().getReferenceFromUrl(url)
+                val downloadTask = httpsReference.getFile(localFile)
+                downloadTask.await()
+
+                if (!localFile.exists() || localFile.length() == 0L) {
+                    Timber.e("Downloaded file is empty or missing: $localFile")
+                    return Result.failure(IOException("Downloaded file is empty or missing"))
+                }
+            }
+
+            Result.success(localFile)
+        } catch (e: Exception) {
+            Timber.e(e, "Error downloading audio: $url")
             Result.failure(e)
         }
     }

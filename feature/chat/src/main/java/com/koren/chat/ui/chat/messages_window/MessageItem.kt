@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -18,12 +19,16 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,11 +43,14 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.koren.chat.ui.chat.message_input.voice_message.PlaybackState
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
 import com.koren.common.util.DateUtils.formatDuration
 import com.koren.designsystem.icon.ImageStack
 import com.koren.designsystem.icon.KorenIcons
+import com.koren.designsystem.icon.Pause
+import com.koren.designsystem.icon.Play
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
 import java.text.SimpleDateFormat
@@ -54,12 +62,7 @@ internal fun MessageItem(
     message: ChatMessage,
     isCurrentUser: Boolean,
     isPreviousMessageSameSender: Boolean,
-    onMessageClick: (String) -> Unit,
-    onLongPress: () -> Unit,
-    timestampVisible: Boolean,
-    profilePic: String? = null,
-    onImageClicked: (message: ChatMessage) -> Unit,
-    onVideoClicked: (message: ChatMessage) -> Unit
+    uiState: MessagesWindowUiState.Shown
 ) {
     val arrangement =
         if (isCurrentUser) Arrangement.End
@@ -85,18 +88,14 @@ internal fun MessageItem(
         SenderProfileImage(
             isCurrentUser = isCurrentUser,
             isPreviousMessageSameSender = isPreviousMessageSameSender,
-            profilePic = profilePic
+            profilePic = uiState.profilePicsMap.getOrDefault(message.senderId, null)
         )
         MessageBubble(
             reactionAlignment = reactionAlignment,
-            onMessageClick = onMessageClick,
             message = message,
-            onLongPress = onLongPress,
             backgroundColor = backgroundColor,
             textColor = textColor,
-            timestampVisible = timestampVisible,
-            onImageClicked = onImageClicked,
-            onVideoClicked = onVideoClicked
+            uiState = uiState
         )
     }
 }
@@ -104,14 +103,10 @@ internal fun MessageItem(
 @Composable
 private fun MessageBubble(
     reactionAlignment: Alignment.Horizontal,
-    onMessageClick: (String) -> Unit,
-    message: ChatMessage,
-    onLongPress: () -> Unit,
     backgroundColor: Color,
     textColor: Color,
-    timestampVisible: Boolean,
-    onImageClicked: (message: ChatMessage) -> Unit,
-    onVideoClicked: (message: ChatMessage) -> Unit
+    message: ChatMessage,
+    uiState: MessagesWindowUiState.Shown
 ) {
     Column {
         Column(
@@ -123,8 +118,8 @@ private fun MessageBubble(
                     .align(reactionAlignment)
                     .clip(MaterialTheme.shapes.small)
                     .combinedClickable(
-                        onClick = { onMessageClick(message.id) },
-                        onLongClick = onLongPress
+                        onClick = { uiState.eventSink(MessagesWindowUiEvent.OnMessageClicked(message.id)) },
+                        onLongClick = { uiState.eventSink(MessagesWindowUiEvent.OpenMessageReactions(message.id)) }
                     ),
                 shape = MaterialTheme.shapes.medium,
                 color = backgroundColor
@@ -134,9 +129,23 @@ private fun MessageBubble(
                 ) {
                     when (message.messageType) {
                         MessageType.TEXT -> TextMessage(message.textContent, textColor)
-                        MessageType.IMAGE -> ImageMessage(message = message, textColor = textColor, onClick = onImageClicked)
-                        MessageType.VIDEO -> VideoMessage(message = message, onVideoClick = onVideoClicked)
-                        MessageType.VOICE -> VoiceMessage(textColor = textColor, message = message)
+                        MessageType.IMAGE -> ImageMessage(
+                            message = message,
+                            textColor = textColor,
+                            onClick = {
+                                uiState.eventSink(MessagesWindowUiEvent.OpenImageAttachment(it))
+                            }
+                        )
+                        MessageType.VIDEO -> VideoMessage(
+                            message = message,
+                            onVideoClick = {
+                                uiState.eventSink(MessagesWindowUiEvent.OpenImageAttachment(it))
+                            }
+                        )
+                        MessageType.VOICE -> VoiceMessage(
+                            message = message,
+                            uiState = uiState
+                        )
                     }
                 }
             }
@@ -145,7 +154,7 @@ private fun MessageBubble(
         ReactionsAndTimestamp(
             reactionAlignment = reactionAlignment,
             message = message,
-            timestampVisible = timestampVisible
+            timestampVisible = uiState.shownTimestamps.contains(message.id)
         )
     }
 }
@@ -270,30 +279,58 @@ private fun VideoMessage(
 
 @Composable
 private fun VoiceMessage(
-    textColor: Color,
-    message: ChatMessage
+    message: ChatMessage,
+    uiState: MessagesWindowUiState.Shown
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        // TODO: Implement actual voice player UI
-        Icon(
-            Icons.Default.PlayArrow,
-            contentDescription = "Voice message",
-            tint = textColor
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            "Voice Message",
-            color = textColor,
-            style = MaterialTheme.typography.bodyMedium
-        )
-        message.mediaDuration?.let {
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = formatDuration(it),
-                color = textColor.copy(alpha = 0.7f),
-                style = MaterialTheme.typography.labelSmall
+    Row(
+        modifier = Modifier
+            .height(64.dp)
+            .widthIn(max = 224.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        IconButton(
+            onClick = {
+                when (uiState.playbackState) {
+                    PlaybackState.PLAYING -> uiState.eventSink(MessagesWindowUiEvent.PausePlayback)
+                    PlaybackState.PAUSED -> uiState.eventSink(MessagesWindowUiEvent.ResumePlayback)
+                    PlaybackState.STOPPED -> uiState.eventSink(MessagesWindowUiEvent.StartPlayback(message))
+                }
+            }
+        ) {
+            Icon(
+                modifier = Modifier.size(24.dp),
+                imageVector = if (message.id == uiState.currentlyPlayingMessageId && uiState.playbackState == PlaybackState.PLAYING) KorenIcons.Pause else KorenIcons.Play,
+                contentDescription = "Play voice message",
+                tint = MaterialTheme.colorScheme.onSurface,
             )
         }
+
+        Slider(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .padding(horizontal = 8.dp),
+            value = if (message.id == uiState.currentlyPlayingMessageId) uiState.playbackPosition else 0f,
+            onValueChange = { progress ->
+                uiState.eventSink(MessagesWindowUiEvent.SeekVoiceMessageTo(progress))
+            },
+            valueRange = 0f..1f,
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.onSurface,
+                activeTrackColor = MaterialTheme.colorScheme.onSurface,
+                inactiveTrackColor = Color.Gray
+            )
+        )
+
+        Text(
+            modifier = Modifier.padding(end = 8.dp),
+            text = formatDuration(message.mediaDuration?: 0L),
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
@@ -375,12 +412,9 @@ private fun PreviewTextMessage() {
             ),
             isCurrentUser = false,
             isPreviousMessageSameSender = false,
-            onMessageClick = {},
-            onLongPress = {},
-            timestampVisible = true,
-            profilePic = "https://i.pravatar.cc/150?img=2",
-            onImageClicked = {},
-            onVideoClicked = {}
+            uiState = MessagesWindowUiState.Shown(
+                eventSink = {}
+            )
         )
     }
 }
@@ -400,11 +434,9 @@ private fun PreviewImageMessage() {
             ),
             isCurrentUser = true,
             isPreviousMessageSameSender = false,
-            onMessageClick = {},
-            onLongPress = {},
-            timestampVisible = true,
-            onImageClicked = {},
-            onVideoClicked = {}
+            uiState = MessagesWindowUiState.Shown(
+                eventSink = {}
+            )
         )
     }
 }
@@ -423,12 +455,9 @@ private fun PreviewVideoMessage() {
             ),
             isCurrentUser = false,
             isPreviousMessageSameSender = false,
-            onMessageClick = {},
-            onLongPress = {},
-            timestampVisible = true,
-            profilePic = "https://i.pravatar.cc/150?img=2",
-            onImageClicked = {},
-            onVideoClicked = {}
+            uiState = MessagesWindowUiState.Shown(
+                eventSink = {}
+            )
         )
     }
 }
@@ -447,11 +476,9 @@ private fun PreviewVoiceMessage() {
             ),
             isCurrentUser = true,
             isPreviousMessageSameSender = false,
-            onMessageClick = {},
-            onLongPress = {},
-            timestampVisible = true,
-            onImageClicked = {},
-            onVideoClicked = {}
+            uiState = MessagesWindowUiState.Shown(
+                eventSink = {}
+            )
         )
     }
 }

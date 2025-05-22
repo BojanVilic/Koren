@@ -16,4 +16,5 @@ interface ChatRepository {
     suspend fun deleteMessage(messageId: String): Result<Unit>
     suspend fun addReactionToMessage(messageId: String, reaction: String): Result<Unit>
     suspend fun removeReactionFromMessage(messageId: String, reaction: String): Result<Unit>
+    suspend fun downloadAudioMessage(url: String): Result<File>
 }
