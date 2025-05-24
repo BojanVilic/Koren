@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -85,6 +86,9 @@ internal fun StartRecordingPrompt(
                 .fillMaxWidth()
                 .fillMaxHeight(0.3f)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            ),
             onClick = {
                 if (permissionState.status.isGranted) uiState.eventSink(VoiceMessageUiEvent.StartRecording)
                 else permissionState.launchPermissionRequest()
@@ -115,6 +119,9 @@ internal fun StartRecordingPrompt(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            )
         ) {
             Row(
                 modifier = Modifier.padding(12.dp),
@@ -172,6 +179,9 @@ internal fun VoiceRecorder(
                 .fillMaxWidth()
                 .fillMaxHeight(0.3f)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            )
         ) {
             Row(
                 modifier = Modifier
@@ -215,6 +225,9 @@ internal fun VoiceRecorder(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            )
         ) {
             Row(
                 modifier = Modifier.padding(12.dp),
@@ -324,6 +337,9 @@ fun VoiceMessagePlayback(uiState: VoiceMessageUiState) {
                     .fillMaxWidth()
                     .fillMaxHeight(0.3f)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                )
             ) {
                 Row(
                     modifier = Modifier
@@ -366,6 +382,9 @@ fun VoiceMessagePlayback(uiState: VoiceMessageUiState) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                )
             ) {
                 Row(
                     modifier = Modifier.padding(12.dp),

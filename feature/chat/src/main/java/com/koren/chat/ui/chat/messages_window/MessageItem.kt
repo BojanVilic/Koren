@@ -294,8 +294,14 @@ private fun VoiceMessage(
         IconButton(
             onClick = {
                 when (uiState.playbackState) {
-                    PlaybackState.PLAYING -> uiState.eventSink(MessagesWindowUiEvent.PausePlayback)
-                    PlaybackState.PAUSED -> uiState.eventSink(MessagesWindowUiEvent.ResumePlayback)
+                    PlaybackState.PLAYING -> {
+                        uiState.eventSink(MessagesWindowUiEvent.PausePlayback)
+                        if (message.id != uiState.currentlyPlayingMessageId)
+                            uiState.eventSink(MessagesWindowUiEvent.StartPlayback(message))
+                    }
+                    PlaybackState.PAUSED ->
+                        if (message.id == uiState.currentlyPlayingMessageId) uiState.eventSink(MessagesWindowUiEvent.ResumePlayback)
+                        else uiState.eventSink(MessagesWindowUiEvent.StartPlayback(message))
                     PlaybackState.STOPPED -> uiState.eventSink(MessagesWindowUiEvent.StartPlayback(message))
                 }
             }
