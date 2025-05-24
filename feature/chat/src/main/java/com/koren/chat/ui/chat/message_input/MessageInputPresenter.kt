@@ -83,7 +83,7 @@ class MessageInputPresenter @Inject constructor(
                                 messageText = TextFieldValue("")
                                 imageAttachments = emptySet()
                                 sendingMessage = false
-                                coroutineScope.launch(Dispatchers.IO) {
+                                coroutineScope.launch {
                                     listState.animateScrollToItem(0)
                                 }
                                 videoAttachment = null
