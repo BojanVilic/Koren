@@ -1,5 +1,8 @@
-package com.koren.chat.ui.chat.message_input
+@file:OptIn(ExperimentalPermissionsApi::class)
 
+package com.koren.chat.ui.chat.message_input.voice_message
+
+import android.Manifest.permission.RECORD_AUDIO
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -26,9 +29,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,33 +46,52 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.koren.chat.R
+import com.koren.chat.util.RecordingStatus
 import com.koren.common.util.DateUtils
+import com.koren.designsystem.icon.Attach
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.icon.Mic
+import com.koren.designsystem.icon.Pause
+import com.koren.designsystem.icon.Play
+import com.koren.designsystem.icon.Restart
+import com.koren.designsystem.icon.Stop
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
+import java.io.File
 
 @Composable
 internal fun VoiceRecorderAre(
-    uiState: MessageInputUiState
+    uiState: VoiceMessageUiState
 ) {
-    if (uiState.voiceMessageRecording) VoiceRecorder(uiState)
-    else StartRecordingPrompt(uiState)
+    when {
+        uiState.voiceMessageFile != null -> VoiceMessagePlayback(uiState)
+        uiState.voiceMessageRecording -> VoiceRecorder(uiState)
+        else -> StartRecordingPrompt(uiState)
+    }
 }
 
 @Composable
 internal fun StartRecordingPrompt(
-    uiState: MessageInputUiState
+    uiState: VoiceMessageUiState
 ) {
+    val permissionState = rememberPermissionState(RECORD_AUDIO)
+
     Column {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.3f)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            ),
             onClick = {
-                uiState.eventSink(MessageInputUiEvent.StartRecording)
+                if (permissionState.status.isGranted) uiState.eventSink(VoiceMessageUiEvent.StartRecording)
+                else permissionState.launchPermissionRequest()
             }
         ) {
             Image(
@@ -94,15 +119,18 @@ internal fun StartRecordingPrompt(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            )
         ) {
             Row(
                 modifier = Modifier.padding(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Button(
+                OutlinedButton(
                     modifier = Modifier
                         .weight(1f),
-                    onClick = { uiState.eventSink(MessageInputUiEvent.ToggleVoiceRecorder) }
+                    onClick = { uiState.eventSink(VoiceMessageUiEvent.ToggleVoiceRecorder) }
                 ) {
                     Icon(
                         modifier = Modifier.size(24.dp),
@@ -116,11 +144,15 @@ internal fun StartRecordingPrompt(
                     )
                 }
 
-                OutlinedButton(
+                Button(
                     modifier = Modifier
                         .weight(1f),
-                    onClick = { uiState.eventSink(MessageInputUiEvent.StartRecording) }
+                    onClick = {
+                        if (permissionState.status.isGranted) uiState.eventSink(VoiceMessageUiEvent.StartRecording)
+                        else permissionState.launchPermissionRequest()
+                    }
                 ) {
+
                     Icon(
                         modifier = Modifier.size(24.dp),
                         imageVector = KorenIcons.Mic,
@@ -139,7 +171,7 @@ internal fun StartRecordingPrompt(
 
 @Composable
 internal fun VoiceRecorder(
-    uiState: MessageInputUiState
+    uiState: VoiceMessageUiState
 ) {
     Column {
         Card(
@@ -147,21 +179,43 @@ internal fun VoiceRecorder(
                 .fillMaxWidth()
                 .fillMaxHeight(0.3f)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            )
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .fillMaxHeight(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                RippleDot()
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    text = DateUtils.formatDuration(uiState.voiceMessageDuration),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.headlineSmall
-                )
+                when (uiState.audioRecordingStatus) {
+                    is RecordingStatus.Error -> {
+                        Text(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            text = "Error recording audio.",
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                    }
+                    is RecordingStatus.Idle -> Text(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        text = "Starting recording...",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    is RecordingStatus.Recording -> {
+                        RippleDot()
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            text = DateUtils.formatDuration(uiState.audioRecordingStatus.durationSeconds),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -171,15 +225,18 @@ internal fun VoiceRecorder(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            )
         ) {
             Row(
                 modifier = Modifier.padding(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Button(
+                OutlinedButton(
                     modifier = Modifier
                         .weight(1f),
-                    onClick = { uiState.eventSink(MessageInputUiEvent.ToggleVoiceRecorder) }
+                    onClick = { uiState.eventSink(VoiceMessageUiEvent.ToggleVoiceRecorder) }
                 ) {
                     Icon(
                         modifier = Modifier.size(24.dp),
@@ -193,19 +250,19 @@ internal fun VoiceRecorder(
                     )
                 }
 
-                OutlinedButton(
+                Button(
                     modifier = Modifier
                         .weight(1f),
-                    onClick = { uiState.eventSink(MessageInputUiEvent.StartRecording) }
+                    onClick = { uiState.eventSink(VoiceMessageUiEvent.StopRecording) }
                 ) {
                     Icon(
                         modifier = Modifier.size(24.dp),
-                        imageVector = KorenIcons.Mic,
+                        imageVector = KorenIcons.Stop,
                         contentDescription = null
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Record",
+                        text = "Stop",
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
@@ -269,6 +326,122 @@ fun RippleDot() {
     }
 }
 
+@Composable
+fun VoiceMessagePlayback(uiState: VoiceMessageUiState) {
+    val voiceMessageFile = uiState.voiceMessageFile
+
+    if (voiceMessageFile != null) {
+        Column {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.3f)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = {
+                            when (uiState.playbackState) {
+                                PlaybackState.PLAYING -> uiState.eventSink(VoiceMessageUiEvent.PausePlayback)
+                                PlaybackState.PAUSED -> uiState.eventSink(VoiceMessageUiEvent.ResumePlayback)
+                                PlaybackState.STOPPED -> uiState.eventSink(VoiceMessageUiEvent.StartPlayback)
+                            }
+                        }
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(24.dp),
+                            imageVector = if (uiState.playbackState == PlaybackState.PLAYING) KorenIcons.Pause else KorenIcons.Play,
+                            contentDescription = "Play"
+                        )
+                    }
+                    Slider(
+                        modifier = Modifier.weight(1f),
+                        value = uiState.playbackPosition,
+                        onValueChange = { progress ->
+                            uiState.eventSink(VoiceMessageUiEvent.SeekTo(progress))
+                        },
+                        valueRange = 0f..1f
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = DateUtils.formatDuration(uiState.duration),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = { uiState.eventSink(VoiceMessageUiEvent.RestartRecording) }
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(24.dp),
+                            imageVector = KorenIcons.Restart,
+                            contentDescription = "Restart"
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "Restart")
+                    }
+
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = { uiState.eventSink(VoiceMessageUiEvent.AttachVoiceMessage) }
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(24.dp),
+                            imageVector = KorenIcons.Attach,
+                            contentDescription = null
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Attach",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@ThemePreview
+@Composable
+private fun VoiceMessagePlaybackPreview() {
+    KorenTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            VoiceMessagePlayback(
+                uiState = VoiceMessageUiState(
+                    voiceMessageFile = File.createTempFile("test", "test"),
+                    playbackState = PlaybackState.PLAYING,
+                    eventSink = {}
+                )
+            )
+        }
+    }
+}
+
 @ThemePreview
 @Composable
 private fun StartRecordingPromptPreview() {
@@ -277,7 +450,7 @@ private fun StartRecordingPromptPreview() {
             modifier = Modifier.fillMaxSize()
         ) {
             StartRecordingPrompt(
-                uiState = MessageInputUiState(
+                uiState = VoiceMessageUiState(
                     voiceMessageMode = true,
                     eventSink = {}
                 )
@@ -294,7 +467,7 @@ private fun VoiceRecorderPreview() {
             modifier = Modifier.fillMaxSize()
         ) {
             VoiceRecorder(
-                uiState = MessageInputUiState(
+                uiState = VoiceMessageUiState(
                     voiceMessageMode = true,
                     eventSink = {}
                 )

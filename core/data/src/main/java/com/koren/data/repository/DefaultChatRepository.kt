@@ -2,6 +2,7 @@ package com.koren.data.repository
 
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.core.net.toUri
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -12,6 +13,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
+import com.koren.common.services.AudioFileManager
 import com.koren.common.services.UserSession
 import com.koren.common.util.DateUtils
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +26,8 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOException
 import java.util.Calendar
 import java.util.UUID
 import javax.inject.Inject
@@ -31,7 +35,8 @@ import javax.inject.Inject
 class DefaultChatRepository @Inject constructor(
     private val userSession: UserSession,
     private val database: FirebaseDatabase,
-    private val firebaseStorage: FirebaseStorage
+    private val firebaseStorage: FirebaseStorage,
+    private val audioFileManager: AudioFileManager
 ): ChatRepository {
 
     companion object {
@@ -113,8 +118,12 @@ class DefaultChatRepository @Inject constructor(
     override suspend fun deleteMessage(messageId: String): Result<Unit> {
         val user = userSession.currentUser.first()
         val messageRef = database.getReference("chats/${user.familyId}/$messageId")
+        val attachmentsRef = firebaseStorage.getReference("chats/${user.familyId}/$messageId")
 
         return try {
+            attachmentsRef.listAll().await().items.forEach { item ->
+                item.delete().await()
+            }
             messageRef.removeValue().await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -207,15 +216,21 @@ class DefaultChatRepository @Inject constructor(
         }
     }
 
-    override suspend fun sendAudioMessage(audioUrl: String, duration: Long): Result<Unit> {
+    override suspend fun sendAudioMessage(audioFile: File, duration: Int): Result<Unit> {
         val user = userSession.currentUser.first()
+        val messageId = UUID.randomUUID().toString()
+
+        val audioUrl = withContext(Dispatchers.IO) {
+            uploadVoiceMessage(user.familyId, audioFile, messageId)
+        }
+
         val message = ChatMessage(
-            id = UUID.randomUUID().toString(),
+            id = messageId,
             senderId = user.id,
             timestamp = DateUtils.getNegativeTimeMillis(),
             messageType = MessageType.VOICE,
             mediaUrls = listOf(audioUrl),
-            mediaDuration = duration
+            mediaDuration = duration.toLong()
         )
 
         val chatRef = database.getReference("chats/${user.familyId}/${message.id}")
@@ -225,6 +240,45 @@ class DefaultChatRepository @Inject constructor(
             Result.success(Unit)
         } catch (e: Exception) {
             Timber.e("Error sending audio message: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    // In DefaultChatRepository.kt
+    override suspend fun downloadAudioMessage(url: String): Result<File> {
+        return try {
+            val localFile = audioFileManager.getCacheFile(url)
+
+            if (!localFile.exists() || localFile.length() == 0L) {
+                val httpsReference = FirebaseStorage.getInstance().getReferenceFromUrl(url)
+                val downloadTask = httpsReference.getFile(localFile)
+                downloadTask.await()
+
+                if (!localFile.exists() || localFile.length() == 0L) {
+                    Timber.e("Downloaded file is empty or missing: $localFile")
+                    return Result.failure(IOException("Downloaded file is empty or missing"))
+                }
+            }
+
+            Result.success(localFile)
+        } catch (e: Exception) {
+            Timber.e(e, "Error downloading audio: $url")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getMessageById(messageId: String): Result<ChatMessage> {
+        val familyId = userSession.currentUser.first().familyId
+        val messageRef = database.getReference("chats/$familyId/$messageId")
+
+        return try {
+            val snapshot = messageRef.get().await()
+            val message = snapshot.getValue<ChatMessage>()
+                ?: return Result.failure(IllegalArgumentException("Message not found"))
+
+            Result.success(message)
+        } catch (e: Exception) {
+            Timber.e(e, "Error fetching message by ID: $messageId")
             Result.failure(e)
         }
     }
@@ -276,6 +330,28 @@ class DefaultChatRepository @Inject constructor(
 
         withContext(Dispatchers.IO) {
             storageRef.putBytes(thumbnailData).await()
+        }
+
+        return storageRef.downloadUrl.await().toString()
+    }
+
+    private suspend fun uploadVoiceMessage(
+        familyId: String,
+        audioFile: File,
+        messageId: String
+    ): String {
+        val fileName = "${messageId}_voice.mp3"
+        val storageRef = firebaseStorage.getReference("chats/$familyId/$messageId/$fileName")
+
+        val uploadTask = storageRef.putFile(audioFile.toUri())
+
+        withContext(Dispatchers.IO) {
+            uploadTask.addOnProgressListener { taskSnapshot ->
+                val progress = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount)
+                Timber.d("Voice upload is $progress% done")
+            }.addOnFailureListener { exception ->
+                Timber.e(exception, "Voice upload failed")
+            }.await()
         }
 
         return storageRef.downloadUrl.await().toString()

@@ -6,11 +6,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.koren.chat.ui.chat.ChatUiSideEffect
+import com.koren.chat.ui.chat.message_input.voice_message.PlaybackState
+import com.koren.chat.util.AudioPlayer
 import com.koren.common.models.chat.ChatItem
+import com.koren.common.models.chat.ChatMessage
 import com.koren.common.services.UserSession
 import com.koren.data.repository.ChatRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
@@ -27,7 +31,8 @@ class MessagesWindowPresenter @Inject constructor(
     private val chatRepository: ChatRepository,
     private val userSession: UserSession,
     private val getAllFamilyMembersUseCase: GetAllFamilyMembersUseCase,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val audioPlayer: AudioPlayer
 ) {
     
     @Composable
@@ -51,6 +56,32 @@ class MessagesWindowPresenter @Inject constructor(
         }
         var canFetchMore by remember { mutableStateOf(true) }
         var fetchingMore by remember { mutableStateOf(false) }
+        var playbackPosition by remember { mutableFloatStateOf(0f) }
+        var pendingSeekPosition by remember { mutableStateOf<Float?>(null) }
+        var currentVoiceMessage by remember { mutableStateOf<ChatMessage?>(null) }
+        var playbackState by remember { mutableStateOf(PlaybackState.STOPPED) }
+
+        LaunchedEffect(currentVoiceMessage?.id) {
+            if (currentVoiceMessage != null) {
+                chatRepository.downloadAudioMessage(currentVoiceMessage?.mediaUrls?.first()?: "").getOrNull()?.let { file ->
+                    scope.launch {
+                        audioPlayer.playFile(
+                            file = file,
+                            onCompletion = {
+                                playbackState = PlaybackState.STOPPED
+                                playbackPosition = 0f
+                                currentVoiceMessage = null
+                            },
+                            startPosition = pendingSeekPosition?.let { (it * (currentVoiceMessage?.mediaDuration?: 0L) * 1000).toInt() }
+                        ).collect { progress ->
+                            playbackPosition = progress
+                        }
+                    }
+                    playbackState = PlaybackState.PLAYING
+                    pendingSeekPosition = null
+                }
+            }
+        }
 
         LaunchedEffect(Unit) {
             chatRepository.getChatMessages().collect { firstPage ->
@@ -70,16 +101,20 @@ class MessagesWindowPresenter @Inject constructor(
             shownTimestamps = shownTimestamps,
             profilePicsMap = profilePicsMap,
             fetchingMore = fetchingMore,
-            canFetchMore = canFetchMore
+            canFetchMore = canFetchMore,
+            playbackPosition = playbackPosition,
+            currentlyPlayingMessageId = currentVoiceMessage?.id,
+            playbackState = playbackState
         ) { event ->
             when (event) {
                 is MessagesWindowUiEvent.DismissReactionPopup -> {
                     showReactionPopup = false
                     targetMessageIdForReaction = null
                 }
-                is MessagesWindowUiEvent.OpenMessageReactions -> {
-                    showReactionPopup = true
-                    targetMessageIdForReaction = event.messageId
+                is MessagesWindowUiEvent.OpenMoreOptions -> {
+                    scope.launch { sideEffects.emit(ChatUiSideEffect.NavigateToMoreOptions(event.messageId)) }
+//                    showReactionPopup = true
+//                    targetMessageIdForReaction = event.messageId
                 }
                 is MessagesWindowUiEvent.OnReactionSelected -> addReactionToMessage(
                     messageId = event.messageId,
@@ -120,6 +155,24 @@ class MessagesWindowPresenter @Inject constructor(
                     val mediaUrls = event.message.mediaUrls
                     if (mediaUrls.isNullOrEmpty()) return@Shown
                     else scope.launch { sideEffects.emit(ChatUiSideEffect.NavigateToFullScreenVideo(mediaUrls.first())) }
+                }
+                is MessagesWindowUiEvent.StartPlayback -> currentVoiceMessage = event.voiceMessage
+                is MessagesWindowUiEvent.SeekVoiceMessageTo -> {
+                    val seekPosition = event.progress
+                    if (playbackState == PlaybackState.PLAYING || playbackState == PlaybackState.PAUSED) {
+                        audioPlayer.seekTo((seekPosition * (currentVoiceMessage?.mediaDuration?: 0L) * 1000).toInt())
+                    } else {
+                        pendingSeekPosition = seekPosition
+                    }
+                    playbackPosition = seekPosition
+                }
+                is MessagesWindowUiEvent.PausePlayback -> {
+                    audioPlayer.pause()
+                    playbackState = PlaybackState.PAUSED
+                }
+                is MessagesWindowUiEvent.ResumePlayback -> {
+                    audioPlayer.resume()
+                    playbackState = PlaybackState.PLAYING
                 }
             }
         }

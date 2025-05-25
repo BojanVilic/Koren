@@ -20,14 +20,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -38,6 +40,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntOffset
@@ -56,19 +61,29 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.koren.chat.ui.chat.message_input.voice_message.VoiceMessageUiEvent
+import com.koren.chat.ui.chat.message_input.voice_message.VoiceMessageUiState
+import com.koren.chat.ui.chat.message_input.voice_message.VoiceRecorderAre
+import com.koren.common.util.DateUtils
 import com.koren.designsystem.icon.Close
 import com.koren.designsystem.icon.KorenIcons
+import com.koren.designsystem.icon.Play
 import com.koren.designsystem.icon.Video
 import com.koren.designsystem.icon.Voice
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
+import java.io.File
 
 @Composable
 internal fun MessageInputArea(
     uiState: MessageInputUiState,
 ) {
 
-    val showAttachmentsRow = uiState.imageAttachments.isNotEmpty() || uiState.videoAttachment != null
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val showAttachmentsRow =
+        uiState.imageAttachments.isNotEmpty() ||
+        uiState.videoAttachment != null ||
+        (uiState.voiceMessageUiState.voiceMessageFile != null && uiState.voiceMessageUiState.attached)
 
     Surface(
         modifier = Modifier.fillMaxWidth()
@@ -85,9 +100,9 @@ internal fun MessageInputArea(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .offset(y = 24.dp)
+                        .offset(y = 36.dp)
                         .padding(start = 16.dp, end = 64.dp)
-                        .clip(MaterialTheme.shapes.medium)
+                        .clip(MaterialTheme.shapes.large)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Column(
@@ -100,8 +115,9 @@ internal fun MessageInputArea(
                         ) {
                             VideoAttachment(uiState = uiState)
                             ImageAttachments(uiState = uiState)
+                            VoiceMessageAttachment(uiState = uiState.voiceMessageUiState)
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
                     }
                 }
             }
@@ -112,7 +128,7 @@ internal fun MessageInputArea(
             ) {
                 OutlinedTextField(
                     modifier = Modifier
-                        .clip(CircleShape)
+                        .clip(MaterialTheme.shapes.extraLarge)
                         .weight(1f)
                         .padding(horizontal = 8.dp),
                     value = uiState.messageText,
@@ -120,7 +136,7 @@ internal fun MessageInputArea(
                         uiState.eventSink(MessageInputUiEvent.OnMessageTextChanged(it))
                     },
                     placeholder = { Text("Message...") },
-                    shape = RoundedCornerShape(24.dp),
+                    shape = MaterialTheme.shapes.extraLarge,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
@@ -136,16 +152,25 @@ internal fun MessageInputArea(
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
                 )
 
-                AnimatedSendMicButton(
-                    isSendButton = uiState.messageText.text.isNotBlank() || uiState.imageAttachments.isNotEmpty(),
+                val isSendButton =
+                    uiState.messageText.text.isNotBlank() ||
+                    uiState.imageAttachments.isNotEmpty() ||
+                    uiState.videoAttachment != null ||
+                    (uiState.voiceMessageUiState.voiceMessageFile != null && uiState.voiceMessageUiState.attached)
+
+                AnimatedSendButton(
+                    isSendButton = isSendButton,
                     sendingMessage = uiState.sendingMessage,
                     onSendClick = { uiState.eventSink(MessageInputUiEvent.SendMessage) },
-                    onMicClick = { uiState.eventSink(MessageInputUiEvent.ToggleVoiceRecorder) }
+                    onVoiceMessageClick = {
+                        keyboardController?.hide()
+                        uiState.voiceMessageUiState.eventSink(VoiceMessageUiEvent.ToggleVoiceRecorder)
+                    }
                 )
             }
 
-            AnimatedVisibility(uiState.voiceMessageMode) {
-                VoiceRecorderAre(uiState = uiState)
+            AnimatedVisibility(uiState.voiceMessageUiState.voiceMessageMode) {
+                VoiceRecorderAre(uiState = uiState.voiceMessageUiState)
             }
         }
     }
@@ -173,20 +198,89 @@ private fun ImageAttachments(
 
             Icon(
                 modifier = Modifier
-                    .size(28.dp)
+                    .size(24.dp)
                     .offset {
-                        IntOffset(0, -42)
+                        IntOffset(-12, -36)
                     }
                     .clip(CircleShape)
                     .align(Alignment.TopEnd)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clickable {
-                        uiState.eventSink(
-                            MessageInputUiEvent.RemoveImageAttachment(
-                                image
-                            )
-                        )
+                        uiState.eventSink(MessageInputUiEvent.RemoveImageAttachment(image))
                     },
+                imageVector = KorenIcons.Close,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+}
+
+@Composable
+private fun VoiceMessageAttachment(
+    uiState: VoiceMessageUiState
+) {
+
+    if (uiState.voiceMessageFile != null && uiState.attached) {
+        Box(
+            modifier = Modifier
+                .width(256.dp)
+                .height(84.dp)
+                .padding(start = 8.dp, end = 8.dp)
+        ) {
+
+            Row(
+                modifier = Modifier
+                    .height(64.dp)
+                    .widthIn(max = 224.dp)
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(MaterialTheme.colorScheme.inverseSurface),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                IconButton(
+                    onClick = { uiState.eventSink(VoiceMessageUiEvent.StartPlayback) }
+                ) {
+                    Icon(
+                        imageVector = KorenIcons.Play,
+                        contentDescription = "Play voice message",
+                        tint = MaterialTheme.colorScheme.inverseOnSurface,
+                    )
+                }
+
+                Slider(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(horizontal = 8.dp),
+                    value = uiState.playbackPosition,
+                    onValueChange = { progress ->
+                        uiState.eventSink(VoiceMessageUiEvent.SeekTo(progress))
+                    },
+                    valueRange = 0f..1f,
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.inverseOnSurface,
+                        activeTrackColor = MaterialTheme.colorScheme.inverseOnSurface,
+                        inactiveTrackColor = Color.Gray
+                    )
+                )
+
+                Text(
+                    modifier = Modifier.padding(end = 8.dp),
+                    text = DateUtils.formatDuration(uiState.duration),
+                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Icon(
+                modifier = Modifier
+                    .size(28.dp)
+                    .offset { IntOffset(0, -42) }
+                    .clip(CircleShape)
+                    .align(Alignment.TopEnd)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { uiState.eventSink(VoiceMessageUiEvent.RemoveVoiceMessage) },
                 imageVector = KorenIcons.Close,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.error
@@ -248,11 +342,11 @@ private fun VideoAttachment(
 }
 
 @Composable
-private fun AnimatedSendMicButton(
+private fun AnimatedSendButton(
     isSendButton: Boolean,
     sendingMessage: Boolean,
     onSendClick: () -> Unit,
-    onMicClick: () -> Unit
+    onVoiceMessageClick: () -> Unit
 ) {
 
     val targetBackgroundColor =
@@ -282,7 +376,7 @@ private fun AnimatedSendMicButton(
             .background(animatedBackgroundColor, CircleShape)
             .clickable(
                 enabled = !sendingMessage,
-                onClick = if (isSendButton) onSendClick else onMicClick
+                onClick = if (isSendButton) onSendClick else onVoiceMessageClick
             ),
         contentAlignment = Alignment.Center
     ) {
@@ -337,12 +431,12 @@ private fun MessageInputAreaPreview() {
 
 @ThemePreview
 @Composable
-private fun MessageInputAreaSendingPreview() {
+private fun MessageInputAreaLongTextPreview() {
     KorenTheme {
         Surface {
             MessageInputArea(
                 uiState = MessageInputUiState(
-                    messageText = TextFieldValue(""),
+                    messageText = TextFieldValue("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."),
                     sendingMessage = true,
                     imageAttachments = emptySet(),
                     attachmentsOverlayShown = false,
@@ -373,7 +467,7 @@ private fun MessageInputAreaWithAttachmentPreview() {
 
 @ThemePreview
 @Composable
-private fun MessageInputAreaWithTextPreview() {
+private fun MessageInputAreaWithVoiceMessageAttachmentPreview() {
     KorenTheme {
         Surface {
             MessageInputArea(
@@ -382,6 +476,11 @@ private fun MessageInputAreaWithTextPreview() {
                     sendingMessage = false,
                     imageAttachments = emptySet(),
                     attachmentsOverlayShown = false,
+                    voiceMessageUiState = VoiceMessageUiState(
+                        voiceMessageFile = File("Testing", "Testing"),
+                        attached = true
+                    ),
+                    videoDuration = 12000,
                     eventSink = {}
                 )
             )

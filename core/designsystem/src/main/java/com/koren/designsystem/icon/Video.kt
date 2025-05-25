@@ -16,8 +16,8 @@ import androidx.compose.ui.unit.dp
 val KorenIcons.Video: ImageVector by lazy(LazyThreadSafetyMode.NONE) {
     ImageVector.Builder(
         name = "Video",
-        defaultWidth = 800.dp,
-        defaultHeight = 800.dp,
+        defaultWidth = 32.dp,
+        defaultHeight = 32.dp,
         viewportWidth = 24f,
         viewportHeight = 24f
     ).apply {

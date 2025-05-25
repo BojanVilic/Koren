@@ -3,6 +3,7 @@ package com.koren.chat.ui.chat.message_input
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.ui.text.input.TextFieldValue
+import com.koren.chat.ui.chat.message_input.voice_message.VoiceMessageUiState
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiState
@@ -15,9 +16,7 @@ data class MessageInputUiState(
     val videoAttachment: Uri? = null,
     val videoDuration: Long = 0L,
     val videoThumbnail: Bitmap? = null,
-    val voiceMessageMode: Boolean = false,
-    val voiceMessageRecording: Boolean = false,
-    val voiceMessageDuration: Long = 0L,
+    val voiceMessageUiState: VoiceMessageUiState = VoiceMessageUiState(),
     override val eventSink: (MessageInputUiEvent) -> Unit = {}
 ) : UiState, EventHandler<MessageInputUiEvent>
 
@@ -30,6 +29,4 @@ sealed interface MessageInputUiEvent : UiEvent {
     data object RemoveVideoAttachment : MessageInputUiEvent
     data object ShowAttachmentsOverlay : MessageInputUiEvent
     data object CloseAttachmentsOverlay : MessageInputUiEvent
-    data object ToggleVoiceRecorder : MessageInputUiEvent
-    data object StartRecording : MessageInputUiEvent
 }
