@@ -22,4 +22,5 @@ sealed interface ChatUiSideEffect : UiSideEffect {
     data class NavigateToImageAttachment(val messageId: String) : ChatUiSideEffect
     data class NavigateToFullScreenImage(val mediaUrl: String) : ChatUiSideEffect
     data class NavigateToFullScreenVideo(val videoUrl: String) : ChatUiSideEffect
+    data class NavigateToMoreOptions(val messageId: String) : ChatUiSideEffect
 }

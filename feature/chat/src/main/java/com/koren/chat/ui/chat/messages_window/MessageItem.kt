@@ -59,6 +59,7 @@ import java.util.Locale
 
 @Composable
 internal fun MessageItem(
+    modifier: Modifier = Modifier,
     message: ChatMessage,
     isCurrentUser: Boolean,
     isPreviousMessageSameSender: Boolean,
@@ -81,7 +82,7 @@ internal fun MessageItem(
         else MaterialTheme.colorScheme.onSurfaceVariant
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = arrangement,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -119,7 +120,7 @@ private fun MessageBubble(
                     .clip(MaterialTheme.shapes.small)
                     .combinedClickable(
                         onClick = { uiState.eventSink(MessagesWindowUiEvent.OnMessageClicked(message.id)) },
-                        onLongClick = { uiState.eventSink(MessagesWindowUiEvent.OpenMessageReactions(message.id)) }
+                        onLongClick = { uiState.eventSink(MessagesWindowUiEvent.OpenMoreOptions(message.id)) }
                     ),
                 shape = MaterialTheme.shapes.medium,
                 color = backgroundColor

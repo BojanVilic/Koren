@@ -51,7 +51,8 @@ internal fun MessageList(
     }
 
     LazyColumn(
-        modifier = modifier.padding(horizontal = 8.dp),
+        modifier = modifier
+            .padding(horizontal = 8.dp),
         state = uiState.listState,
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(vertical = 8.dp),
@@ -78,6 +79,7 @@ internal fun MessageList(
                     }
 
                     MessageItem(
+                        modifier = Modifier.animateItem(),
                         message = message,
                         isCurrentUser = message.senderId == uiState.currentUserId,
                         isPreviousMessageSameSender = isPreviousMessageSameSender,

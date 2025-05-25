@@ -28,7 +28,7 @@ sealed interface MessagesWindowUiState : UiState {
 }
 
 sealed interface MessagesWindowUiEvent : UiEvent {
-    data class OpenMessageReactions(val messageId: String) : MessagesWindowUiEvent
+    data class OpenMoreOptions(val messageId: String) : MessagesWindowUiEvent
     data class OnReactionSelected(val messageId: String, val reaction: String) : MessagesWindowUiEvent
     data object DismissReactionPopup : MessagesWindowUiEvent
     data class OnMessageClicked(val messageId: String) : MessagesWindowUiEvent

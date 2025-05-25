@@ -44,7 +44,8 @@ fun ChatScreen(
     onShowSnackbar: suspend (message: String) -> Unit,
     onNavigateToImageAttachment: (messageId: String) -> Unit,
     onNavigateToFullScreenImage: (mediaUrl: String) -> Unit,
-    onNavigateToFullScreenVideo: (mediaUrl: String) -> Unit
+    onNavigateToFullScreenVideo: (mediaUrl: String) -> Unit,
+    onNavigateToMoreOptions: (messageId: String) -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
@@ -63,6 +64,7 @@ fun ChatScreen(
             is ChatUiSideEffect.NavigateToImageAttachment -> onNavigateToImageAttachment(uiSideEffect.messageId)
             is ChatUiSideEffect.NavigateToFullScreenImage -> onNavigateToFullScreenImage(uiSideEffect.mediaUrl)
             is ChatUiSideEffect.NavigateToFullScreenVideo -> onNavigateToFullScreenVideo(uiSideEffect.videoUrl)
+            is ChatUiSideEffect.NavigateToMoreOptions -> onNavigateToMoreOptions(uiSideEffect.messageId)
         }
     }
 

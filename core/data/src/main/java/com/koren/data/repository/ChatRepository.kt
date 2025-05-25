@@ -3,6 +3,7 @@ package com.koren.data.repository
 import android.graphics.Bitmap
 import android.net.Uri
 import com.koren.common.models.chat.ChatItem
+import com.koren.common.models.chat.ChatMessage
 import kotlinx.coroutines.flow.Flow
 import java.io.File
 
@@ -17,4 +18,5 @@ interface ChatRepository {
     suspend fun addReactionToMessage(messageId: String, reaction: String): Result<Unit>
     suspend fun removeReactionFromMessage(messageId: String, reaction: String): Result<Unit>
     suspend fun downloadAudioMessage(url: String): Result<File>
+    suspend fun getMessageById(messageId: String): Result<ChatMessage>
 }

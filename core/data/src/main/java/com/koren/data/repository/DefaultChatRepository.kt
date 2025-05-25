@@ -118,8 +118,12 @@ class DefaultChatRepository @Inject constructor(
     override suspend fun deleteMessage(messageId: String): Result<Unit> {
         val user = userSession.currentUser.first()
         val messageRef = database.getReference("chats/${user.familyId}/$messageId")
+        val attachmentsRef = firebaseStorage.getReference("chats/${user.familyId}/$messageId")
 
         return try {
+            attachmentsRef.listAll().await().items.forEach { item ->
+                item.delete().await()
+            }
             messageRef.removeValue().await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -259,6 +263,22 @@ class DefaultChatRepository @Inject constructor(
             Result.success(localFile)
         } catch (e: Exception) {
             Timber.e(e, "Error downloading audio: $url")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getMessageById(messageId: String): Result<ChatMessage> {
+        val familyId = userSession.currentUser.first().familyId
+        val messageRef = database.getReference("chats/$familyId/$messageId")
+
+        return try {
+            val snapshot = messageRef.get().await()
+            val message = snapshot.getValue<ChatMessage>()
+                ?: return Result.failure(IllegalArgumentException("Message not found"))
+
+            Result.success(message)
+        } catch (e: Exception) {
+            Timber.e(e, "Error fetching message by ID: $messageId")
             Result.failure(e)
         }
     }

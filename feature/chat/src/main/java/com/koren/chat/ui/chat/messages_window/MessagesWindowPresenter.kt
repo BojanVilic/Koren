@@ -111,9 +111,10 @@ class MessagesWindowPresenter @Inject constructor(
                     showReactionPopup = false
                     targetMessageIdForReaction = null
                 }
-                is MessagesWindowUiEvent.OpenMessageReactions -> {
-                    showReactionPopup = true
-                    targetMessageIdForReaction = event.messageId
+                is MessagesWindowUiEvent.OpenMoreOptions -> {
+                    scope.launch { sideEffects.emit(ChatUiSideEffect.NavigateToMoreOptions(event.messageId)) }
+//                    showReactionPopup = true
+//                    targetMessageIdForReaction = event.messageId
                 }
                 is MessagesWindowUiEvent.OnReactionSelected -> addReactionToMessage(
                     messageId = event.messageId,
