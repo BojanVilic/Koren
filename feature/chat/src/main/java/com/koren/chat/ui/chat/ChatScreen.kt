@@ -19,9 +19,7 @@ import com.koren.chat.ui.chat.message_input.MessageInputArea
 import com.koren.chat.ui.chat.message_input.MessageInputUiEvent
 import com.koren.chat.ui.chat.message_input.MessageInputUiState
 import com.koren.chat.ui.chat.messages_window.MessageList
-import com.koren.chat.ui.chat.messages_window.MessagesWindowUiEvent
 import com.koren.chat.ui.chat.messages_window.MessagesWindowUiState
-import com.koren.chat.ui.chat.messages_window.ReactionSelectionDialog
 import com.koren.common.models.chat.ChatItem
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
@@ -131,9 +129,6 @@ private fun ChatScreenShownContent(
         }
 
         MessageInputArea(uiState = uiState.messageInputUiState)
-        if (uiState.messagesWindowUiState is MessagesWindowUiState.Shown) {
-            ReactionsArea(uiState = uiState.messagesWindowUiState)
-        }
     }
 
     AnimatedVisibility(
@@ -146,21 +141,6 @@ private fun ChatScreenShownContent(
             uiState = uiState.messageInputUiState,
             imagePicker = imagePicker,
             videoPicker = videoPicker
-        )
-    }
-}
-
-@Composable
-private fun ReactionsArea(uiState: MessagesWindowUiState.Shown) {
-    if (uiState.showReactionPopup && uiState.targetMessageIdForReaction != null) {
-        ReactionSelectionDialog(
-            onDismissRequest = { uiState.eventSink(MessagesWindowUiEvent.DismissReactionPopup) },
-            onReactionSelected = { reaction ->
-                uiState.targetMessageIdForReaction.let { msgId ->
-                    uiState.eventSink(MessagesWindowUiEvent.OnReactionSelected(msgId, reaction))
-                }
-                uiState.eventSink(MessagesWindowUiEvent.DismissReactionPopup)
-            }
         )
     }
 }
@@ -193,8 +173,6 @@ fun ChatScreenPreview() {
                 messagesWindowUiState = MessagesWindowUiState.Shown(
                     currentUserId = "user1",
                     chatItems = chatItems,
-                    showReactionPopup = false,
-                    targetMessageIdForReaction = null,
                     shownTimestamps = emptySet(),
                     profilePicsMap = emptyMap(),
                     eventSink = {}

@@ -16,6 +16,7 @@ sealed interface MoreOptionsUiState : UiState {
 
 sealed interface MoreOptionsUiEvent : UiEvent {
     data object DeleteMessage : MoreOptionsUiEvent
+    data class AddReaction(val reaction: String) : MoreOptionsUiEvent
 }
 
 sealed interface MoreOptionsUiSideEffect : UiSideEffect {

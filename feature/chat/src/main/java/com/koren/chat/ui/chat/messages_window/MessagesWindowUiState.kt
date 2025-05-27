@@ -14,8 +14,6 @@ sealed interface MessagesWindowUiState : UiState {
         val currentUserId: String = "",
         val listState: LazyListState = LazyListState(),
         val chatItems: List<ChatItem> = emptyList(),
-        val showReactionPopup: Boolean = false,
-        val targetMessageIdForReaction: String? = null,
         val shownTimestamps: Set<String> = emptySet(),
         val profilePicsMap: Map<String, String> = emptyMap(),
         val fetchingMore: Boolean = false,
@@ -29,8 +27,6 @@ sealed interface MessagesWindowUiState : UiState {
 
 sealed interface MessagesWindowUiEvent : UiEvent {
     data class OpenMoreOptions(val messageId: String) : MessagesWindowUiEvent
-    data class OnReactionSelected(val messageId: String, val reaction: String) : MessagesWindowUiEvent
-    data object DismissReactionPopup : MessagesWindowUiEvent
     data class OnMessageClicked(val messageId: String) : MessagesWindowUiEvent
     data object FetchMoreMessages : MessagesWindowUiEvent
     data class OpenImageAttachment(val message: ChatMessage) : MessagesWindowUiEvent

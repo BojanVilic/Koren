@@ -65,7 +65,10 @@ internal fun MessageList(
             when (item) {
                 is ChatItem.DateSeparator -> {
                     val calendar = Calendar.getInstance().apply { timeInMillis = item.timestamp }
-                    DateSeparator(calendar = calendar)
+                    DateSeparator(
+                        modifier = Modifier.animateItem(),
+                        calendar = calendar
+                    )
                 }
                 is ChatItem.MessageItem -> {
                     val message = item.message
@@ -106,7 +109,10 @@ internal fun MessageList(
 }
 
 @Composable
-fun DateSeparator(calendar: Calendar) {
+fun DateSeparator(
+    modifier: Modifier = Modifier,
+    calendar: Calendar
+) {
     val today = Calendar.getInstance()
     val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
 
@@ -118,7 +124,7 @@ fun DateSeparator(calendar: Calendar) {
     val timeText = SimpleDateFormat("HH:mm", Locale.getDefault()).format(calendar.time)
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -171,8 +177,6 @@ fun MessageListPreview() {
             uiState = MessagesWindowUiState.Shown(
                 currentUserId = "user1",
                 chatItems = chatItems,
-                showReactionPopup = false,
-                targetMessageIdForReaction = null,
                 shownTimestamps = emptySet(),
                 profilePicsMap = emptyMap(),
                 eventSink = {}

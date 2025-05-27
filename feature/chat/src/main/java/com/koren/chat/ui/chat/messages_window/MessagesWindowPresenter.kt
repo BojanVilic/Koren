@@ -19,7 +19,6 @@ import com.koren.common.services.UserSession
 import com.koren.data.repository.ChatRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -44,8 +43,6 @@ class MessagesWindowPresenter @Inject constructor(
         val familyMembers by getAllFamilyMembersUseCase.invoke().collectAsState(initial = emptyList())
 
         var chatItems by remember { mutableStateOf<List<ChatItem>>(emptyList()) }
-        var showReactionPopup by remember { mutableStateOf(false) }
-        var targetMessageIdForReaction by remember { mutableStateOf<String?>(null) }
         var shownTimestamps by remember { mutableStateOf(emptySet<String>()) }
         val profilePicsMap by remember {
             derivedStateOf {
@@ -96,8 +93,6 @@ class MessagesWindowPresenter @Inject constructor(
             currentUserId = currentUserId,
             listState = listState,
             chatItems = chatItems,
-            showReactionPopup = showReactionPopup,
-            targetMessageIdForReaction = targetMessageIdForReaction,
             shownTimestamps = shownTimestamps,
             profilePicsMap = profilePicsMap,
             fetchingMore = fetchingMore,
@@ -107,23 +102,9 @@ class MessagesWindowPresenter @Inject constructor(
             playbackState = playbackState
         ) { event ->
             when (event) {
-                is MessagesWindowUiEvent.DismissReactionPopup -> {
-                    showReactionPopup = false
-                    targetMessageIdForReaction = null
-                }
                 is MessagesWindowUiEvent.OpenMoreOptions -> {
                     scope.launch { sideEffects.emit(ChatUiSideEffect.NavigateToMoreOptions(event.messageId)) }
-//                    showReactionPopup = true
-//                    targetMessageIdForReaction = event.messageId
                 }
-                is MessagesWindowUiEvent.OnReactionSelected -> addReactionToMessage(
-                    messageId = event.messageId,
-                    reaction = event.reaction,
-                    onSuccess = { showReactionPopup = false },
-                    onFailure = { errorMessage ->
-                        scope.launch { sideEffects.emit(ChatUiSideEffect.ShowError(errorMessage)) }
-                    }
-                )
                 is MessagesWindowUiEvent.OnMessageClicked -> shownTimestamps =
                     if (shownTimestamps.contains(event.messageId)) shownTimestamps - event.messageId
                     else shownTimestamps + event.messageId
@@ -175,19 +156,6 @@ class MessagesWindowPresenter @Inject constructor(
                     playbackState = PlaybackState.PLAYING
                 }
             }
-        }
-    }
-
-    private fun addReactionToMessage(
-        messageId: String,
-        reaction: String,
-        onSuccess: () -> Unit,
-        onFailure: (String) -> Unit
-    ) {
-        scope.launch(Dispatchers.Default) {
-            chatRepository.addReactionToMessage(messageId, reaction)
-                .onSuccess { onSuccess() }
-                .onFailure { onFailure("The reaction was not added. Please try again.") }
         }
     }
 

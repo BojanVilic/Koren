@@ -34,8 +34,6 @@ import com.koren.designsystem.icon.Copy
 import com.koren.designsystem.icon.Delete
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.theme.KorenTheme
-import com.koren.designsystem.theme.LocalScaffoldStateProvider
-import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -48,17 +46,11 @@ fun MoreOptionsScreen(
     viewModel: MoreOptionsViewModel = hiltViewModel(),
     navigateBack: () -> Unit
 ) {
-    LocalScaffoldStateProvider.current.setScaffoldState(
-        ScaffoldState(
-
-        )
-    )
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     CollectSideEffects(viewModel) { sideEffect ->
         when (sideEffect) {
-            MoreOptionsUiSideEffect.NavigateBack -> navigateBack()
+            is MoreOptionsUiSideEffect.NavigateBack -> navigateBack()
         }
     }
 
@@ -89,7 +81,9 @@ private fun MoreOptionsScreenShownContent(uiState: MoreOptionsUiState.Shown) {
         ) {
             reactions.forEach { reaction ->
                 FilledTonalIconButton(
-                    onClick = {  }
+                    onClick = {
+                        uiState.eventSink(MoreOptionsUiEvent.AddReaction(reaction))
+                    }
                 ) {
                     Text(
                         text = reaction,

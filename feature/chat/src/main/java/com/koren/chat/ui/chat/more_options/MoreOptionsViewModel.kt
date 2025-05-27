@@ -13,6 +13,7 @@ import com.koren.common.models.chat.ChatMessage
 import com.koren.common.util.MoleculeViewModel
 import com.koren.data.repository.ChatRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -43,7 +44,23 @@ class MoreOptionsViewModel @Inject constructor(
                     chatRepository.deleteMessage(messageId)
                         .onSuccess { _sideEffects.emitSuspended(MoreOptionsUiSideEffect.NavigateBack) }
                 }
+                is MoreOptionsUiEvent.AddReaction -> addReactionToMessage(
+                    messageId = messageId,
+                    reaction = event.reaction,
+                    onSuccess = { _sideEffects.emitSuspended(MoreOptionsUiSideEffect.NavigateBack) }
+                )
             }
+        }
+    }
+
+    private fun addReactionToMessage(
+        messageId: String,
+        reaction: String,
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch(Dispatchers.Default) {
+            chatRepository.addReactionToMessage(messageId, reaction)
+                .onSuccess { onSuccess() }
         }
     }
 }
