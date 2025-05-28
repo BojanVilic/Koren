@@ -14,6 +14,7 @@ import com.koren.common.util.MoleculeViewModel
 import com.koren.domain.GetFamilyMemberUseCase
 import com.koren.domain.UpdateUserProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,15 +32,22 @@ class EditMemberViewModel @Inject constructor(
         val memberDetails by getFamilyMemberUseCase(memberId).collectAsState(initial = UserData())
         var selectedRole by remember { mutableStateOf(memberDetails.familyRole) }
         var selectedFrequency by remember { mutableIntStateOf(memberDetails.locationUpdateFrequencyInMins) }
+        var areYouSureActive by remember { mutableStateOf(false) }
 
         return EditMemberUiState.Shown(
             memberDetails = memberDetails,
             selectedRole = selectedRole,
-            selectedFrequency = selectedFrequency
+            selectedFrequency = selectedFrequency,
+            areYouSureActive = areYouSureActive
         ) { event ->
             when (event) {
                 is EditMemberUiEvent.UpdateFamilyRole -> selectedRole = event.familyRole
                 is EditMemberUiEvent.UpdateLocationUpdateFrequency -> selectedFrequency = event.frequency
+                is EditMemberUiEvent.RemoveMemberClicked -> {
+                    if (areYouSureActive) Timber.d("Remove member: ${event.memberId}")
+                    else areYouSureActive = true
+                }
+                is EditMemberUiEvent.CancelRemoveMemberClicked -> areYouSureActive = false
             }
         }
     }

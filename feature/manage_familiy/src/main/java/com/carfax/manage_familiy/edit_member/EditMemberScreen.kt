@@ -3,6 +3,7 @@
 package com.carfax.manage_familiy.edit_member
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
@@ -20,6 +22,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -201,24 +204,66 @@ private fun EditMemberScreenShownContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {  },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer
-            ),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Remove Member",
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = "Remove Family Member",
-                style = MaterialTheme.typography.labelLarge
-            )
+            AnimatedVisibility(
+                visible = uiState.areYouSureActive
+            ) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(0.5f),
+                    text = "Are you sure you want to remove this family member?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            if (uiState.areYouSureActive) Spacer(modifier = Modifier.width(12.dp))
+
+            Button(
+                modifier = Modifier
+                    .animateContentSize()
+                    .weight(1f),
+                onClick = { uiState.eventSink(EditMemberUiEvent.RemoveMemberClicked(uiState.memberDetails.id)) },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                ),
+                shape = if (uiState.areYouSureActive) ButtonDefaults.filledTonalShape else ButtonDefaults.shape
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Remove Member",
+                )
+                Spacer(Modifier.width(8.dp))
+                if (!uiState.areYouSureActive) {
+                    Text(
+                        text = "Remove Family Member",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            AnimatedVisibility(
+                visible = uiState.areYouSureActive
+            ) {
+                FilledTonalButton(
+                    modifier = Modifier
+                        .weight(1f),
+                    onClick = { uiState.eventSink(EditMemberUiEvent.CancelRemoveMemberClicked) }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Cancel Remove Member",
+                    )
+                }
+            }
         }
     }
 }
@@ -236,6 +281,7 @@ private fun EditMemberScreenPreview() {
                     familyRole = FamilyRole.CHILD
                 ),
                 selectedRole = FamilyRole.CHILD,
+                areYouSureActive = true,
                 eventSink = {}
             )
         )
