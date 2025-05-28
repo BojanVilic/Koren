@@ -53,7 +53,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -78,7 +77,8 @@ fun AccountScreen(
     onLogOut: () -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit,
     navigateToEditProfile: () -> Unit,
-    navigateToActivity: () -> Unit
+    navigateToActivity: () -> Unit,
+    navigateToManageFamily: () -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(ScaffoldState(isTopBarVisible = false))
@@ -102,7 +102,8 @@ fun AccountScreen(
             is AccountUiSideEffect.ShowError -> onShowSnackbar(uiSideEffect.message)
             is AccountUiSideEffect.NavigateToEditProfile -> navigateToEditProfile()
             is AccountUiSideEffect.NavigateToActivity -> navigateToActivity()
-            is AccountUiSideEffect.NavigateToNotifications -> startActivity(context, settingsIntent, null)
+            is AccountUiSideEffect.NavigateToNotifications -> context.startActivity(settingsIntent, null)
+            is AccountUiSideEffect.NavigateToManageFamily -> navigateToManageFamily()
         }
     }
 

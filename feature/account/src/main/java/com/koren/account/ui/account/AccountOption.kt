@@ -40,7 +40,7 @@ val options = listOf(
         text = "Manage Family",
         subText = "Edit roles or remove members",
         icon = Icons.Rounded.Settings,
-        event = AccountUiEvent.LeaveFamily
+        event = AccountUiEvent.ManageFamily
     ),
     AccountOption(
         text = "Terms of service",

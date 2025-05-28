@@ -25,6 +25,7 @@ sealed interface AccountUiEvent : UiEvent {
     data object LogOut : AccountUiEvent
     data object Notifications : AccountUiEvent
     data object TermsOfService : AccountUiEvent
+    data object ManageFamily : AccountUiEvent
     data object Privacy : AccountUiEvent
     data object LeaveFamily : AccountUiEvent
     data object DeleteAccount : AccountUiEvent
@@ -40,4 +41,5 @@ sealed interface AccountUiSideEffect : UiSideEffect {
     data object NavigateToEditProfile : AccountUiSideEffect
     data object NavigateToActivity : AccountUiSideEffect
     data object NavigateToNotifications : AccountUiSideEffect
+    data object NavigateToManageFamily : AccountUiSideEffect
 }

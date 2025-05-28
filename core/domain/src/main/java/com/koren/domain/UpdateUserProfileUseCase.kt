@@ -6,11 +6,11 @@ import com.koren.common.models.user.UserData
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-class UpdateUserProfile @Inject constructor(
+class UpdateUserProfileUseCase @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase,
     private val uploadProfilePictureUseCase: UploadProfilePictureUseCase
 ) {
-    suspend operator fun invoke(userData: UserData, newProfilePicture: Uri?): Result<Unit> {
+    suspend operator fun invoke(userData: UserData, newProfilePicture: Uri? = null): Result<Unit> {
         if (newProfilePicture != null) {
             uploadProfilePictureUseCase(userData.id, newProfilePicture)
                 .onFailure { return Result.failure(it) }

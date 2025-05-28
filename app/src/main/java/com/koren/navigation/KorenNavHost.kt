@@ -11,6 +11,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import androidx.navigation.toRoute
+import com.carfax.manage_familiy.navigation.manageFamilyScreen
+import com.carfax.manage_familiy.select_member.SelectMemberDestination
 import com.koren.MainActivityViewModel
 import com.koren.account.ui.account.AccountDestination
 import com.koren.account.ui.navigation.accountScreen
@@ -124,6 +126,9 @@ fun KorenNavHost(
                     onShowSnackbar = onShowSnackbar,
                     navigateToActivity = {
                         navController.navigateToTopLevelDestination(ActivityTopLevelRoute)
+                    },
+                    navigateToManageFamily = {
+                        navController.navigate(SelectMemberDestination)
                     }
                 )
                 invitationScreen(navController = navController)
@@ -132,6 +137,10 @@ fun KorenNavHost(
                     onShowSnackbar = onShowSnackbar
                 )
                 chatScreen(
+                    navController = navController,
+                    onShowSnackbar = onShowSnackbar
+                )
+                manageFamilyScreen(
                     navController = navController,
                     onShowSnackbar = onShowSnackbar
                 )

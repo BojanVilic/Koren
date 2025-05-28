@@ -38,6 +38,7 @@ internal fun Project.configureComposeSetup(
             add("implementation", libs.findLibrary("androidx-compose-ui").get())
             add("implementation", libs.findLibrary("androidx-compose-ui-graphics").get())
             add("implementation", libs.findLibrary("androidx-compose-material3").get())
+            add("implementation", libs.findLibrary("androidx-compose-icons-extended").get())
             add("androidTestImplementation", libs.findLibrary("androidx-compose-ui-test-junit4").get())
             add("debugImplementation", libs.findLibrary("androidx-compose-ui-test-manifest").get())
         }

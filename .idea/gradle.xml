@@ -39,6 +39,7 @@
             <option value="$PROJECT_DIR$/feature/chat" />
             <option value="$PROJECT_DIR$/feature/home" />
             <option value="$PROJECT_DIR$/feature/invitation" />
+            <option value="$PROJECT_DIR$/feature/manage_familiy" />
             <option value="$PROJECT_DIR$/feature/map" />
             <option value="$PROJECT_DIR$/feature/onboarding" />
           </set>

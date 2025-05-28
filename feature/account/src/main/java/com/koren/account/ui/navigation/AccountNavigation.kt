@@ -17,7 +17,8 @@ fun NavGraphBuilder.accountScreen(
     navController: NavHostController,
     onLogOut: () -> Unit,
     onShowSnackbar: suspend (message: String) -> Unit,
-    navigateToActivity: () -> Unit
+    navigateToActivity: () -> Unit,
+    navigateToManageFamily: () -> Unit
 ) {
     navigation<AccountGraph>(
         startDestination = AccountDestination
@@ -27,7 +28,8 @@ fun NavGraphBuilder.accountScreen(
                 onLogOut = onLogOut,
                 onShowSnackbar = onShowSnackbar,
                 navigateToEditProfile = { navController.navigate(EditProfileDestination) },
-                navigateToActivity = navigateToActivity
+                navigateToActivity = navigateToActivity,
+                navigateToManageFamily = navigateToManageFamily
             )
         }
         composable<EditProfileDestination> {

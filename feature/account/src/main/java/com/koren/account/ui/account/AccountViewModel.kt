@@ -55,6 +55,7 @@ class AccountViewModel @Inject constructor(
                 is AccountUiEvent.Activity -> _sideEffects.emitSuspended(AccountUiSideEffect.NavigateToActivity)
                 is AccountUiEvent.Premium -> Unit
                 is AccountUiEvent.CloseOption -> _uiState.update { currentState.copy(optionContent = null) }
+                is AccountUiEvent.ManageFamily -> _sideEffects.emitSuspended(AccountUiSideEffect.NavigateToManageFamily)
             }
         }
     }
