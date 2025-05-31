@@ -13,6 +13,7 @@ dependencies {
 
     implementation(libs.firebase.database)
     implementation(libs.firebase.storage)
+    implementation(libs.firebase.functions.ktx)
 
     implementation(libs.android.maps.utils)
     implementation(libs.play.services.places)

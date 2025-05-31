@@ -53,6 +53,10 @@ abstract class MoleculeViewModel<Event: UiEvent, State: UiState, SideEffect: UiS
             emit(effect)
         }
     }
+
+    protected fun sendSideEffect(effect: SideEffect) {
+        _sideEffects.emitSuspended(effect)
+    }
 }
 
 

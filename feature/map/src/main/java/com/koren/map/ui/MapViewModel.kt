@@ -114,6 +114,7 @@ class MapViewModel @Inject constructor(
                 try {
                     updateUserLocationUseCase(location)
                     activityRepository.insertNewActivity(location)
+                    Timber.d("User location updated: $location")
                 } catch (e: Exception) {
                     Timber.d("Failed to update user location: $e")
                 }

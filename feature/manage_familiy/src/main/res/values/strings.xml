@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="are_you_sure_text">Are you sure you want to remove %s from the family?</string>
+</resources>

@@ -44,7 +44,7 @@ import com.koren.designsystem.theme.ThemePreview
 import kotlinx.serialization.Serializable
 
 @Serializable
-object SelectMemberDestination
+data object SelectMemberDestination
 
 @Composable
 fun SelectMemberScreen(

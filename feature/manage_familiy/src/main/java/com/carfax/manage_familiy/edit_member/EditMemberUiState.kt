@@ -18,6 +18,7 @@ sealed interface EditMemberUiState : UiState {
         val selectedRole: FamilyRole = FamilyRole.NONE,
         val selectedFrequency: Int = DEFAULT_LOCATION_UPDATE_FREQUENCY_IN_MINS,
         val areYouSureActive: Boolean = false,
+        val removingInProgress: Boolean = false,
         override val eventSink: (EditMemberUiEvent) -> Unit
     ) : EditMemberUiState, EventHandler<EditMemberUiEvent>
 }
@@ -30,5 +31,6 @@ sealed interface EditMemberUiEvent : UiEvent {
 }
 
 sealed interface EditMemberUiSideEffect : UiSideEffect {
-
+    data class ShowFamilyMemberRemovedMessage(val message: String) : EditMemberUiSideEffect
+    data class ShowErrorMessage(val message: String) : EditMemberUiSideEffect
 }

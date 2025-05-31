@@ -24,7 +24,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
@@ -41,6 +46,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -48,10 +55,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.carfax.manage_familiy.R
 import com.koren.common.models.family.FamilyRole
 import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.LoadingContent
+import com.koren.designsystem.components.StyledStringResource
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
 import kotlinx.serialization.Serializable
@@ -62,17 +71,27 @@ data class EditMemberDestination(val memberId: String)
 @Composable
 fun EditMemberScreen(
     viewModel: EditMemberViewModel = hiltViewModel(),
-    onShowSnackbar: suspend (message: String) -> Unit
+    onFamilyMemberRemoved: suspend (message: String) -> Unit
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     CollectSideEffects(viewModel) { sideEffect ->
         when (sideEffect) {
-            else -> Unit
+            is EditMemberUiSideEffect.ShowFamilyMemberRemovedMessage -> onFamilyMemberRemoved(sideEffect.message)
+            is EditMemberUiSideEffect.ShowErrorMessage -> snackbarHostState.showSnackbar(message = sideEffect.message)
         }
     }
 
+    SnackbarHost(
+        hostState = snackbarHostState,
+        snackbar = {
+            Snackbar(
+                content = { Text(text = it.visuals.message) }
+            )
+        }
+    )
     EditMemberScreenContent(uiState)
 }
 
@@ -204,65 +223,99 @@ private fun EditMemberScreenShownContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+        if (uiState.removingInProgress) RemovingLoadingRow()
+        else RemoveFamilyMemberRow(uiState)
+    }
+}
+
+@Composable
+private fun RemovingLoadingRow() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Removing member...",
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        LoadingIndicator()
+    }
+}
+
+@Composable
+private fun RemoveFamilyMemberRow(
+    uiState: EditMemberUiState.Shown
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AnimatedVisibility(
+            visible = uiState.areYouSureActive
         ) {
-            AnimatedVisibility(
-                visible = uiState.areYouSureActive
-            ) {
+            val nameStyle = SpanStyle(
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            StyledStringResource(
+                modifier = Modifier.fillMaxWidth(0.5f),
+                stringRes = R.string.are_you_sure_text,
+                formatArgs = listOf(
+                    Pair(
+                        uiState.memberDetails.displayName,
+                        nameStyle
+                    )
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        if (uiState.areYouSureActive) Spacer(modifier = Modifier.width(12.dp))
+
+        Button(
+            modifier = Modifier
+                .animateContentSize()
+                .weight(1f),
+            onClick = { uiState.eventSink(EditMemberUiEvent.RemoveMemberClicked(uiState.memberDetails.id)) },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer
+            ),
+            shape = if (uiState.areYouSureActive) ButtonDefaults.filledTonalShape else ButtonDefaults.shape
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Remove Member",
+            )
+            if (!uiState.areYouSureActive) {
+                Spacer(Modifier.width(8.dp))
                 Text(
-                    modifier = Modifier.fillMaxWidth(0.5f),
-                    text = "Are you sure you want to remove this family member?",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center
+                    text = "Remove Family Member",
+                    style = MaterialTheme.typography.labelLarge
                 )
             }
+        }
 
-            if (uiState.areYouSureActive) Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
-            Button(
+        AnimatedVisibility(
+            visible = uiState.areYouSureActive
+        ) {
+            FilledTonalButton(
                 modifier = Modifier
-                    .animateContentSize()
                     .weight(1f),
-                onClick = { uiState.eventSink(EditMemberUiEvent.RemoveMemberClicked(uiState.memberDetails.id)) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                ),
-                shape = if (uiState.areYouSureActive) ButtonDefaults.filledTonalShape else ButtonDefaults.shape
+                onClick = { uiState.eventSink(EditMemberUiEvent.CancelRemoveMemberClicked) }
             ) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Remove Member",
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Cancel Remove Member",
                 )
-                Spacer(Modifier.width(8.dp))
-                if (!uiState.areYouSureActive) {
-                    Text(
-                        text = "Remove Family Member",
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            AnimatedVisibility(
-                visible = uiState.areYouSureActive
-            ) {
-                FilledTonalButton(
-                    modifier = Modifier
-                        .weight(1f),
-                    onClick = { uiState.eventSink(EditMemberUiEvent.CancelRemoveMemberClicked) }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Cancel Remove Member",
-                    )
-                }
             }
         }
     }
@@ -272,18 +325,21 @@ private fun EditMemberScreenShownContent(
 @Composable
 private fun EditMemberScreenPreview() {
     KorenTheme {
-        EditMemberScreenContent(
-            EditMemberUiState.Shown(
-                memberDetails = UserData(
-                    id = "123",
-                    displayName = "John Doe",
-                    profilePictureUrl = "https://example.com/profile.jpg",
-                    familyRole = FamilyRole.CHILD
-                ),
-                selectedRole = FamilyRole.CHILD,
-                areYouSureActive = true,
-                eventSink = {}
+        Surface {
+            EditMemberScreenContent(
+                EditMemberUiState.Shown(
+                    memberDetails = UserData(
+                        id = "123",
+                        displayName = "John Doe",
+                        profilePictureUrl = "https://example.com/profile.jpg",
+                        familyRole = FamilyRole.CHILD
+                    ),
+                    selectedRole = FamilyRole.CHILD,
+                    areYouSureActive = true,
+                    removingInProgress = true,
+                    eventSink = {}
+                )
             )
-        )
+        }
     }
 }
