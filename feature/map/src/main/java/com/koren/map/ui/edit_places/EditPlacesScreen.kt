@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,7 +35,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -44,7 +42,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.koren.common.models.family.LocationIcon
 import com.koren.common.models.family.SavedLocation
-import com.koren.common.models.suggestion.SuggestionResponse
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
@@ -104,20 +101,13 @@ private fun EditPlacesScreenShownContent(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-//        BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.CenterHorizontally))
         SearchBar(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             inputField = {
                 SearchBarDefaults.InputField(
-                    modifier = if (uiState.searchBarExpanded) Modifier else Modifier
-                        .clip(MaterialTheme.shapes.extraLarge)
-                        .background(MaterialTheme.colorScheme.surfaceContainer),
                     query = uiState.searchQuery,
                     onQueryChange = { uiState.eventSink(EditPlacesUiEvent.SearchTextChanged(it)) },
-                    onSearch = {
-//                        onSearch(textFieldState.text.toString())
-//                        expanded = false
-                    },
+                    onSearch = {},
                     expanded = uiState.searchBarExpanded,
                     onExpandedChange = { uiState.eventSink(EditPlacesUiEvent.OnExpandSearchBarChanged(it)) },
                     placeholder = { Text("Search") },
@@ -142,11 +132,7 @@ private fun EditPlacesScreenShownContent(
                 )
             },
             expanded = uiState.searchBarExpanded,
-            onExpandedChange = { uiState.eventSink(EditPlacesUiEvent.OnExpandSearchBarChanged(it)) },
-            colors = SearchBarDefaults.colors(
-                containerColor = BottomSheetDefaults.ContainerColor,
-                dividerColor = MaterialTheme.colorScheme.outlineVariant
-            )
+            onExpandedChange = { uiState.eventSink(EditPlacesUiEvent.OnExpandSearchBarChanged(it)) }
         ) {
             Column(
                 modifier = Modifier
