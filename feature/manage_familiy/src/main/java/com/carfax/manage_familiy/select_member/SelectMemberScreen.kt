@@ -50,7 +50,8 @@ data object SelectMemberDestination
 fun SelectMemberScreen(
     viewModel: SelectMemberViewModel = hiltViewModel(),
     onShowSnackbar: suspend (message: String) -> Unit,
-    onNavigateToEditMember: (String) -> Unit = {}
+    onNavigateToEditMember: (String) -> Unit,
+    onNavigateToAddNewMember: () -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
@@ -66,6 +67,7 @@ fun SelectMemberScreen(
     CollectSideEffects(viewModel) { sideEffect ->
         when (sideEffect) {
             is SelectMemberUiSideEffect.NavigateToEditMember -> onNavigateToEditMember(sideEffect.memberId)
+            is SelectMemberUiSideEffect.NavigateToAddNewMember -> onNavigateToAddNewMember()
         }
     }
 

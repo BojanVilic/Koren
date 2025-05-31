@@ -19,7 +19,8 @@ private const val FAMILY_MEMBER_REMOVED_MESSAGE_KEY = "familyMemberRemovedMessag
 
 fun NavGraphBuilder.manageFamilyScreen(
     navController: NavHostController,
-    onShowSnackbar: suspend (message: String) -> Unit
+    onShowSnackbar: suspend (message: String) -> Unit,
+    onNavigateToAddNewMember: () -> Unit
 ) {
     navigation<ManageFamilyGraph>(
         startDestination = SelectMemberDestination
@@ -36,7 +37,8 @@ fun NavGraphBuilder.manageFamilyScreen(
                 onShowSnackbar = onShowSnackbar,
                 onNavigateToEditMember = { memberId ->
                     navController.navigate(EditMemberDestination(memberId))
-                }
+                },
+                onNavigateToAddNewMember = onNavigateToAddNewMember
             )
         }
         bottomSheet<EditMemberDestination> {

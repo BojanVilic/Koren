@@ -21,4 +21,5 @@ sealed interface SelectMemberUiEvent : UiEvent {
 
 sealed interface SelectMemberUiSideEffect : UiSideEffect {
     data class NavigateToEditMember(val memberId: String) : SelectMemberUiSideEffect
+    data object NavigateToAddNewMember : SelectMemberUiSideEffect
 }

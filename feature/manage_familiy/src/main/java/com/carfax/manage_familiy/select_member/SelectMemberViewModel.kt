@@ -30,7 +30,7 @@ class SelectMemberViewModel @Inject constructor(
         ) { event ->
             when (event) {
                 is SelectMemberUiEvent.MemberSelected -> _sideEffects.emitSuspended(SelectMemberUiSideEffect.NavigateToEditMember(event.member.id))
-                is SelectMemberUiEvent.AddMemberClicked -> Unit
+                is SelectMemberUiEvent.AddMemberClicked -> sendSideEffect(SelectMemberUiSideEffect.NavigateToAddNewMember)
             }
         }
     }

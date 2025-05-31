@@ -142,7 +142,10 @@ fun KorenNavHost(
                 )
                 manageFamilyScreen(
                     navController = navController,
-                    onShowSnackbar = onShowSnackbar
+                    onShowSnackbar = onShowSnackbar,
+                    onNavigateToAddNewMember = {
+                        navController.navigate(InvitationDestination)
+                    }
                 )
                 bottomSheet<AddEntryDestination> { backStackEntry ->
                     val addEntryDestination = backStackEntry.toRoute<AddEntryDestination>()
