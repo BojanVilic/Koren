@@ -28,7 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Hail
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -63,8 +63,6 @@ import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.components.Scrim
-import com.koren.designsystem.icon.KorenIcons
-import com.koren.designsystem.icon.RemovePerson
 import com.koren.designsystem.models.ActionItem
 import com.koren.designsystem.models.IconResource
 import com.koren.designsystem.theme.KorenTheme
@@ -190,15 +188,10 @@ fun HomeScaffoldWithExpandingFab(
             onClick = { state.eventSink(HomeEvent.OpenAddCalendarEntry) }
         ),
         ActionItem(
-            icon = IconResource.Vector(Icons.Default.Notifications),
-            text = "Reminder",
-            onClick = {}
-        ),
-        ActionItem(
-            icon = IconResource.Vector(KorenIcons.RemovePerson),
-            text = "Remove",
-            onClick = {}
-        ),
+            icon = IconResource.Vector(Icons.Default.Hail),
+            text = "Request Pick Up",
+            onClick = { state.eventSink(HomeEvent.RequestPickUpClicked) }
+        )
     )
 
     Scaffold(

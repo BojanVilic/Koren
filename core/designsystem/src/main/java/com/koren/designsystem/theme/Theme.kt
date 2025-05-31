@@ -2,8 +2,7 @@
 
 package com.koren.designsystem.theme
 
-import android.content.res.Configuration.UI_MODE_NIGHT_NO
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.content.res.Configuration
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -142,6 +141,6 @@ val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState> {
     error("No SnackbarHostState provided")
 }
 
-@Preview(name = "Dark Mode", showBackground = true, backgroundColor = 0xFF1B1B1F, uiMode = UI_MODE_NIGHT_YES)
-@Preview(name = "Light Mode", showBackground = true, backgroundColor = 0xFFFEFBFF, uiMode = UI_MODE_NIGHT_NO)
+@Preview(name = "Dark Mode", showBackground = true, backgroundColor = 0xFF1B1B1F, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(name = "Light Mode", showBackground = true, backgroundColor = 0xFFFEFBFF, uiMode = Configuration.UI_MODE_NIGHT_NO)
 annotation class ThemePreview

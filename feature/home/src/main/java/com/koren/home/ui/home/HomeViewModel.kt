@@ -18,10 +18,10 @@ import com.koren.common.util.orUnknownError
 import com.koren.data.repository.CalendarRepository
 import com.koren.data.repository.InvitationRepository
 import com.koren.domain.ChangeTaskStatusUseCase
+import com.koren.domain.GetAllFamilyMembersWithDetailsUseCase
 import com.koren.domain.GetCallHomeRequestUseCase
 import com.koren.domain.GetNextCalendarItemUseCase
 import com.koren.domain.UpdateCallHomeStatusUseCase
-import com.koren.domain.GetAllFamilyMembersWithDetailsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -85,6 +85,7 @@ class HomeViewModel @Inject constructor(
                 is HomeEvent.RejectCallHomeRequest -> updateCallHomeRequestStatus(CallHomeRequestStatus.REJECTED)
                 is HomeEvent.ActionsFabClicked -> actionsOpen = !actionsOpen
                 is HomeEvent.NavigateToChat -> _sideEffects.emitSuspended(HomeSideEffect.NavigateToChat)
+                is HomeEvent.RequestPickUpClicked -> Unit
             }
         }
     }

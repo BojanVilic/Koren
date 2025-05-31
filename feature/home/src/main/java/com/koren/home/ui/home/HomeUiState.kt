@@ -6,14 +6,13 @@ import com.koren.common.models.calendar.EventWithUsers
 import com.koren.common.models.calendar.Task
 import com.koren.common.models.calendar.TaskWithUsers
 import com.koren.common.models.family.CallHomeRequestWithUser
-import com.koren.common.models.family.Family
+import com.koren.common.models.family.FamilyMemberUserData
 import com.koren.common.models.invitation.Invitation
 import com.koren.common.models.user.UserData
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
 import com.koren.common.util.UiSideEffect
 import com.koren.common.util.UiState
-import com.koren.common.models.family.FamilyMemberUserData
 
 sealed interface NextItem {
     data class TaskItem(val task: TaskWithUsers) : NextItem
@@ -55,6 +54,7 @@ sealed interface HomeEvent : UiEvent {
     data object RejectCallHomeRequest : HomeEvent
     data object ActionsFabClicked : HomeEvent
     data object NavigateToChat : HomeEvent
+    data object RequestPickUpClicked : HomeEvent
 }
 
 sealed interface HomeSideEffect : UiSideEffect {
