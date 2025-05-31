@@ -1,14 +1,15 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.koren.account.ui.change_password
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -32,6 +33,10 @@ import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.ThemePreview
+import kotlinx.serialization.Serializable
+
+@Serializable
+data object ChangePasswordScreenDestination
 
 @Composable
 fun ChangePasswordScreen(
@@ -74,9 +79,9 @@ private fun ShownContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.7f)
             .padding(16.dp)
     ) {
+        BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.CenterHorizontally))
         Text(
             text = "Forgot Your Password?",
             style = MaterialTheme.typography.titleLarge
@@ -105,8 +110,6 @@ private fun ShownContent(
             enabled = !uiState.emailSent
         )
 
-        Spacer(modifier = Modifier.weight(1f))
-
         Button(
             modifier = Modifier
                 .fillMaxWidth()
@@ -131,9 +134,9 @@ private fun EmailSentContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.7f)
             .padding(16.dp)
     ) {
+        BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.CenterHorizontally))
         Text(
             text = "Password Reset Email Sent!",
             style = MaterialTheme.typography.titleLarge
@@ -159,7 +162,6 @@ private fun EmailSentContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.7f)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -168,9 +170,6 @@ private fun EmailSentContent(
                 progress = { preloaderProgress },
                 composition = composition
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -182,12 +181,8 @@ private fun EmailSentContent(
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
         Button(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 32.dp),
+            modifier = Modifier.fillMaxWidth(),
             onClick = { uiState.close() }
         ) {
             Text("Close")

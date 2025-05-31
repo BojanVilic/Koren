@@ -37,11 +37,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,14 +75,11 @@ fun AccountScreen(
     onShowSnackbar: suspend (message: String) -> Unit,
     navigateToEditProfile: () -> Unit,
     navigateToActivity: () -> Unit,
-    navigateToManageFamily: () -> Unit
+    navigateToManageFamily: () -> Unit,
+    navigateToChangePassword: () -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(ScaffoldState(isTopBarVisible = false))
-
-    LaunchedEffect(Unit) {
-        viewModel.init()
-    }
 
     val settingsIntent: Intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -99,11 +93,12 @@ fun AccountScreen(
     ) { uiSideEffect ->
         when (uiSideEffect) {
             is AccountUiSideEffect.LogOut -> onLogOut()
-            is AccountUiSideEffect.ShowError -> onShowSnackbar(uiSideEffect.message)
+            is AccountUiSideEffect.ShowMessage -> onShowSnackbar(uiSideEffect.message)
             is AccountUiSideEffect.NavigateToEditProfile -> navigateToEditProfile()
             is AccountUiSideEffect.NavigateToActivity -> navigateToActivity()
             is AccountUiSideEffect.NavigateToNotifications -> context.startActivity(settingsIntent, null)
             is AccountUiSideEffect.NavigateToManageFamily -> navigateToManageFamily()
+            is AccountUiSideEffect.NavigateToChangePassword -> navigateToChangePassword()
         }
     }
 
@@ -133,17 +128,6 @@ private fun AccountScreenShownContent(
             uiState.eventSink(AccountUiEvent.UploadNewProfilePicture(uri))
         }
     )
-
-    uiState.optionContent?.let { bottomSheetContent ->
-        ModalBottomSheet(
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            onDismissRequest = {
-                uiState.eventSink(AccountUiEvent.CloseOption)
-            }
-        ) {
-            bottomSheetContent()
-        }
-    }
 
     Column(
         modifier = Modifier

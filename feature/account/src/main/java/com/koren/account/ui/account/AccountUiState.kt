@@ -1,7 +1,6 @@
 package com.koren.account.ui.account
 
 import android.net.Uri
-import androidx.compose.runtime.Composable
 import com.koren.common.models.user.UserData
 import com.koren.common.util.EventHandler
 import com.koren.common.util.UiEvent
@@ -13,7 +12,6 @@ sealed interface AccountUiState : UiState {
     data class Shown(
         val userData: UserData? = null,
         val appVersion: String = "",
-        val optionContent: @Composable (() -> Unit)? = null,
         override val eventSink: (AccountUiEvent) -> Unit
     ) : AccountUiState, EventHandler<AccountUiEvent>
 }
@@ -32,12 +30,12 @@ sealed interface AccountUiEvent : UiEvent {
     data object SendFeedback : AccountUiEvent
     data object Premium : AccountUiEvent
     data object Activity : AccountUiEvent
-    data object CloseOption : AccountUiEvent
 }
 
 sealed interface AccountUiSideEffect : UiSideEffect {
     data object LogOut : AccountUiSideEffect
-    data class ShowError(val message: String) : AccountUiSideEffect
+    data class ShowMessage(val message: String) : AccountUiSideEffect
+    data object NavigateToChangePassword : AccountUiSideEffect
     data object NavigateToEditProfile : AccountUiSideEffect
     data object NavigateToActivity : AccountUiSideEffect
     data object NavigateToNotifications : AccountUiSideEffect
