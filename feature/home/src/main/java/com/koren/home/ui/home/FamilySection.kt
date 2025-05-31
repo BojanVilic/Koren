@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
@@ -30,19 +30,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import com.koren.common.models.family.FamilyMemberUserData
 import com.koren.common.models.user.UserData
 import com.koren.common.util.formatDistanceToText
+import com.koren.designsystem.components.InitialsAvatar
 import com.koren.designsystem.icon.CallHome
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.theme.KorenTheme
@@ -117,16 +113,12 @@ private fun FamilyMember(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                AsyncImage(
+                InitialsAvatar(
                     modifier = Modifier
                         .size(64.dp)
-                        .clip(CircleShape),
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .crossfade(true)
-                        .data(member.userData.profilePictureUrl)
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop
+                        .clip(RoundedCornerShape(percent = 28)),
+                    imageUrl = member.userData.profilePictureUrl,
+                    name = member.userData.displayName
                 )
                 if (member.goingHome) {
                     Spacer(modifier = Modifier.padding(4.dp))

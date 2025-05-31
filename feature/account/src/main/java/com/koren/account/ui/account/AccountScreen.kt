@@ -54,7 +54,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -64,12 +63,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import com.koren.common.models.family.FamilyRole
 import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects
+import com.koren.designsystem.components.InitialsAvatar
 import com.koren.designsystem.icon.ActivitySelected
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.theme.KorenTheme
@@ -199,18 +196,13 @@ private fun AccountScreenShownContent(
                     tint = MaterialTheme.colorScheme.background
                 )
             }
-        }
-        else {
-            AsyncImage(
+        } else {
+            InitialsAvatar(
                 modifier = Modifier
                     .size(128.dp)
                     .clip(CircleShape),
-                model = ImageRequest.Builder(LocalContext.current)
-                    .crossfade(true)
-                    .data(uiState.userData.profilePictureUrl)
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop
+                imageUrl = uiState.userData.profilePictureUrl,
+                name = uiState.userData.displayName
             )
         }
 

@@ -178,7 +178,7 @@ fun MessageListPreview() {
                 currentUserId = "user1",
                 chatItems = chatItems,
                 shownTimestamps = emptySet(),
-                profilePicsMap = emptyMap(),
+                messageSenderInfo = emptySet(),
                 eventSink = {}
             )
         )

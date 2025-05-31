@@ -38,10 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -51,13 +47,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import com.carfax.manage_familiy.R
 import com.koren.common.models.family.FamilyRole
 import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects
+import com.koren.designsystem.components.InitialsAvatar
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.components.StyledStringResource
 import com.koren.designsystem.theme.KorenTheme
@@ -107,8 +101,6 @@ private fun EditMemberScreenContent(uiState: EditMemberUiState) {
 private fun EditMemberScreenShownContent(
     uiState: EditMemberUiState.Shown
 ) {
-    val primaryContainerColor = MaterialTheme.colorScheme.primaryContainer
-    val placeholder: Painter = remember { ColorPainter(primaryContainerColor) }
 
     Column(
         modifier = Modifier
@@ -117,18 +109,12 @@ private fun EditMemberScreenShownContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         BottomSheetDefaults.DragHandle()
-        AsyncImage(
+        InitialsAvatar(
             modifier = Modifier
                 .size(96.dp)
                 .clip(MaterialTheme.shapes.extraLarge),
-            model = ImageRequest.Builder(LocalContext.current)
-                .crossfade(true)
-                .data(uiState.memberDetails.profilePictureUrl)
-                .build(),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            placeholder = placeholder,
-            error = placeholder
+            imageUrl = uiState.memberDetails.profilePictureUrl,
+            name = uiState.memberDetails.displayName
         )
 
         Text(

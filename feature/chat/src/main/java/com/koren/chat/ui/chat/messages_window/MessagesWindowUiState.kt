@@ -15,7 +15,7 @@ sealed interface MessagesWindowUiState : UiState {
         val listState: LazyListState = LazyListState(),
         val chatItems: List<ChatItem> = emptyList(),
         val shownTimestamps: Set<String> = emptySet(),
-        val profilePicsMap: Map<String, String> = emptyMap(),
+        val messageSenderInfo: Set<MessageSenderInfo> = emptySet(),
         val fetchingMore: Boolean = false,
         val canFetchMore: Boolean = true,
         val playbackPosition: Float = 0f,
@@ -36,3 +36,9 @@ sealed interface MessagesWindowUiEvent : UiEvent {
     data object ResumePlayback : MessagesWindowUiEvent
     data class SeekVoiceMessageTo(val progress: Float) : MessagesWindowUiEvent
 }
+
+data class MessageSenderInfo(
+    val id: String,
+    val name: String,
+    val profilePictureUrl: String?
+)

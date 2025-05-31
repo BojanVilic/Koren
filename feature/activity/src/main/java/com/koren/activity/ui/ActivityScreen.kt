@@ -31,8 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,14 +38,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import com.koren.activity.R
 import com.koren.common.models.activity.UserLocationActivity
 import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects
 import com.koren.common.util.DateUtils.toRelativeTime
+import com.koren.designsystem.components.InitialsAvatar
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.components.isEndReached
 import com.koren.designsystem.icon.Event
@@ -295,16 +291,12 @@ private fun LocationActivityListItem(
                 modifier = Modifier.padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                AsyncImage(
+                InitialsAvatar(
                     modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape),
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .crossfade(true)
-                        .data(userLocationActivity.userData?.profilePictureUrl)
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop
+                        .clip(CircleShape)
+                        .size(32.dp),
+                    imageUrl = userLocationActivity.userData?.profilePictureUrl,
+                    name = userLocationActivity.userData?.displayName?: ""
                 )
 
                 Text(

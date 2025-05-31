@@ -59,12 +59,10 @@ import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.toPath
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
-import coil3.request.crossfade
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -79,6 +77,7 @@ import com.koren.common.models.user.UserData
 import com.koren.common.models.user.UserLocation
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.ActionButton
+import com.koren.designsystem.components.InitialsAvatar
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.models.ActionItem
 import com.koren.designsystem.models.IconResource
@@ -307,19 +306,15 @@ private fun ActionBottomSheetContent(
                 items = uiState.familyMembers,
                 key = { it.id }
             ) { member ->
-                AsyncImage(
+                InitialsAvatar(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
                         .clickable {
                             uiState.eventSink(MapEvent.FamilyMemberClicked(member))
                         },
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .crossfade(true)
-                        .data(member.profilePictureUrl)
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop
+                    imageUrl = member.profilePictureUrl,
+                    name = member.displayName
                 )
             }
         }

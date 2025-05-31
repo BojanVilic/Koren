@@ -47,6 +47,7 @@ import com.koren.chat.ui.chat.message_input.voice_message.PlaybackState
 import com.koren.common.models.chat.ChatMessage
 import com.koren.common.models.chat.MessageType
 import com.koren.common.util.DateUtils.formatDuration
+import com.koren.designsystem.components.InitialsAvatar
 import com.koren.designsystem.icon.ImageStack
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.icon.Pause
@@ -89,7 +90,7 @@ internal fun MessageItem(
         SenderProfileImage(
             isCurrentUser = isCurrentUser,
             isPreviousMessageSameSender = isPreviousMessageSameSender,
-            profilePic = uiState.profilePicsMap.getOrDefault(message.senderId, null)
+            messageSenderInfo = uiState.messageSenderInfo.firstOrNull { it.id == message.senderId }
         )
         MessageBubble(
             reactionAlignment = reactionAlignment,
@@ -120,7 +121,13 @@ private fun MessageBubble(
                     .clip(MaterialTheme.shapes.small)
                     .combinedClickable(
                         onClick = { uiState.eventSink(MessagesWindowUiEvent.OnMessageClicked(message.id)) },
-                        onLongClick = { uiState.eventSink(MessagesWindowUiEvent.OpenMoreOptions(message.id)) }
+                        onLongClick = {
+                            uiState.eventSink(
+                                MessagesWindowUiEvent.OpenMoreOptions(
+                                    message.id
+                                )
+                            )
+                        }
                     ),
                 shape = MaterialTheme.shapes.medium,
                 color = backgroundColor
@@ -382,23 +389,23 @@ private fun ColumnScope.ReactionsAndTimestamp(
 private fun RowScope.SenderProfileImage(
     isCurrentUser: Boolean,
     isPreviousMessageSameSender: Boolean,
-    profilePic: String?
+    messageSenderInfo: MessageSenderInfo?
 ) {
     if (isCurrentUser.not()) {
         if (isPreviousMessageSameSender.not()) {
-            AsyncImage(
-                modifier = Modifier
-                    .padding(top = 8.dp, end = 8.dp)
-                    .clip(CircleShape)
-                    .size(36.dp)
-                    .align(Alignment.Top),
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(profilePic)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Sent image",
-                contentScale = ContentScale.Crop
-            )
+            Column(
+                modifier = Modifier.align(Alignment.Top)
+            ) {
+                Spacer(modifier = Modifier.width(8.dp))
+                InitialsAvatar(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .size(36.dp),
+                    imageUrl = messageSenderInfo?.profilePictureUrl,
+                    name = messageSenderInfo?.name ?: ""
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
         } else {
             Spacer(modifier = Modifier.width(44.dp))
         }

@@ -46,9 +46,16 @@ class MessagesWindowPresenter @Inject constructor(
         var shownTimestamps by remember { mutableStateOf(emptySet<String>()) }
         val profilePicsMap by remember {
             derivedStateOf {
-                familyMembers.associate { member ->
-                    member.id to member.profilePictureUrl
-                }
+                familyMembers
+                    .filter { it.id.isNotBlank() && it.displayName.isNotBlank() }
+                    .map { member ->
+                        MessageSenderInfo(
+                            id = member.id,
+                            name = member.displayName,
+                            profilePictureUrl = member.profilePictureUrl
+                        )
+                    }
+                    .toSet()
             }
         }
         var canFetchMore by remember { mutableStateOf(true) }
@@ -94,7 +101,7 @@ class MessagesWindowPresenter @Inject constructor(
             listState = listState,
             chatItems = chatItems,
             shownTimestamps = shownTimestamps,
-            profilePicsMap = profilePicsMap,
+            messageSenderInfo = profilePicsMap,
             fetchingMore = fetchingMore,
             canFetchMore = canFetchMore,
             playbackPosition = playbackPosition,
