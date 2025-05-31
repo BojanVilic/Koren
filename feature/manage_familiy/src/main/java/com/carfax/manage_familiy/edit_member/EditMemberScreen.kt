@@ -29,7 +29,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
@@ -325,21 +324,19 @@ private fun RemoveFamilyMemberRow(
 @Composable
 private fun EditMemberScreenPreview() {
     KorenTheme {
-        Surface {
-            EditMemberScreenContent(
-                EditMemberUiState.Shown(
-                    memberDetails = UserData(
-                        id = "123",
-                        displayName = "John Doe",
-                        profilePictureUrl = "https://example.com/profile.jpg",
-                        familyRole = FamilyRole.CHILD
-                    ),
-                    selectedRole = FamilyRole.CHILD,
-                    areYouSureActive = true,
-                    removingInProgress = true,
-                    eventSink = {}
-                )
+        EditMemberScreenContent(
+            EditMemberUiState.Shown(
+                memberDetails = UserData(
+                    id = "123",
+                    displayName = "John Doe",
+                    profilePictureUrl = "https://example.com/profile.jpg",
+                    familyRole = FamilyRole.CHILD
+                ),
+                selectedRole = FamilyRole.CHILD,
+                areYouSureActive = true,
+                removingInProgress = true,
+                eventSink = {}
             )
-        }
+        )
     }
 }

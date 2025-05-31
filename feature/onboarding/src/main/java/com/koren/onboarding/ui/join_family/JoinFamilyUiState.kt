@@ -8,6 +8,7 @@ import com.koren.common.util.UiState
 
 sealed interface JoinFamilyUiState : UiState {
     data object Loading : JoinFamilyUiState
+    data class NoInvitations(val userEmail: String): JoinFamilyUiState
     data class Shown(
         val receivedInvitations: List<Invitation> = emptyList(),
         val invitationCodeText: String = "",

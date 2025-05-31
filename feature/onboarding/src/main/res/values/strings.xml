@@ -35,4 +35,6 @@
     <string name="loading_fun_times">Loading family fun times…</string>
     <string name="unlocking_family_secrets">Unlocking family secrets…</string>
     <string name="planting_family_roots">Planting your family roots…</string>
+
+    <string name="no_invitations_text">You can share your email (%s) with your family members to receive invitations.</string>
 </resources>
