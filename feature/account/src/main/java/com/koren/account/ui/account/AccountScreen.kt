@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package com.koren.account.ui.account
 
@@ -28,15 +28,25 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,6 +60,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -128,6 +140,15 @@ private fun AccountScreenShownContent(
             uiState.eventSink(AccountUiEvent.UploadNewProfilePicture(uri))
         }
     )
+
+    if (uiState.areYouSureDialogType != AreYouSureDialogType.None) {
+        AreYouSureDialog(
+            areYouSureActionInProgress = uiState.areYouSureActionInProgress,
+            areYouSureDialogType = uiState.areYouSureDialogType,
+            onConfirm = { uiState.eventSink(AccountUiEvent.ConfirmAreYouSureDialog) },
+            onDismissRequest = { uiState.eventSink(AccountUiEvent.DismissAreYouSureDialog) }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -280,6 +301,105 @@ private fun RowScope.FeaturedOptions(
 }
 
 @Composable
+private fun AreYouSureDialog(
+    areYouSureActionInProgress: Boolean,
+    areYouSureDialogType: AreYouSureDialogType,
+    onDismissRequest: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    if (areYouSureActionInProgress) {
+        Dialog(
+            onDismissRequest = onDismissRequest,
+            properties = DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            )
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                shape = AlertDialogDefaults.shape
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        modifier = Modifier.padding(16.dp),
+                        text = "Processing...",
+                        style = MaterialTheme.typography.headlineMedium,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp),
+                        text = "Please hang tight while we process your request.",
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LoadingIndicator()
+                    Spacer(modifier = Modifier.height(48.dp))
+
+                }
+            }
+        }
+    } else {
+        AlertDialog(
+            title = {
+                when (areYouSureDialogType) {
+                    is AreYouSureDialogType.LeaveFamily -> Text("Leave Family")
+                    is AreYouSureDialogType.DeleteFamilyMember -> Text("Delete Family")
+                    is AreYouSureDialogType.DeleteAccount -> Text("Delete Account")
+                    is AreYouSureDialogType.None -> Unit
+                }
+            },
+            icon = {
+                when (areYouSureDialogType) {
+                    is AreYouSureDialogType.LeaveFamily -> Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = "Leave Family"
+                    )
+                    is AreYouSureDialogType.DeleteFamilyMember -> Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete Family"
+                    )
+                    is AreYouSureDialogType.DeleteAccount -> Icon(
+                        imageVector = Icons.Default.DeleteForever,
+                        contentDescription = "Delete Account"
+                    )
+                    is AreYouSureDialogType.None -> Unit
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = onConfirm
+                ) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = onDismissRequest
+                ) {
+                    Text("Cancel")
+                }
+            },
+            onDismissRequest = {
+                onDismissRequest()
+            },
+            text = {
+                when (areYouSureDialogType) {
+                    is AreYouSureDialogType.LeaveFamily -> Text("Are you sure you want to leave the family? This action cannot be undone.")
+                    is AreYouSureDialogType.DeleteFamilyMember -> Text("Are you sure you want to delete the family? This action cannot be undone.")
+                    is AreYouSureDialogType.DeleteAccount -> Text("Are you sure you want to delete your account? This action cannot be undone.")
+                    is AreYouSureDialogType.None -> Text("Are you sure?")
+                }
+            }
+        )
+    }
+}
+
+@Composable
 fun AccountOptionItem(
     option: AccountOption,
     onClick: () -> Unit
@@ -332,6 +452,32 @@ fun AccountScreenPreview() {
                 appVersion = "1.0.0",
                 eventSink = {}
             )
+        )
+    }
+}
+
+@ThemePreview
+@Composable
+fun AreYouSureDialogPreview() {
+    KorenTheme {
+        AreYouSureDialog(
+            areYouSureActionInProgress = false,
+            areYouSureDialogType = AreYouSureDialogType.LeaveFamily("user123"),
+            onDismissRequest = {},
+            onConfirm = {}
+        )
+    }
+}
+
+@ThemePreview
+@Composable
+fun AreYouSureDialogProcessingPreview() {
+    KorenTheme {
+        AreYouSureDialog(
+            areYouSureActionInProgress = true,
+            areYouSureDialogType = AreYouSureDialogType.LeaveFamily("user123"),
+            onDismissRequest = {},
+            onConfirm = {}
         )
     }
 }

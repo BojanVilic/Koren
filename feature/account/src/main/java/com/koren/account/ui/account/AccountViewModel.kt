@@ -4,7 +4,11 @@ import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import com.koren.account.ui.account.AreYouSureDialogType.LeaveFamily
 import com.koren.common.models.user.UserData
 import com.koren.common.services.UserSession
 import com.koren.common.services.app_info.AppInfoProvider
@@ -33,17 +37,25 @@ class AccountViewModel @Inject constructor(
     override fun produceState(): AccountUiState {
         val userData by userSession.currentUser.collectAsState(initial = UserData())
 
+        if (userData == UserData()) return AccountUiState.Loading
+
+        var areYouSureDialogType by remember { mutableStateOf<AreYouSureDialogType>(AreYouSureDialogType.None) }
+        var areYouSureActionInProgress by remember { mutableStateOf(false) }
+
         return AccountUiState.Shown(
             userData = userData,
-            appVersion = appInfoProvider.getAppVersion()
+            appVersion = appInfoProvider.getAppVersion(),
+            areYouSureDialogType = areYouSureDialogType,
+            areYouSureActionInProgress = areYouSureActionInProgress
         ) { event ->
             when (event) {
                 is AccountUiEvent.UploadNewProfilePicture -> uploadProfilePicture(userData.id, event.uri)
                 is AccountUiEvent.EditProfile -> _sideEffects.emitSuspended(AccountUiSideEffect.NavigateToEditProfile)
                 is AccountUiEvent.ChangePassword -> sendSideEffect(AccountUiSideEffect.NavigateToChangePassword)
                 is AccountUiEvent.LogOut -> signOut()
-                is AccountUiEvent.DeleteAccount -> Unit
-                is AccountUiEvent.LeaveFamily -> leaveFamily(userData.id)
+                is AccountUiEvent.LeaveFamily -> areYouSureDialogType = LeaveFamily(userData.id)
+                is AccountUiEvent.DeleteFamily -> areYouSureDialogType = AreYouSureDialogType.DeleteFamilyMember(userData.id)
+                is AccountUiEvent.DeleteAccount -> areYouSureDialogType = AreYouSureDialogType.DeleteAccount(userData.id)
                 is AccountUiEvent.SendFeedback -> Unit
                 is AccountUiEvent.Notifications -> _sideEffects.emitSuspended(AccountUiSideEffect.NavigateToNotifications)
                 is AccountUiEvent.TermsOfService -> Unit
@@ -51,6 +63,17 @@ class AccountViewModel @Inject constructor(
                 is AccountUiEvent.Activity -> _sideEffects.emitSuspended(AccountUiSideEffect.NavigateToActivity)
                 is AccountUiEvent.Premium -> Unit
                 is AccountUiEvent.ManageFamily -> _sideEffects.emitSuspended(AccountUiSideEffect.NavigateToManageFamily)
+                is AccountUiEvent.ConfirmAreYouSureDialog -> {
+                    areYouSureActionInProgress = true
+                    confirmAreYouSureAction(
+                        dialogType = areYouSureDialogType,
+                        dismissInProgressState = {
+                            areYouSureActionInProgress = false
+                            areYouSureDialogType = AreYouSureDialogType.None
+                        }
+                    )
+                }
+                is AccountUiEvent.DismissAreYouSureDialog -> areYouSureDialogType = AreYouSureDialogType.None
             }
         }
     }
@@ -77,11 +100,32 @@ class AccountViewModel @Inject constructor(
         }
     }
 
-    private fun leaveFamily(memberId: String) {
+    private fun leaveFamily(
+        memberId: String,
+        dismissInProgressState: () -> Unit
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
             removeMemberFromFamilyUseCase(memberId)
-                .onSuccess { _sideEffects.emitSuspended(AccountUiSideEffect.ShowMessage("You have successfully left the family.")) }
-                .onFailure { error -> _sideEffects.emitSuspended(AccountUiSideEffect.ShowMessage(message = error.message.orUnknownError())) }
+                .onSuccess {
+                    _sideEffects.emitSuspended(AccountUiSideEffect.ShowMessage("You have successfully left the family."))
+                    dismissInProgressState()
+                }
+                .onFailure { error ->
+                    _sideEffects.emitSuspended(AccountUiSideEffect.ShowMessage(message = error.message.orUnknownError()))
+                    dismissInProgressState()
+                }
+        }
+    }
+
+    private fun confirmAreYouSureAction(
+        dialogType: AreYouSureDialogType,
+        dismissInProgressState: () -> Unit
+    ) {
+        when (dialogType) {
+            is AreYouSureDialogType.LeaveFamily -> leaveFamily(dialogType.userId, dismissInProgressState)
+            is AreYouSureDialogType.DeleteFamilyMember -> sendSideEffect(AccountUiSideEffect.ShowMessage("This feature is not implemented yet."))
+            is AreYouSureDialogType.DeleteAccount -> sendSideEffect(AccountUiSideEffect.ShowMessage("This feature is not implemented yet."))
+            is AreYouSureDialogType.None -> Unit
         }
     }
 }

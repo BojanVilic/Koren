@@ -68,7 +68,7 @@ val options = listOf(
         text = "Delete family",
         subText = "All members will be removed and data will be lost",
         icon = Icons.Rounded.Delete,
-        event = AccountUiEvent.LeaveFamily,
+        event = AccountUiEvent.DeleteFamily,
         isDestructive = true
     ),
     AccountOption(
