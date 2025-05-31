@@ -27,4 +27,5 @@ sealed interface JoinFamilyUiEvent : UiEvent {
 }
 
 sealed interface JoinFamilyUiSideEffect : UiSideEffect {
+    data object NavigateToHome : JoinFamilyUiSideEffect
 }

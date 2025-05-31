@@ -57,8 +57,9 @@ class JoinFamilyViewModel @Inject constructor(
         onError: (String) -> Unit
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            val result = invitationRepository.acceptInvitation(invitation, typedCode)
-            if (result.isFailure) onError(result.exceptionOrNull()?.message.orUnknownError())
+            invitationRepository.acceptInvitation(invitation, typedCode)
+                .onSuccess { sendSideEffect(JoinFamilyUiSideEffect.NavigateToHome) }
+                .onFailure { onError(it.message.orUnknownError()) }
         }
     }
 

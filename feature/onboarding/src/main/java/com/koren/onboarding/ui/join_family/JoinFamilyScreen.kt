@@ -57,7 +57,7 @@ object JoinFamilyDestination
 @Composable
 fun JoinFamilyScreen(
     viewModel: JoinFamilyViewModel = hiltViewModel(),
-    onShowSnackbar: suspend (message: String) -> Unit
+    onNavigateToHome: () -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
@@ -73,7 +73,7 @@ fun JoinFamilyScreen(
         viewModel = viewModel
     ) { uiSideEffect ->
         when (uiSideEffect) {
-            else -> Unit
+            JoinFamilyUiSideEffect.NavigateToHome -> onNavigateToHome()
         }
     }
 

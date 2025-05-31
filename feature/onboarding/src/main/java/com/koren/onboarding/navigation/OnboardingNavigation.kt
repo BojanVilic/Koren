@@ -37,7 +37,7 @@ fun NavGraphBuilder.onboardingScreen(
 
         composable<JoinFamilyDestination> {
             JoinFamilyScreen(
-                onShowSnackbar = {  }
+                onNavigateToHome = onNavigateToHome
             )
         }
     }
