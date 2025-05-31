@@ -33,4 +33,5 @@ sealed interface EditMemberUiEvent : UiEvent {
 sealed interface EditMemberUiSideEffect : UiSideEffect {
     data class ShowFamilyMemberRemovedMessage(val message: String) : EditMemberUiSideEffect
     data class ShowErrorMessage(val message: String) : EditMemberUiSideEffect
+    data class ShowMemberDetailsUpdatedMessage(val message: String) : EditMemberUiSideEffect
 }

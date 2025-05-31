@@ -80,6 +80,7 @@ fun EditMemberScreen(
         when (sideEffect) {
             is EditMemberUiSideEffect.ShowFamilyMemberRemovedMessage -> onFamilyMemberRemoved(sideEffect.message)
             is EditMemberUiSideEffect.ShowErrorMessage -> snackbarHostState.showSnackbar(message = sideEffect.message)
+            is EditMemberUiSideEffect.ShowMemberDetailsUpdatedMessage -> snackbarHostState.showSnackbar(sideEffect.message)
         }
     }
 
