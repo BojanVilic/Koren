@@ -67,6 +67,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.koren.common.models.family.FamilyRole
 import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.icon.ActivitySelected
@@ -206,7 +207,7 @@ private fun AccountScreenShownContent(
                     .clip(CircleShape),
                 model = ImageRequest.Builder(LocalContext.current)
                     .crossfade(true)
-                    .data(uiState.userData?.profilePictureUrl)
+                    .data(uiState.userData.profilePictureUrl)
                     .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop
@@ -247,7 +248,12 @@ private fun AccountScreenShownContent(
 
         HorizontalDivider(modifier = Modifier.padding(16.dp))
 
-        options.forEach { option ->
+        options
+            .filter {
+                if (uiState.userData?.familyRole == FamilyRole.CHILD) !it.isChildRestricted
+                else true
+            }
+            .forEach { option ->
             AccountOptionItem(
                 option = option,
                 onClick = { uiState.eventSink(option.event) }

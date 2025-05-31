@@ -16,7 +16,7 @@ class LocationUpdateScheduler @Inject constructor(
 
         workManager.enqueueUniquePeriodicWork(
             "locationUpdateWork",
-            ExistingPeriodicWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.REPLACE,
             workRequest
         )
     }

@@ -18,6 +18,7 @@ data class AccountOption(
     val icon: ImageVector? = null,
     val event: AccountUiEvent,
     val isDestructive: Boolean = false,
+    val isChildRestricted: Boolean = false
 )
 
 val options = listOf(
@@ -40,7 +41,8 @@ val options = listOf(
         text = "Manage Family",
         subText = "Edit roles or remove members",
         icon = Icons.Rounded.Settings,
-        event = AccountUiEvent.ManageFamily
+        event = AccountUiEvent.ManageFamily,
+        isChildRestricted = true
     ),
     AccountOption(
         text = "Terms of service",
@@ -62,14 +64,16 @@ val options = listOf(
         subText = "You will be removed from the family",
         icon = Icons.Rounded.Warning,
         event = AccountUiEvent.LeaveFamily,
-        isDestructive = true
+        isDestructive = true,
+        isChildRestricted = true
     ),
     AccountOption(
         text = "Delete family",
         subText = "All members will be removed and data will be lost",
         icon = Icons.Rounded.Delete,
         event = AccountUiEvent.DeleteFamily,
-        isDestructive = true
+        isDestructive = true,
+        isChildRestricted = true
     ),
     AccountOption(
         text = "Delete account",
