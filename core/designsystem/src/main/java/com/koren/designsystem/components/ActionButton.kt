@@ -2,6 +2,8 @@ package com.koren.designsystem.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -23,7 +25,12 @@ fun ActionButton(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            actionItem.IconComposable()
+            Icon(
+                modifier = Modifier.size(24.dp),
+                imageVector = actionItem.icon,
+                contentDescription = actionItem.text,
+                tint = MaterialTheme.colorScheme.onSurface
+            )
             Text(
                 modifier = Modifier.padding(top = 4.dp),
                 text = actionItem.text,

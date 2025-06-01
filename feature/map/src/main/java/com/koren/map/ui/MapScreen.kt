@@ -80,7 +80,6 @@ import com.koren.designsystem.components.ActionButton
 import com.koren.designsystem.components.InitialsAvatar
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.models.ActionItem
-import com.koren.designsystem.models.IconResource
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -271,7 +270,7 @@ private fun ActionBottomSheetContent(
 
     val actions = listOf(
         ActionItem(
-            icon = IconResource.Vector(Icons.Default.Edit),
+            icon = Icons.Default.Edit,
             text = "Edit places",
             onClick = { uiState.eventSink(MapEvent.EditModeClicked) }
         )

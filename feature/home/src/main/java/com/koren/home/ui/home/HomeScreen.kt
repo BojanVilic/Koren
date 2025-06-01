@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -64,7 +65,6 @@ import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.components.Scrim
 import com.koren.designsystem.models.ActionItem
-import com.koren.designsystem.models.IconResource
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -173,22 +173,22 @@ fun HomeScaffoldWithExpandingFab(
 
     val actions = listOf(
         ActionItem(
-            icon = IconResource.Vector(Icons.Default.Add),
+            icon = Icons.Default.Add,
             text = "Invite",
             onClick = { state.eventSink(HomeEvent.NavigateToInviteFamilyMember) }
         ),
         ActionItem(
-            icon = IconResource.Vector(Icons.Default.Email),
+            icon = Icons.Default.Email,
             text = "Chat",
             onClick = { state.eventSink(HomeEvent.NavigateToChat) }
         ),
         ActionItem(
-            icon = IconResource.Vector(Icons.Default.DateRange),
+            icon = Icons.Default.DateRange,
             text = "Schedule",
             onClick = { state.eventSink(HomeEvent.OpenAddCalendarEntry) }
         ),
         ActionItem(
-            icon = IconResource.Vector(Icons.Default.Hail),
+            icon = Icons.Default.Hail,
             text = "Request Pick Up",
             onClick = { state.eventSink(HomeEvent.RequestPickUpClicked) }
         )
@@ -306,7 +306,12 @@ fun MiniFabItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            actionItem.IconComposable()
+            Icon(
+                modifier = Modifier.size(24.dp),
+                imageVector = actionItem.icon,
+                contentDescription = actionItem.text,
+                tint = MaterialTheme.colorScheme.onSurface
+            )
             Text(
                 text = actionItem.text,
                 style = MaterialTheme.typography.labelLarge,

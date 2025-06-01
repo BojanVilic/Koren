@@ -47,6 +47,7 @@ media3Exoplayer = "1.6.1"
 material3 = "1.4.0-alpha15"
 extendedIcons = "1.7.8"
 firebaseFunctionsKtx = "21.2.1"
+material = "1.12.0"
 
 [libraries]
 android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version.ref = "androidMapsUtils" }
@@ -115,6 +116,7 @@ firebase-database-ktx = { group = "com.google.firebase", name = "firebase-databa
 androidx-hilt-common = { group = "androidx.hilt", name = "hilt-common", version.ref = "hiltCommon" }
 androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltWork" }
 androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

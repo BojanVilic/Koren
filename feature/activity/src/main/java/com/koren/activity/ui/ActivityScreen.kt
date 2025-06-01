@@ -121,7 +121,6 @@ fun ShownContent(uiState: ActivityUiState.Shown) {
     }
 
     Column {
-
         Card(
             modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
             onClick = { uiState.eventSink(ActivityEvent.NavigateToCalendar) },
