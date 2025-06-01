@@ -21,8 +21,10 @@ sealed interface ActivityUiState : UiState {
 sealed interface ActivityEvent : UiEvent {
     data object NavigateToCalendar : ActivityEvent
     data object FetchMoreActivities : ActivityEvent
+    data object AnswersClicked : ActivityEvent
 }
 
 sealed interface ActivitySideEffect : UiSideEffect {
     data object NavigateToCalendar : ActivitySideEffect
+    data object NavigateToAnswers : ActivitySideEffect
 }

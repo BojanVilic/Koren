@@ -11,16 +11,16 @@ object ActivityGraph
 
 fun NavGraphBuilder.activityScreen(
     navController: NavHostController,
-    navigateToCalendar: () -> Unit
+    navigateToCalendar: () -> Unit,
+    navigateToAnswers: () -> Unit
 ) {
     navigation<ActivityGraph>(
         startDestination = ActivityDestination
     ) {
         composable<ActivityDestination> {
             ActivityScreen(
-                navigateToCalendar = {
-                    navigateToCalendar()
-                }
+                navigateToCalendar = { navigateToCalendar() },
+                navigateToAnswers = { navigateToAnswers() }
             )
         }
     }

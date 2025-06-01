@@ -46,8 +46,6 @@ import com.koren.common.util.DateUtils.toRelativeTime
 import com.koren.designsystem.components.InitialsAvatar
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.components.isEndReached
-import com.koren.designsystem.icon.Event
-import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -63,7 +61,8 @@ object ActivityDestination
 @Composable
 fun ActivityScreen(
     viewModel: ActivityViewModel = hiltViewModel(),
-    navigateToCalendar: () -> Unit
+    navigateToCalendar: () -> Unit,
+    navigateToAnswers: () -> Unit
 ) {
 
     LocalScaffoldStateProvider.current.setScaffoldState(
@@ -80,6 +79,7 @@ fun ActivityScreen(
     ) { sideEffect ->
         when (sideEffect) {
             is ActivitySideEffect.NavigateToCalendar -> navigateToCalendar()
+            is ActivitySideEffect.NavigateToAnswers -> navigateToAnswers()
         }
     }
 
@@ -121,27 +121,20 @@ fun ShownContent(uiState: ActivityUiState.Shown) {
     }
 
     Column {
-        Card(
-            modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
-            onClick = { uiState.eventSink(ActivityEvent.NavigateToCalendar) },
-            shape = MaterialTheme.shapes.medium
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(0.3f),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    modifier = Modifier.size(24.dp),
-                    imageVector = KorenIcons.Event,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Calendar",
+            actionItems.forEach { actionItem ->
+                ActionItemsRow(
+                    modifier = Modifier.weight(1f),
+                    actionItem = actionItem,
+                    onClick = {
+                        uiState.eventSink(actionItem.event)
+                    }
                 )
             }
         }
@@ -176,6 +169,38 @@ fun ShownContent(uiState: ActivityUiState.Shown) {
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ActionItemsRow(
+    modifier: Modifier = Modifier,
+    actionItem: ActivityActionItem,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier,
+        onClick = { onClick() },
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                modifier = Modifier.size(24.dp),
+                imageVector = actionItem.icon,
+                contentDescription = actionItem.text,
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = actionItem.text,
+            )
         }
     }
 }

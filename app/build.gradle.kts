@@ -70,6 +70,7 @@ dependencies {
     implementation(projects.feature.calendar)
     implementation(projects.feature.chat)
     implementation(projects.feature.manageFamiliy)
+    implementation(projects.feature.answers)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

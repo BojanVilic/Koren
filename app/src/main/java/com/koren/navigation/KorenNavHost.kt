@@ -9,15 +9,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.navOptions
 import androidx.navigation.toRoute
-import com.koren.manage_familiy.navigation.manageFamilyScreen
-import com.koren.manage_familiy.select_member.SelectMemberDestination
 import com.koren.MainActivityViewModel
 import com.koren.account.ui.account.AccountDestination
 import com.koren.account.ui.navigation.accountScreen
 import com.koren.activity.ui.ActivityDestination
 import com.koren.activity.ui.activityScreen
+import com.koren.answers.AnswersDestination
+import com.koren.answers.AnswersScreen
 import com.koren.auth.navigation.AuthGraph
 import com.koren.auth.navigation.authScreen
 import com.koren.calendar.navigation.calendarScreen
@@ -35,6 +36,8 @@ import com.koren.home.navigation.homeScreen
 import com.koren.home.ui.home.HomeDestination
 import com.koren.invitation.navigation.invitationScreen
 import com.koren.invitation.ui.InvitationDestination
+import com.koren.manage_familiy.navigation.manageFamilyScreen
+import com.koren.manage_familiy.select_member.SelectMemberDestination
 import com.koren.map.navigation.mapScreen
 import com.koren.map.ui.MapDestination
 import com.koren.onboarding.navigation.OnboardingGraph
@@ -114,7 +117,8 @@ fun KorenNavHost(
                 )
                 activityScreen(
                     navController = navController,
-                    navigateToCalendar = { navController.navigate(CalendarDestination) }
+                    navigateToCalendar = { navController.navigate(CalendarDestination) },
+                    navigateToAnswers = { navController.navigate(AnswersDestination) },
                 )
                 accountScreen(
                     navController = navController,
@@ -156,6 +160,11 @@ fun KorenNavHost(
                             localDate = LocalDate.parse(addEntryDestination.localDate)
                         ),
                         onDismiss = { navController.popBackStack() }
+                    )
+                }
+                composable<AnswersDestination> {
+                    AnswersScreen(
+                        onShowSnackbar = onShowSnackbar
                     )
                 }
             }
