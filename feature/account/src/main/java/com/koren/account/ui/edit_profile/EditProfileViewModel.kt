@@ -38,6 +38,7 @@ class EditProfileViewModel @Inject constructor(
                 is EditProfileUiEvent.UploadNewProfilePicture -> _uiState.update { currentState.copy(newProfilePicture = event.uri) }
                 is EditProfileUiEvent.OnNameChange -> _uiState.update { currentState.copy(userData = currentState.userData?.copy(displayName = event.name)) }
                 is EditProfileUiEvent.SaveProfile -> saveProfile(currentState)
+                is EditProfileUiEvent.UpdateLocationUpdateFrequency -> _uiState.update { currentState.copy(userData = currentState.userData?.copy(locationUpdateFrequencyInMins = event.frequency)) }
             }
         }
     }

@@ -9,10 +9,8 @@ import javax.inject.Inject
 class LocationUpdateScheduler @Inject constructor(
     private val workManager: WorkManager
 ) {
-    fun schedulePeriodicUpdates() {
-        val workRequest = PeriodicWorkRequestBuilder<LocationWorker>(
-            15, TimeUnit.MINUTES
-        ).build()
+    fun schedulePeriodicUpdates(frequency: Long) {
+        val workRequest = PeriodicWorkRequestBuilder<LocationWorker>(frequency, TimeUnit.MINUTES).build()
 
         workManager.enqueueUniquePeriodicWork(
             "locationUpdateWork",

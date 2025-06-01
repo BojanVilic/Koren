@@ -40,6 +40,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class DefaultLocationService @Inject constructor(
@@ -49,8 +50,7 @@ class DefaultLocationService @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase
 ): LocationService {
 
-    private val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30.seconds.inWholeMilliseconds)
-        .build()
+    private val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30.seconds.inWholeMilliseconds).build()
 
     private val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
 
@@ -60,7 +60,9 @@ class DefaultLocationService @Inject constructor(
             .await()
     }
 
-    override fun requestLocationUpdates(): Flow<Location> = callbackFlow<Location> {
+    override fun requestLocationUpdates(frequency: Int): Flow<Location> = callbackFlow<Location> {
+        val locationUpdatesRequester = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, frequency.minutes.inWholeMilliseconds).build()
+
         if (checkSelfPermission(context, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED) {
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
@@ -69,7 +71,9 @@ class DefaultLocationService @Inject constructor(
                     }
                 }
             }
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+            fusedLocationClient.requestLocationUpdates(locationUpdatesRequester, locationCallback, Looper.getMainLooper())
+
+            Timber.d("Location updates requested with frequency: $frequency minutes")
 
             awaitClose { fusedLocationClient.removeLocationUpdates(locationCallback) }
         }

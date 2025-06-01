@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface LocationService {
     suspend fun updateLocationOnce(): Location
-    fun requestLocationUpdates(): Flow<Location>
+    fun requestLocationUpdates(frequency: Int): Flow<Location>
     fun isLocationPermissionGranted(): Boolean
 
     suspend fun getPlaceSuggestions(query: String): List<SuggestionResponse>

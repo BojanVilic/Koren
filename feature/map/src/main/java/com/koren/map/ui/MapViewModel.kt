@@ -14,6 +14,7 @@ import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.koren.common.services.LocationService
 import com.koren.common.services.UserSession
+import com.koren.common.util.Constants.DEFAULT_LOCATION_UPDATE_FREQUENCY_IN_MINS
 import com.koren.common.util.MoleculeViewModel
 import com.koren.data.repository.ActivityRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
@@ -40,10 +41,10 @@ class MapViewModel @Inject constructor(
     @Composable
     override fun produceState(): MapUiState {
         val currentUser by userSession.currentUser.collectAsState(initial = null)
-        if (!locationService.isLocationPermissionGranted()) return MapUiState.LocationPermissionNotGranted(onPermissionGranted = { setupLocationUpdates() })
+        if (!locationService.isLocationPermissionGranted()) return MapUiState.LocationPermissionNotGranted(onPermissionGranted = { setupLocationUpdates(currentUser?.locationUpdateFrequencyInMins) })
         if (currentUser == null) return MapUiState.Loading
 
-        LaunchedEffect(Unit) { setupLocationUpdates() }
+        LaunchedEffect(Unit) { setupLocationUpdates(currentUser?.locationUpdateFrequencyInMins) }
         val targetUserId = savedStateHandle.toRoute<MapDestination>().userId
         val familyMembers by getAllFamilyMembersUseCase().collectAsState(initial = emptyList())
         val savedLocations by getFamilyLocations().collectAsState(initial = emptyList())
@@ -108,9 +109,9 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    private fun setupLocationUpdates() {
+    private fun setupLocationUpdates(frequency: Int?) {
         viewModelScope.launch {
-            locationService.requestLocationUpdates().collect { location ->
+            locationService.requestLocationUpdates(frequency?: DEFAULT_LOCATION_UPDATE_FREQUENCY_IN_MINS).collect { location ->
                 try {
                     updateUserLocationUseCase(location)
                     activityRepository.insertNewActivity(location)

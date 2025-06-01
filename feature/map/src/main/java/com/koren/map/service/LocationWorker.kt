@@ -51,7 +51,7 @@ class LocationWorker @AssistedInject constructor(
         val notification = NotificationCompat.Builder(appContext, CHANNEL_ID)
             .setContentTitle(resourceProvider[R.string.notification_location_update_title])
             .setContentText(resourceProvider[R.string.notification_location_update_message])
-            .setSmallIcon(R.drawable.koren_icon)
+            .setSmallIcon(com.koren.designsystem.R.drawable.koren_icon)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setAutoCancel(true)
             .build()

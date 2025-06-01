@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package com.koren.account.ui.edit_profile
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -9,9 +11,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,10 +23,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,6 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
@@ -39,12 +50,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.koren.common.models.family.FamilyRole
 import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects
 import com.koren.designsystem.components.DisposableEffectWithLifecycle
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.icon.RotateCamera
+import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
 import com.koren.designsystem.theme.ThemePreview
@@ -261,6 +274,55 @@ private fun ShownContent(
             enabled = false
         )
 
+        if (uiState.userData?.familyRole != FamilyRole.CHILD) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .padding(top = 16.dp)
+            ) {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, bottom = 8.dp),
+                    text = "Location Update Frequency (in minutes):",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    uiState.locationUpdateFrequencyOptions.forEachIndexed { index, frequencyOption ->
+                        ToggleButton(
+                            modifier = Modifier
+                                .weight(if (frequencyOption == uiState.userData?.locationUpdateFrequencyInMins) 1.5f else 1f)
+                                .semantics { role = Role.RadioButton },
+                            checked = frequencyOption == uiState.userData?.locationUpdateFrequencyInMins,
+                            onCheckedChange = { uiState.eventSink(EditProfileUiEvent.UpdateLocationUpdateFrequency(frequencyOption)) },
+                            shapes =
+                                when (index) {
+                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                    uiState.locationUpdateFrequencyOptions.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                },
+                            colors = ToggleButtonDefaults.toggleButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                            )
+                        ) {
+                            Text(
+                                text = frequencyOption.toString(),
+                                maxLines = if (frequencyOption == uiState.userData?.locationUpdateFrequencyInMins) 2 else 1,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
@@ -280,12 +342,15 @@ private fun ShownContent(
 @ThemePreview
 @Composable
 private fun EditProfilePreview() {
-    EditProfileContent(
-        uiState = EditProfileUiState.Shown(
-            userData = UserData(
-                displayName = "John Doe"
-            ),
-            eventSink = {}
+    KorenTheme {
+        EditProfileContent(
+            uiState = EditProfileUiState.Shown(
+                userData = UserData(
+                    displayName = "John Doe",
+                    familyRole = FamilyRole.PARENT
+                ),
+                eventSink = {}
+            )
         )
-    )
+    }
 }

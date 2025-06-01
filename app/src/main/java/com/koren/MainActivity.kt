@@ -20,7 +20,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration.Short
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -32,22 +31,16 @@ import com.koren.designsystem.components.bottom_sheet.rememberBottomSheetNavigat
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.LocalSnackbarHostState
-import com.koren.map.service.LocationUpdateScheduler
 import com.koren.navigation.BottomNavigationBar
 import com.koren.navigation.KorenNavHost
 import com.koren.navigation.topLevelRoutes
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainActivityViewModel by viewModels()
-
-    @Inject
-    lateinit var locationUpdateScheduler: LocationUpdateScheduler
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -56,8 +49,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         splashScreen.setKeepOnScreenCondition { viewModel.uiState.value.shouldKeepSplashScreen() }
-
-        locationUpdateScheduler.schedulePeriodicUpdates()
 
         setContent {
             KorenTheme {
