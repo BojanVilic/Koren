@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
-package com.carfax.manage_familiy.edit_member
+package com.koren.manage_familiy.edit_member
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -47,7 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.carfax.manage_familiy.R
+import com.koren.manage_familiy.R
 import com.koren.common.models.family.FamilyRole
 import com.koren.common.models.user.UserData
 import com.koren.common.util.CollectSideEffects

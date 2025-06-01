@@ -11,8 +11,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import androidx.navigation.toRoute
-import com.carfax.manage_familiy.navigation.manageFamilyScreen
-import com.carfax.manage_familiy.select_member.SelectMemberDestination
+import com.koren.manage_familiy.navigation.manageFamilyScreen
+import com.koren.manage_familiy.select_member.SelectMemberDestination
 import com.koren.MainActivityViewModel
 import com.koren.account.ui.account.AccountDestination
 import com.koren.account.ui.navigation.accountScreen

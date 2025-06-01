@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.carfax.manage_familiy"
+    namespace = "com.koren.manage_familiy"
 }
 
 dependencies {

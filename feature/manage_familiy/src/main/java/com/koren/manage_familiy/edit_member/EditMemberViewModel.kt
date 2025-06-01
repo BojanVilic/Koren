@@ -1,4 +1,4 @@
-package com.carfax.manage_familiy.edit_member
+package com.koren.manage_familiy.edit_member
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState

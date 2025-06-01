@@ -1,4 +1,4 @@
-package com.carfax.manage_familiy.edit_member
+package com.koren.manage_familiy.edit_member
 
 import com.koren.common.models.family.FamilyRole
 import com.koren.common.models.user.UserData

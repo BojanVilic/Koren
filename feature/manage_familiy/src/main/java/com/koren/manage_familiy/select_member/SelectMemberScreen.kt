@@ -1,4 +1,4 @@
-package com.carfax.manage_familiy.select_member
+package com.koren.manage_familiy.select_member
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

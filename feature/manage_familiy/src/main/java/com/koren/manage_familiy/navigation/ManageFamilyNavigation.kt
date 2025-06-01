@@ -1,14 +1,14 @@
-package com.carfax.manage_familiy.navigation
+package com.koren.manage_familiy.navigation
 
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.carfax.manage_familiy.edit_member.EditMemberDestination
-import com.carfax.manage_familiy.edit_member.EditMemberScreen
-import com.carfax.manage_familiy.select_member.SelectMemberDestination
-import com.carfax.manage_familiy.select_member.SelectMemberScreen
+import com.koren.manage_familiy.edit_member.EditMemberDestination
+import com.koren.manage_familiy.edit_member.EditMemberScreen
+import com.koren.manage_familiy.select_member.SelectMemberDestination
+import com.koren.manage_familiy.select_member.SelectMemberScreen
 import com.koren.designsystem.components.bottom_sheet.bottomSheet
 import kotlinx.serialization.Serializable
 
