@@ -3,6 +3,8 @@ package com.bojanvilic.koren
 import com.android.build.api.dsl.CommonExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
+import org.gradle.api.tasks.testing.Test
+import org.gradle.kotlin.dsl.withType
 
 internal fun Project.configureFeatureModule(
     commonExtension: CommonExtension<*, *, *, *, *, *>,
@@ -20,6 +22,10 @@ internal fun Project.configureFeatureModule(
         compileOptions {
             sourceCompatibility = JavaVersion.VERSION_17
             targetCompatibility = JavaVersion.VERSION_17
+        }
+
+        tasks.withType<Test> {
+            useJUnitPlatform()
         }
 
         kotlinOptions {
