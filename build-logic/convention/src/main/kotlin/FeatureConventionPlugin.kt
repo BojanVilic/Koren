@@ -40,6 +40,12 @@ class FeatureConventionPlugin : Plugin<Project> {
                 add("implementation", project(":core:common"))
 
                 add("implementation", libs.findLibrary("molecule-runtime").get())
+
+
+                add("testImplementation", libs.findLibrary("junit-jupiter-api").get())
+                add("testRuntimeOnly", libs.findLibrary("junit-jupiter-engine").get())
+                add("testImplementation", libs.findLibrary("mockk").get())
+                add("testImplementation", libs.findLibrary("kotlinx-coroutines-test").get())
             }
         }
     }
