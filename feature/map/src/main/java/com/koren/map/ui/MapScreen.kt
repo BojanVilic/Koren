@@ -7,6 +7,9 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -71,7 +74,6 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberMarkerState
 import com.koren.common.models.family.LocationIcon
 import com.koren.common.models.user.UserData
 import com.koren.common.models.user.UserLocation
@@ -226,13 +228,18 @@ private fun ShownContent(
                 onMapLoaded = { mapReady = true }
             ) {
                 uiState.familyMembers.filter { it.lastLocation != null }.forEach { member ->
-                    val markerState = rememberMarkerState(
-                        position = LatLng(member.lastLocation?.latitude?: 0.0, member.lastLocation?.longitude?: 0.0)
-                    )
+                    val currentLastLocation = member.lastLocation!!
+
+                    val markerState = remember(member.id) {
+                        MarkerState(
+                            position = LatLng(currentLastLocation.latitude, currentLastLocation.longitude)
+                        )
+                    }
+
                     ProfilePicPin(
-                        imageUrl = member.profilePictureUrl,
+                        targetLocation = currentLastLocation,
                         displayName = member.displayName,
-                        location = member.lastLocation ?: UserLocation(),
+                        imageUrl = member.profilePictureUrl,
                         onClick = {
                             uiState.eventSink(MapEvent.FamilyMemberClicked(member))
                         },
@@ -353,9 +360,9 @@ private fun SavedLocationPin(
 
 @Composable
 private fun ProfilePicPin(
-    imageUrl: String?,
+    targetLocation: UserLocation,
     displayName: String,
-    location: UserLocation,
+    imageUrl: String?,
     onClick: () -> Unit,
     markerState: MarkerState,
     mapReady: Boolean
@@ -368,8 +375,31 @@ private fun ProfilePicPin(
     )
     val painterState by painter.state.collectAsState()
 
+    val targetLatLng = LatLng(targetLocation.latitude, targetLocation.longitude)
+
+    LaunchedEffect(targetLatLng, markerState) {
+        val startPosition = markerState.position
+
+        if (startPosition.latitude == targetLatLng.latitude && startPosition.longitude == targetLatLng.longitude) return@LaunchedEffect
+
+        val animatable = Animatable(0f)
+
+        animatable.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 5000, easing = LinearEasing)
+        ) {
+            val fraction = value.toDouble()
+            val currentLat = lerpDouble(startPosition.latitude, targetLatLng.latitude, fraction)
+            val currentLng = lerpDouble(startPosition.longitude, targetLatLng.longitude, fraction)
+            markerState.position = LatLng(currentLat, currentLng)
+        }
+        if (markerState.position.latitude != targetLatLng.latitude || markerState.position.longitude != targetLatLng.longitude) {
+            markerState.position = targetLatLng
+        }
+    }
+
     MarkerComposable(
-        keys = arrayOf(location.latitude, location.longitude, displayName, painterState, mapReady),
+        keys = arrayOf(displayName, painterState, mapReady),
         state = markerState,
         title = displayName,
         onClick = {
@@ -383,6 +413,10 @@ private fun ProfilePicPin(
             painter = painter
         )
     }
+}
+
+private fun lerpDouble(start: Double, stop: Double, fraction: Double): Double {
+    return start + fraction * (stop - start)
 }
 
 @Composable
