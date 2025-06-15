@@ -23,15 +23,13 @@ class MainActivityViewModel @Inject constructor(
 
     @Composable
     override fun produceState(): MainActivityUiState {
-        val userData by userSession.currentUser.collectAsState(initial = null)
         if (!userSession.isLoggedIn) return MainActivityUiState.LoggedOut
+        val userData by userSession.currentUser.collectAsState(initial = null)
         if (userData == null) return MainActivityUiState.Loading
 
         LaunchedEffect(userData?.id) {
-            if (userData != null) {
-                val frequency = userData?.locationUpdateFrequencyInMins ?: Constants.DEFAULT_LOCATION_UPDATE_FREQUENCY_IN_MINS
-                locationUpdateScheduler.schedulePeriodicUpdates(frequency.toLong())
-            }
+            val frequency = userData?.locationUpdateFrequencyInMins ?: Constants.DEFAULT_LOCATION_UPDATE_FREQUENCY_IN_MINS
+            locationUpdateScheduler.schedulePeriodicUpdates(frequency.toLong())
         }
 
         return MainActivityUiState.Success(userData = userData?: UserData())
