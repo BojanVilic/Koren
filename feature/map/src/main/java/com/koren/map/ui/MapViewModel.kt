@@ -152,10 +152,14 @@ class MapViewModel @Inject constructor(
         val cameraUpdate = CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(LatLng(latitude, longitude), zoom))
         if (animate) {
             viewModelScope.launch {
-                cameraPositionState.animate(
-                    update = cameraUpdate,
-                    durationMs = 1000
-                )
+                try {
+                    cameraPositionState.animate(
+                        update = cameraUpdate,
+                        durationMs = 1000
+                    )
+                } catch (e: Exception) {
+                    Timber.e("Failed to animate camera position: $e")
+                }
             }
         } else {
             cameraPositionState.position = CameraPosition.fromLatLngZoom(LatLng(latitude, longitude), zoom)

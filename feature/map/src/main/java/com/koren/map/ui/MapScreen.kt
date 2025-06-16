@@ -87,6 +87,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.ComposeMapColorScheme
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MarkerComposable
@@ -239,7 +240,8 @@ private fun ShownContent(
                 cameraPositionState = uiState.cameraPosition,
                 uiSettings = MapUiSettings(zoomControlsEnabled = false),
                 onMapLoaded = { mapReady = true },
-                onMapClick = { uiState.eventSink(MapEvent.DismissMarkerActions) }
+                onMapClick = { uiState.eventSink(MapEvent.DismissMarkerActions) },
+                mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM
             ) {
                 uiState.familyMembers.filter { it.lastLocation != null }.forEach { member ->
                     val currentLastLocation = member.lastLocation!!
@@ -296,7 +298,8 @@ private fun ShownContent(
                         MarkerActionsMenu(
                             modifier = Modifier.weight(1f),
                             userData = selectedUser,
-                            onFollowClicked = { uiState.eventSink(MapEvent.FollowUser(selectedUser.id)) }
+                            onFollowClicked = { uiState.eventSink(MapEvent.FollowUser(selectedUser.id)) },
+                            isFollowing = uiState.followedUserId == selectedUser.id
                         )
                     }
                 }
@@ -387,7 +390,8 @@ private fun ActionBottomSheetContent(
 private fun MarkerActionsMenu(
     modifier: Modifier = Modifier,
     userData: UserData,
-    onFollowClicked: () -> Unit
+    onFollowClicked: () -> Unit,
+    isFollowing: Boolean
 ) {
     Card(
         modifier = modifier,
@@ -430,20 +434,22 @@ private fun MarkerActionsMenu(
                     text = "5.2 km away from you | $batteryEmoji ${userData.batteryLevel}% battery",
                     style = MaterialTheme.typography.bodyMedium,
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    onClick = onFollowClicked
-                ) {
-                    Icon(
-                        modifier = Modifier.padding(end = 8.dp),
-                        imageVector = KorenIcons.Route,
-                        contentDescription = "Follow User",
-                    )
-                    Text(
-                        text = "Follow ${userData.displayName}",
-                        style = MaterialTheme.typography.labelLarge
-                    )
+                if (isFollowing.not()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        onClick = onFollowClicked
+                    ) {
+                        Icon(
+                            modifier = Modifier.padding(end = 8.dp),
+                            imageVector = KorenIcons.Route,
+                            contentDescription = "Follow User",
+                        )
+                        Text(
+                            text = "Follow ${userData.displayName}",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
                 }
             }
         }
@@ -680,7 +686,8 @@ private fun MarkerActionsMenuPreview() {
                 profilePictureUrl = "https://example.com/profile.jpg",
                 lastLocation = UserLocation(37.7749, -122.4194)
             ),
-            onFollowClicked = {}
+            onFollowClicked = {},
+            isFollowing = false
         )
     }
 }
