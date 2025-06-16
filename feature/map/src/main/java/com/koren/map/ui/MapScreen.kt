@@ -92,10 +92,12 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
+import com.koren.common.models.activity.LocationActivity
 import com.koren.common.models.family.LocationIcon
 import com.koren.common.models.user.UserData
 import com.koren.common.models.user.UserLocation
 import com.koren.common.util.CollectSideEffects
+import com.koren.common.util.DateUtils.toRelativeTime
 import com.koren.designsystem.components.InitialsAvatar
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.icon.KorenIcons
@@ -295,11 +297,12 @@ private fun ShownContent(
             ) {
                 uiState.selectedMarkerUserData?.let { selectedUser ->
                     selectedUser.lastLocation?.let {
-                        MarkerActionsMenu(
+                        FamilyMemberLocationDetails(
                             modifier = Modifier.weight(1f),
                             userData = selectedUser,
                             onFollowClicked = { uiState.eventSink(MapEvent.FollowUser(selectedUser.id)) },
-                            isFollowing = uiState.followedUserId == selectedUser.id
+                            isFollowing = uiState.followedUserId == selectedUser.id,
+                            lastLocation = uiState.lastUserLocationActivities[selectedUser.id]
                         )
                     }
                 }
@@ -387,11 +390,12 @@ private fun ActionBottomSheetContent(
 }
 
 @Composable
-private fun MarkerActionsMenu(
+private fun FamilyMemberLocationDetails(
     modifier: Modifier = Modifier,
     userData: UserData,
     onFollowClicked: () -> Unit,
-    isFollowing: Boolean
+    isFollowing: Boolean,
+    lastLocation: LocationActivity? = null
 ) {
     Card(
         modifier = modifier,
@@ -417,13 +421,13 @@ private fun MarkerActionsMenu(
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = userData.lastLocation?.let {
-                        "\uD83D\uDCCD Last seen at ${it.latitude}, ${it.longitude}"
-                    } ?: "Location not available",
+                    text = lastLocation?.let {
+                        "\uD83D\uDCCD ${it.locationName}"
+                    } ?: "\uD83D\uDCCD Location not available",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Arrived 2 hours ago",
+                    text = "Last updated: ${lastLocation?.createdAt?.toRelativeTime()}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontStyle = FontStyle.Italic
                 )
@@ -679,7 +683,7 @@ private fun MapScreenPreview() {
 @Composable
 private fun MarkerActionsMenuPreview() {
     KorenTheme {
-        MarkerActionsMenu(
+        FamilyMemberLocationDetails(
             userData = UserData(
                 id = "1",
                 displayName = "John Doe",

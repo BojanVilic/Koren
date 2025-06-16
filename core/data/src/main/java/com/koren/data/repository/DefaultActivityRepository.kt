@@ -85,6 +85,16 @@ class DefaultActivityRepository @Inject constructor(
         }
     }
 
+    override suspend fun getLocationActivityById(activityId: String): LocationActivity {
+        val userData = userSession.currentUser.first()
+        val activityRef = firebaseDatabase.reference.child("activities/${userData.familyId}/$LOCATION_ACTIVITY/$activityId")
+
+        return activityRef.get()
+            .await()
+            .getValue<LocationActivity>()
+            ?: throw IllegalArgumentException("Activity with ID $activityId not found.")
+    }
+
     override fun getLocationActivities(): Flow<List<UserLocationActivity>> = callbackFlow {
         val userData = userSession.currentUser.first()
         val activitiesRef = firebaseDatabase.reference.child("activities/${userData.familyId}/location")

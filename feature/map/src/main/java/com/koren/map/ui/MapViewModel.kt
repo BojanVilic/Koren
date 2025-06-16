@@ -15,6 +15,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.koren.common.models.activity.LocationActivity
 import com.koren.common.models.user.UserData
 import com.koren.common.services.LocationService
 import com.koren.common.services.UserSession
@@ -55,6 +56,7 @@ class MapViewModel @Inject constructor(
 
         var selectedMarkerUserDataState by remember { mutableStateOf<UserData?>(null) }
         var followedUserIdState by remember { mutableStateOf<String?>(null) }
+        var lastUserLocationActivities by remember { mutableStateOf<Map<String, LocationActivity>>(emptyMap()) }
 
         val cameraPosition = rememberCameraPositionState(
             init = {
@@ -98,12 +100,27 @@ class MapViewModel @Inject constructor(
             }
         }
 
+        LaunchedEffect(familyMembers) {
+            familyMembers.map {
+                if (it.lastActivityId.isNotEmpty()) {
+                    try {
+                        activityRepository.getLocationActivityById(it.lastActivityId).also { activity ->
+                            lastUserLocationActivities = lastUserLocationActivities + (it.id to activity)
+                        }
+                    } catch (e: Exception) {
+                        Timber.e("Failed to fetch last activity for user ${it.id}: $e")
+                    }
+                }
+            }
+        }
+
         return MapUiState.Shown(
             familyMembers = familyMembers,
             savedLocations = savedLocations,
             cameraPosition = cameraPosition,
             selectedMarkerUserData = selectedMarkerUserDataState,
             followedUserId = followedUserIdState,
+            lastUserLocationActivities = lastUserLocationActivities
         ) { event ->
             when (event) {
                 is MapEvent.FamilyMemberClicked -> {

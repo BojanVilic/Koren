@@ -1,6 +1,7 @@
 package com.koren.map.ui
 
 import com.google.maps.android.compose.CameraPositionState
+import com.koren.common.models.activity.LocationActivity
 import com.koren.common.models.family.SavedLocation
 import com.koren.common.models.user.UserData
 import com.koren.common.util.EventHandler
@@ -17,6 +18,7 @@ sealed interface MapUiState : UiState {
         val savedLocations: List<SavedLocation> = emptyList(),
         val selectedMarkerUserData: UserData? = null,
         val followedUserId: String? = null,
+        val lastUserLocationActivities: Map<String, LocationActivity> = emptyMap(),
         override val eventSink: (MapEvent) -> Unit
     ): MapUiState, EventHandler<MapEvent>
 }
