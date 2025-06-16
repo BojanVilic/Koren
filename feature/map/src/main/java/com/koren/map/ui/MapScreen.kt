@@ -295,7 +295,7 @@ private fun ShownContent(
             Row(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(16.dp),
+                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 uiState.selectedMarkerUserData?.let { selectedUser ->
