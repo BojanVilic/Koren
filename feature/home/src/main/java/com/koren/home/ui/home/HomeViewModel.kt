@@ -1,6 +1,7 @@
 package com.koren.home.ui.home
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +22,7 @@ import com.koren.domain.ChangeTaskStatusUseCase
 import com.koren.domain.GetAllFamilyMembersWithDetailsUseCase
 import com.koren.domain.GetCallHomeRequestUseCase
 import com.koren.domain.GetNextCalendarItemUseCase
+import com.koren.domain.UpdateBatteryLevelUseCase
 import com.koren.domain.UpdateCallHomeStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +40,8 @@ class HomeViewModel @Inject constructor(
     private val changeTaskStatusUseCase: ChangeTaskStatusUseCase,
     private val getCallHomeRequestUseCase: GetCallHomeRequestUseCase,
     private val updateCallHomeStatusUseCase: UpdateCallHomeStatusUseCase,
-    private val getAllFamilyMembersWithDetailsUseCase: GetAllFamilyMembersWithDetailsUseCase
+    private val getAllFamilyMembersWithDetailsUseCase: GetAllFamilyMembersWithDetailsUseCase,
+    private val updateBatteryLevelUseCase: UpdateBatteryLevelUseCase
 ): MoleculeViewModel<HomeEvent, HomeUiState, HomeSideEffect>() {
 
     override fun setInitialState(): HomeUiState = HomeUiState.Loading
@@ -59,6 +62,10 @@ class HomeViewModel @Inject constructor(
         var actionsOpen by remember { mutableStateOf(false) }
 
         if (currentUser.id.isBlank()) return HomeUiState.Loading
+
+        LaunchedEffect(Unit) {
+            updateBatteryLevelUseCase()
+        }
 
         return HomeUiState.Shown(
             currentUser = currentUser,

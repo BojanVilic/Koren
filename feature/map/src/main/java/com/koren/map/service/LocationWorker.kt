@@ -12,6 +12,7 @@ import androidx.work.WorkerParameters
 import com.koren.common.services.LocationService
 import com.koren.common.services.ResourceProvider
 import com.koren.data.repository.ActivityRepository
+import com.koren.domain.UpdateBatteryLevelUseCase
 import com.koren.domain.UpdateUserLocationUseCase
 import com.koren.map.R
 import dagger.assisted.Assisted
@@ -26,7 +27,8 @@ class LocationWorker @AssistedInject constructor(
     @Assisted private val resourceProvider: ResourceProvider,
     @Assisted private val locationService: LocationService,
     @Assisted private val updateUserLocationUseCase: UpdateUserLocationUseCase,
-    @Assisted private val activityRepository: ActivityRepository
+    @Assisted private val activityRepository: ActivityRepository,
+    @Assisted private val updateBatteryLevelUseCase: UpdateBatteryLevelUseCase
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
@@ -35,6 +37,7 @@ class LocationWorker @AssistedInject constructor(
                 showNotification()
                 updateUserLocationUseCase(location)
                 activityRepository.insertNewActivity(location)
+                updateBatteryLevelUseCase()
                 dismissNotification()
             }
             Result.success()
@@ -84,7 +87,8 @@ class LocationWorkerFactory @Inject constructor(
     private val resourceProvider: ResourceProvider,
     private val locationService: LocationService,
     private val updateUserLocationUseCase: UpdateUserLocationUseCase,
-    private val activityRepository: ActivityRepository
+    private val activityRepository: ActivityRepository,
+    private val updateBatteryLevelUseCase: UpdateBatteryLevelUseCase
 ): WorkerFactory() {
     override fun createWorker(
         appContext: Context,
@@ -96,6 +100,7 @@ class LocationWorkerFactory @Inject constructor(
         resourceProvider = resourceProvider,
         locationService = locationService,
         updateUserLocationUseCase = updateUserLocationUseCase,
-        activityRepository = activityRepository
+        activityRepository = activityRepository,
+        updateBatteryLevelUseCase = updateBatteryLevelUseCase
     )
 }
