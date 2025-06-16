@@ -1,10 +1,6 @@
 package com.koren.home.ui.home.member_details
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.SphericalUtil
 import com.koren.common.models.family.CallHomeRequestStatus
 import com.koren.common.models.family.Family
 import com.koren.common.models.user.UserData
@@ -24,13 +20,11 @@ import com.koren.domain.GetFamilyUseCase
 import com.koren.domain.SendCallHomeRequestUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
-import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel

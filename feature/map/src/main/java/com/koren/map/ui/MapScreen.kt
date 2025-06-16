@@ -98,6 +98,7 @@ import com.koren.common.models.user.UserData
 import com.koren.common.models.user.UserLocation
 import com.koren.common.util.CollectSideEffects
 import com.koren.common.util.DateUtils.toRelativeTime
+import com.koren.common.util.formatDistanceToText
 import com.koren.designsystem.components.InitialsAvatar
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.icon.KorenIcons
@@ -302,7 +303,8 @@ private fun ShownContent(
                             userData = selectedUser,
                             onFollowClicked = { uiState.eventSink(MapEvent.FollowUser(selectedUser.id)) },
                             isFollowing = uiState.followedUserId == selectedUser.id,
-                            lastLocation = uiState.lastUserLocationActivities[selectedUser.id]
+                            lastLocation = uiState.lastUserLocationActivities[selectedUser.id],
+                            distanceToSelectedUser = uiState.distanceToSelectedUser
                         )
                     }
                 }
@@ -395,7 +397,8 @@ private fun FamilyMemberLocationDetails(
     userData: UserData,
     onFollowClicked: () -> Unit,
     isFollowing: Boolean,
-    lastLocation: LocationActivity? = null
+    lastLocation: LocationActivity? = null,
+    distanceToSelectedUser: Int? = null
 ) {
     Card(
         modifier = modifier,
@@ -435,7 +438,7 @@ private fun FamilyMemberLocationDetails(
                 val batteryEmoji = if (userData.batteryLevel > 20) "\uD83D\uDD0B" else "\uD83E\uDEAB"
 
                 Text(
-                    text = "5.2 km away from you | $batteryEmoji ${userData.batteryLevel}% battery",
+                    text = "${distanceToSelectedUser.formatDistanceToText()} away from you | $batteryEmoji ${userData.batteryLevel}% battery",
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 if (isFollowing.not()) {

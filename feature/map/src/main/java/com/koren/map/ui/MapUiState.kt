@@ -19,6 +19,7 @@ sealed interface MapUiState : UiState {
         val selectedMarkerUserData: UserData? = null,
         val followedUserId: String? = null,
         val lastUserLocationActivities: Map<String, LocationActivity> = emptyMap(),
+        val distanceToSelectedUser: Int? = null,
         override val eventSink: (MapEvent) -> Unit
     ): MapUiState, EventHandler<MapEvent>
 }

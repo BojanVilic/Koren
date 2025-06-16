@@ -23,6 +23,7 @@ import com.koren.common.util.Constants.DEFAULT_LOCATION_UPDATE_FREQUENCY_IN_MINS
 import com.koren.common.util.MoleculeViewModel
 import com.koren.data.repository.ActivityRepository
 import com.koren.domain.GetAllFamilyMembersUseCase
+import com.koren.domain.GetDistanceBetweenTwoUsersUseCase
 import com.koren.domain.GetFamilyLocations
 import com.koren.domain.UpdateUserLocationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,7 +39,8 @@ class MapViewModel @Inject constructor(
     private val getFamilyLocations: GetFamilyLocations,
     private val userSession: UserSession,
     private val activityRepository: ActivityRepository,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    private val getDistanceBetweenTwoUsersUseCase: GetDistanceBetweenTwoUsersUseCase
 ): MoleculeViewModel<MapEvent, MapUiState, MapSideEffect>() {
 
     override fun setInitialState(): MapUiState = MapUiState.Loading
@@ -57,6 +59,7 @@ class MapViewModel @Inject constructor(
         var selectedMarkerUserDataState by remember { mutableStateOf<UserData?>(null) }
         var followedUserIdState by remember { mutableStateOf<String?>(null) }
         var lastUserLocationActivities by remember { mutableStateOf<Map<String, LocationActivity>>(emptyMap()) }
+        var distanceToSelectedUser by remember { mutableStateOf<Int?>(null) }
 
         val cameraPosition = rememberCameraPositionState(
             init = {
@@ -120,11 +123,20 @@ class MapViewModel @Inject constructor(
             cameraPosition = cameraPosition,
             selectedMarkerUserData = selectedMarkerUserDataState,
             followedUserId = followedUserIdState,
-            lastUserLocationActivities = lastUserLocationActivities
+            lastUserLocationActivities = lastUserLocationActivities,
+            distanceToSelectedUser = distanceToSelectedUser
         ) { event ->
             when (event) {
                 is MapEvent.FamilyMemberClicked -> {
                     selectedMarkerUserDataState = event.userData
+                    viewModelScope.launch {
+                        currentUser?.let {
+                            distanceToSelectedUser = getDistanceBetweenTwoUsersUseCase(
+                                currentUser = it,
+                                targetUser = event.userData
+                            )
+                        }
+                    }
                     event.userData.lastLocation?.let {
                         updateCameraPosition(
                             cameraPositionState = cameraPosition,
