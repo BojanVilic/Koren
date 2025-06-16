@@ -114,7 +114,7 @@ fun HeaderSection(currentMonth: YearMonth) {
                 modifier = Modifier
                     .size(8.dp)
                     .clip(CircleShape)
-                    .background(ExtendedTheme.colors.event)
+                    .background(ExtendedTheme.colorScheme.event)
             )
 
             Text(
@@ -129,7 +129,7 @@ fun HeaderSection(currentMonth: YearMonth) {
                 modifier = Modifier
                     .size(8.dp)
                     .clip(CircleShape)
-                    .background(ExtendedTheme.colors.task)
+                    .background(ExtendedTheme.colorScheme.task)
             )
 
             Text(
@@ -282,7 +282,7 @@ fun DayCell(
                                     modifier = Modifier
                                         .size(6.dp)
                                         .clip(CircleShape)
-                                        .background(ExtendedTheme.colors.event)
+                                        .background(ExtendedTheme.colorScheme.event)
                                 )
                             }
 
@@ -295,7 +295,7 @@ fun DayCell(
                                     modifier = Modifier
                                         .size(6.dp)
                                         .clip(CircleShape)
-                                        .background(ExtendedTheme.colors.task)
+                                        .background(ExtendedTheme.colorScheme.task)
                                 )
                             }
                         }

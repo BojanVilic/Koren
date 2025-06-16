@@ -124,7 +124,8 @@ class MapViewModel @Inject constructor(
             selectedMarkerUserData = selectedMarkerUserDataState,
             followedUserId = followedUserIdState,
             lastUserLocationActivities = lastUserLocationActivities,
-            distanceToSelectedUser = distanceToSelectedUser
+            distanceToSelectedUser = distanceToSelectedUser,
+            currentUser = currentUser
         ) { event ->
             when (event) {
                 is MapEvent.FamilyMemberClicked -> {

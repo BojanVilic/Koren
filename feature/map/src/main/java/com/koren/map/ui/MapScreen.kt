@@ -103,6 +103,7 @@ import com.koren.designsystem.components.InitialsAvatar
 import com.koren.designsystem.components.LoadingContent
 import com.koren.designsystem.icon.KorenIcons
 import com.koren.designsystem.icon.Route
+import com.koren.designsystem.theme.ExtendedTheme
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -267,7 +268,8 @@ private fun ShownContent(
                         },
                         markerState = markerState,
                         mapReady = mapReady,
-                        isSelectedForMenu = uiState.selectedMarkerUserData?.id == member.id
+                        isSelectedForMenu = uiState.selectedMarkerUserData?.id == member.id,
+                        isCurrentUser = member.id == uiState.currentUser?.id
                     )
                 }
 
@@ -504,7 +506,8 @@ private fun ProfilePicPin(
     onMarkerClicked: (UserData) -> Unit,
     markerState: MarkerState,
     mapReady: Boolean,
-    isSelectedForMenu: Boolean
+    isSelectedForMenu: Boolean,
+    isCurrentUser: Boolean
 ) {
     val painter = rememberAsyncImagePainter(
         ImageRequest.Builder(LocalContext.current)
@@ -547,7 +550,8 @@ private fun ProfilePicPin(
             imageUrl = imageUrl,
             displayName = displayName,
             painter = painter,
-            isSelected = isSelectedForMenu
+            isSelected = isSelectedForMenu,
+            isCurrentUser = isCurrentUser
         )
     }
 }
@@ -575,15 +579,23 @@ private fun PinImage(
     imageUrl: String?,
     displayName: String,
     painter: AsyncImagePainter,
-    isSelected: Boolean
+    isSelected: Boolean,
+    isCurrentUser: Boolean
 ) {
+
+    val borderColor = when {
+        isCurrentUser -> ExtendedTheme.colorScheme.currentUserBorderMap
+        isSelected -> MaterialTheme.colorScheme.secondary
+        else -> MaterialTheme.colorScheme.primary
+    }
+
     Box(
         modifier = Modifier
             .size(width = 86.dp, height = 86.dp)
             .clip(PinShape)
             .border(
                 width = if (isSelected) 4.dp else 3.dp,
-                color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
+                color = borderColor,
                 shape = PinShape
             )
             .padding(4.dp),
@@ -651,7 +663,8 @@ private fun PinImagePreview() {
                     .allowHardware(false)
                     .build()
             ),
-            isSelected = false
+            isSelected = false,
+            isCurrentUser = false
         )
     }
 }

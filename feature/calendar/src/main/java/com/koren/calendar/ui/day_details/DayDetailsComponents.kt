@@ -254,7 +254,7 @@ private fun TaskItem(
                 modifier = Modifier.size(24.dp),
                 imageVector = if (task.completed) KorenIcons.CircleCheck else KorenIcons.Circle,
                 contentDescription = if (task.completed) "Task Completed" else "Task Pending",
-                tint = if (task.completed) ExtendedTheme.colors.task else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                tint = if (task.completed) ExtendedTheme.colorScheme.task else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
         Spacer(modifier = Modifier.width(8.dp))
@@ -288,7 +288,7 @@ private fun EventItem(event: Event) {
             modifier = Modifier
                 .size(8.dp)
                 .clip(CircleShape)
-                .background(ExtendedTheme.colors.event)
+                .background(ExtendedTheme.colorScheme.event)
                 .align(Alignment.CenterVertically)
         )
         Spacer(modifier = Modifier.width(12.dp))

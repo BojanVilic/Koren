@@ -13,6 +13,7 @@ sealed interface MapUiState : UiState {
     data object Loading : MapUiState
     data class LocationPermissionNotGranted(val onPermissionGranted: () -> Unit) : MapUiState
     data class Shown(
+        val currentUser: UserData? = null,
         val cameraPosition: CameraPositionState = CameraPositionState(),
         val familyMembers: List<UserData> = emptyList(),
         val savedLocations: List<SavedLocation> = emptyList(),
