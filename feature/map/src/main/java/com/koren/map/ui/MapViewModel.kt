@@ -4,6 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
@@ -12,6 +15,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.koren.common.models.user.UserData
 import com.koren.common.services.LocationService
 import com.koren.common.services.UserSession
 import com.koren.common.util.Constants.DEFAULT_LOCATION_UPDATE_FREQUENCY_IN_MINS
@@ -45,9 +49,13 @@ class MapViewModel @Inject constructor(
         if (currentUser == null) return MapUiState.Loading
 
         LaunchedEffect(Unit) { setupLocationUpdates(currentUser?.locationUpdateFrequencyInMins) }
-        val targetUserId = savedStateHandle.toRoute<MapDestination>().userId
+        val targetUserIdFromNav = savedStateHandle.toRoute<MapDestination>().userId
         val familyMembers by getAllFamilyMembersUseCase().collectAsState(initial = emptyList())
         val savedLocations by getFamilyLocations().collectAsState(initial = emptyList())
+
+        var selectedMarkerUserDataState by remember { mutableStateOf<UserData?>(null) }
+        var followedUserIdState by remember { mutableStateOf<String?>(null) }
+
         val cameraPosition = rememberCameraPositionState(
             init = {
                 position = CameraPosition.fromLatLngZoom(
@@ -55,39 +63,79 @@ class MapViewModel @Inject constructor(
                         currentUser?.lastLocation?.latitude ?: 0.0,
                         currentUser?.lastLocation?.longitude ?: 0.0
                     ),
-                    16f
+                    14.5f
                 )
             }
         )
 
-        LaunchedEffect(targetUserId, familyMembers.size) {
-            if (targetUserId == null || familyMembers.isEmpty()) return@LaunchedEffect
-            val userLocation = familyMembers.find { it.id == targetUserId }?.lastLocation
+        LaunchedEffect(targetUserIdFromNav, familyMembers.size) {
+            if (followedUserIdState != null) return@LaunchedEffect
+            if (targetUserIdFromNav == null || familyMembers.isEmpty()) return@LaunchedEffect
+            val userLocation = familyMembers.find { it.id == targetUserIdFromNav }?.lastLocation
 
-            updateCameraPosition(
-                cameraPositionState = cameraPosition,
-                latitude = userLocation?.latitude?: 0.0,
-                longitude = userLocation?.longitude?: 0.0
-            )
+            userLocation?.let {
+                updateCameraPosition(
+                    cameraPositionState = cameraPosition,
+                    latitude = it.latitude,
+                    longitude = it.longitude,
+                    zoom = 16f,
+                    animate = true
+                )
+            }
+        }
+
+        LaunchedEffect(followedUserIdState, familyMembers) {
+            if (followedUserIdState == null) return@LaunchedEffect
+            val userToFollow = familyMembers.find { it.id == followedUserIdState }
+            userToFollow?.lastLocation?.let { location ->
+                updateCameraPosition(
+                    cameraPositionState = cameraPosition,
+                    latitude = location.latitude,
+                    longitude = location.longitude,
+                    zoom = 16f,
+                    animate = true
+                )
+            }
         }
 
         return MapUiState.Shown(
             familyMembers = familyMembers,
             savedLocations = savedLocations,
-            cameraPosition = cameraPosition
+            cameraPosition = cameraPosition,
+            selectedMarkerUserData = selectedMarkerUserDataState,
+            followedUserId = followedUserIdState,
         ) { event ->
             when (event) {
-                is MapEvent.FamilyMemberClicked -> updateCameraPosition(
-                    cameraPositionState = cameraPosition,
-                    latitude = event.userData.lastLocation?.latitude?: 0.0,
-                    longitude = event.userData.lastLocation?.longitude?: 0.0
-                )
+                is MapEvent.FamilyMemberClicked -> {
+                    selectedMarkerUserDataState = event.userData
+                    event.userData.lastLocation?.let {
+                        updateCameraPosition(
+                            cameraPositionState = cameraPosition,
+                            latitude = it.latitude,
+                            longitude = it.longitude,
+                            zoom = 16f,
+                            animate = true
+                        )
+                    }
+                }
+                is MapEvent.FollowUser -> {
+                    followedUserIdState = event.userId
+                    selectedMarkerUserDataState = null
+                }
+                is MapEvent.StopFollowing -> followedUserIdState = null
+                is MapEvent.DismissMarkerActions -> selectedMarkerUserDataState = null
                 is MapEvent.EditModeClicked -> _sideEffects.emitSuspended(MapSideEffect.NavigateToEditPlaces)
-                is MapEvent.PinClicked -> updateCameraPosition(
-                    cameraPositionState = cameraPosition,
-                    latitude = event.latitude,
-                    longitude = event.longitude
-                )
+                is MapEvent.PinClicked -> {
+                    selectedMarkerUserDataState = null
+                    followedUserIdState = null
+                    updateCameraPosition(
+                        cameraPositionState = cameraPosition,
+                        latitude = event.latitude,
+                        longitude = event.longitude,
+                        zoom = 16f,
+                        animate = true
+                    )
+                }
             }
         }
     }
@@ -95,17 +143,22 @@ class MapViewModel @Inject constructor(
     private fun updateCameraPosition(
         cameraPositionState: CameraPositionState,
         latitude: Double,
-        longitude: Double
+        longitude: Double,
+        zoom: Float,
+        animate: Boolean
     ) {
-        val cameraUpdate = CameraUpdateFactory.newCameraPosition(
-            CameraPosition.fromLatLngZoom(LatLng(latitude, longitude), 16f)
-        )
+        if (animate && cameraPositionState.isMoving) return
 
-        viewModelScope.launch {
-            cameraPositionState.animate(
-                update = cameraUpdate,
-                durationMs = 1000
-            )
+        val cameraUpdate = CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(LatLng(latitude, longitude), zoom))
+        if (animate) {
+            viewModelScope.launch {
+                cameraPositionState.animate(
+                    update = cameraUpdate,
+                    durationMs = 1000
+                )
+            }
+        } else {
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(LatLng(latitude, longitude), zoom)
         }
     }
 

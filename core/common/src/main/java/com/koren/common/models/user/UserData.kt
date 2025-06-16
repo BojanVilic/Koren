@@ -13,5 +13,6 @@ data class UserData(
     val lastLocation: UserLocation? = null,
     val lastActivityId: String = "",
     val fcmToken: String = "",
-    val locationUpdateFrequencyInMins: Int = DEFAULT_LOCATION_UPDATE_FREQUENCY_IN_MINS
+    val locationUpdateFrequencyInMins: Int = DEFAULT_LOCATION_UPDATE_FREQUENCY_IN_MINS,
+    val batteryLevel: Int = -1
 )

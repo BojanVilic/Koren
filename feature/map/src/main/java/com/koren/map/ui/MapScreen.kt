@@ -1,4 +1,6 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class,
+    ExperimentalMaterial3ExpressiveApi::class
+)
 
 package com.koren.map.ui
 
@@ -7,30 +9,44 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SmallExtendedFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
@@ -53,6 +69,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
@@ -78,10 +95,10 @@ import com.koren.common.models.family.LocationIcon
 import com.koren.common.models.user.UserData
 import com.koren.common.models.user.UserLocation
 import com.koren.common.util.CollectSideEffects
-import com.koren.designsystem.components.ActionButton
 import com.koren.designsystem.components.InitialsAvatar
 import com.koren.designsystem.components.LoadingContent
-import com.koren.designsystem.models.ActionItem
+import com.koren.designsystem.icon.KorenIcons
+import com.koren.designsystem.icon.Route
 import com.koren.designsystem.theme.KorenTheme
 import com.koren.designsystem.theme.LocalScaffoldStateProvider
 import com.koren.designsystem.theme.ScaffoldState
@@ -214,22 +231,18 @@ private fun ShownContent(
 
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
-        sheetContent = {
-            ActionBottomSheetContent(uiState)
-        },
-        sheetPeekHeight = 128.dp
+        sheetContent = { ActionBottomSheetContent(uiState) }
     ) {
-
-        Box {
+        Box(modifier = Modifier.fillMaxSize()) {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = uiState.cameraPosition,
                 uiSettings = MapUiSettings(zoomControlsEnabled = false),
-                onMapLoaded = { mapReady = true }
+                onMapLoaded = { mapReady = true },
+                onMapClick = { uiState.eventSink(MapEvent.DismissMarkerActions) }
             ) {
                 uiState.familyMembers.filter { it.lastLocation != null }.forEach { member ->
                     val currentLastLocation = member.lastLocation!!
-
                     val markerState = remember(member.id) {
                         MarkerState(
                             position = LatLng(currentLastLocation.latitude, currentLastLocation.longitude)
@@ -237,14 +250,19 @@ private fun ShownContent(
                     }
 
                     ProfilePicPin(
+                        member = member,
                         targetLocation = currentLastLocation,
                         displayName = member.displayName,
                         imageUrl = member.profilePictureUrl,
-                        onClick = {
-                            uiState.eventSink(MapEvent.FamilyMemberClicked(member))
+                        onMarkerClicked = {
+                            coroutineScope.launch {
+                                scaffoldState.bottomSheetState.expand()
+                            }
+                            uiState.eventSink(MapEvent.FamilyMemberClicked(it))
                         },
                         markerState = markerState,
-                        mapReady = mapReady
+                        mapReady = mapReady,
+                        isSelectedForMenu = uiState.selectedMarkerUserData?.id == member.id
                     )
                 }
 
@@ -266,6 +284,63 @@ private fun ShownContent(
                     )
                 }
             }
+
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                uiState.selectedMarkerUserData?.let { selectedUser ->
+                    selectedUser.lastLocation?.let {
+                        MarkerActionsMenu(
+                            modifier = Modifier.weight(1f),
+                            userData = selectedUser,
+                            onFollowClicked = { uiState.eventSink(MapEvent.FollowUser(selectedUser.id)) }
+                        )
+                    }
+                }
+                if (uiState.selectedMarkerUserData == null) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    AnimatedVisibility(
+                        visible = uiState.selectedMarkerUserData == null,
+                        enter = expandHorizontally(),
+                        exit = shrinkHorizontally()
+                    ) {
+                        SmallExtendedFloatingActionButton(
+                            onClick = { uiState.eventSink(MapEvent.EditModeClicked) },
+                            containerColor = BottomSheetDefaults.ContainerColor,
+                            text = { Text(text = "Edit places") },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit places"
+                                )
+                            },
+                            expanded =
+                                scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
+                                        && uiState.selectedMarkerUserData == null
+                        )
+                    }
+                    AnimatedVisibility(
+                        visible = uiState.followedUserId != null,
+                        enter = expandHorizontally(),
+                        exit = shrinkHorizontally()
+                    ) {
+                        ExtendedFloatingActionButton(
+                            onClick = { uiState.eventSink(MapEvent.StopFollowing) },
+                            icon = { Icon(Icons.Filled.Close, "Stop Following") },
+                            text = { Text("Stop Following") },
+                            expanded = uiState.selectedMarkerUserData == null
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -274,28 +349,9 @@ private fun ShownContent(
 private fun ActionBottomSheetContent(
     uiState: MapUiState.Shown
 ) {
-
-    val actions = listOf(
-        ActionItem(
-            icon = Icons.Default.Edit,
-            text = "Edit places",
-            onClick = { uiState.eventSink(MapEvent.EditModeClicked) }
-        )
-    )
-
     Column(
         modifier = Modifier.padding(horizontal = 16.dp)
     ) {
-        LazyRow(
-            modifier = Modifier.padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(actions) { actionItem ->
-                ActionButton(actionItem)
-            }
-        }
-
-        HorizontalDivider()
         Text(
             modifier = Modifier
                 .fillMaxWidth()
@@ -326,6 +382,74 @@ private fun ActionBottomSheetContent(
         }
     }
 }
+
+@Composable
+private fun MarkerActionsMenu(
+    modifier: Modifier = Modifier,
+    userData: UserData,
+    onFollowClicked: () -> Unit
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = BottomSheetDefaults.ContainerColor)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            InitialsAvatar(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape),
+                imageUrl = userData.profilePictureUrl,
+                name = userData.displayName
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(
+                modifier = Modifier.padding(horizontal = 4.dp)
+            ) {
+                Text(
+                    text = userData.displayName,
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    text = userData.lastLocation?.let {
+                        "\uD83D\uDCCD Last seen at ${it.latitude}, ${it.longitude}"
+                    } ?: "Location not available",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "Arrived 2 hours ago",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontStyle = FontStyle.Italic
+                )
+
+                val batteryEmoji = if (userData.batteryLevel > 20) "\uD83D\uDD0B" else "\uD83E\uDEAB"
+
+                Text(
+                    text = "5.2 km away from you | $batteryEmoji ${userData.batteryLevel}% battery",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    onClick = onFollowClicked
+                ) {
+                    Icon(
+                        modifier = Modifier.padding(end = 8.dp),
+                        imageVector = KorenIcons.Route,
+                        contentDescription = "Follow User",
+                    )
+                    Text(
+                        text = "Follow ${userData.displayName}",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 private fun SavedLocationPin(
@@ -360,12 +484,14 @@ private fun SavedLocationPin(
 
 @Composable
 private fun ProfilePicPin(
+    member: UserData,
     targetLocation: UserLocation,
     displayName: String,
     imageUrl: String?,
-    onClick: () -> Unit,
+    onMarkerClicked: (UserData) -> Unit,
     markerState: MarkerState,
-    mapReady: Boolean
+    mapReady: Boolean,
+    isSelectedForMenu: Boolean
 ) {
     val painter = rememberAsyncImagePainter(
         ImageRequest.Builder(LocalContext.current)
@@ -379,11 +505,8 @@ private fun ProfilePicPin(
 
     LaunchedEffect(targetLatLng, markerState) {
         val startPosition = markerState.position
-
         if (startPosition.latitude == targetLatLng.latitude && startPosition.longitude == targetLatLng.longitude) return@LaunchedEffect
-
         val animatable = Animatable(0f)
-
         animatable.animateTo(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 5000, easing = LinearEasing)
@@ -399,18 +522,19 @@ private fun ProfilePicPin(
     }
 
     MarkerComposable(
-        keys = arrayOf(displayName, painterState, mapReady),
+        keys = arrayOf(displayName, painterState, mapReady, isSelectedForMenu),
         state = markerState,
         title = displayName,
         onClick = {
-            onClick()
+            onMarkerClicked(member)
             true
         }
     ) {
         PinImage(
             imageUrl = imageUrl,
             displayName = displayName,
-            painter = painter
+            painter = painter,
+            isSelected = isSelectedForMenu
         )
     }
 }
@@ -437,14 +561,18 @@ private fun PinIcon(
 private fun PinImage(
     imageUrl: String?,
     displayName: String,
-    painter: AsyncImagePainter
+    painter: AsyncImagePainter,
+    isSelected: Boolean
 ) {
-
     Box(
         modifier = Modifier
             .size(width = 86.dp, height = 86.dp)
             .clip(PinShape)
-            .border(3.dp, MaterialTheme.colorScheme.primary, PinShape)
+            .border(
+                width = if (isSelected) 4.dp else 3.dp,
+                color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
+                shape = PinShape
+            )
             .padding(4.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -474,42 +602,24 @@ object PinShape : Shape {
         layoutDirection: LayoutDirection,
         density: Density
     ): Outline {
-        // Ensure the ratio is within a reasonable range to prevent visual issues.
         val saneHeadHeightToWidthRatio = 0.6f.coerceIn(0.1f, 0.75f)
-
-        // Calculate the actual height of the curved 'head' part of the pin.
-        // This is measured from the very top of the pin (y=0) to the "shoulders".
         val actualHeadHeight = size.width * saneHeadHeightToWidthRatio
-
-        // Vertices of the base polygon (before rounding)
-        // P0: Bottom tip
-        // P1: Left "shoulder" (y-coordinate is actualHeadHeight)
-        // P2: Top-center of the arc (y-coordinate is 0f)
-        // P3: Right "shoulder" (y-coordinate is actualHeadHeight)
         val polygonVertices = floatArrayOf(
-            size.width / 2f, size.height,        // P0 (Tip)
-            0f, actualHeadHeight,                // P1 (Left Shoulder)
-            size.width / 2f, 0f,                 // P2 (Top-Center of Arc, at y=0)
-            size.width, actualHeadHeight         // P3 (Right Shoulder)
+            size.width / 2f, size.height,
+            0f, actualHeadHeight,
+            size.width / 2f, 0f,
+            size.width, actualHeadHeight
         )
-
-        // The rounding radius for the top corners (P1, P2, P3).
-        // To make these corners form a continuous smooth curve that defines the head,
-        // the radius should generally be equal to the actualHeadHeight.
-        val topCornerRoundingRadius = actualHeadHeight
-
         val perVertexRounding = listOf(
-            CornerRounding(radius = 0f, smoothing = 0f),              // P0 (Tip) - Sharp corner
-            CornerRounding(radius = topCornerRoundingRadius, smoothing = 0f), // P1 (Left Shoulder)
-            CornerRounding(radius = topCornerRoundingRadius, smoothing = 0f), // P2 (Top-Center)
-            CornerRounding(radius = topCornerRoundingRadius, smoothing = 0f)  // P3 (Right Shoulder)
+            CornerRounding(radius = 0f, smoothing = 0f),
+            CornerRounding(radius = actualHeadHeight, smoothing = 0f),
+            CornerRounding(radius = actualHeadHeight, smoothing = 0f),
+            CornerRounding(radius = actualHeadHeight, smoothing = 0f)
         )
-
         val roundedPolygon = RoundedPolygon(
             vertices = polygonVertices,
             perVertexRounding = perVertexRounding
         )
-
         val composePath: Path = roundedPolygon.toPath().asComposePath()
         return Outline.Generic(composePath)
     }
@@ -527,7 +637,8 @@ private fun PinImagePreview() {
                     .data(null)
                     .allowHardware(false)
                     .build()
-            )
+            ),
+            isSelected = false
         )
     }
 }
@@ -545,8 +656,31 @@ private fun MapScreenPreview() {
                         lastLocation = UserLocation(37.7749, -122.4194)
                     ),
                 ),
+                selectedMarkerUserData = UserData(
+                    id = "1",
+                    displayName = "John Doe",
+                    profilePictureUrl = "https://example.com/profile.jpg",
+                    lastLocation = UserLocation(37.7749, -122.4194),
+                    batteryLevel = 24
+                ),
                 eventSink = {}
             )
+        )
+    }
+}
+
+@ThemePreview
+@Composable
+private fun MarkerActionsMenuPreview() {
+    KorenTheme {
+        MarkerActionsMenu(
+            userData = UserData(
+                id = "1",
+                displayName = "John Doe",
+                profilePictureUrl = "https://example.com/profile.jpg",
+                lastLocation = UserLocation(37.7749, -122.4194)
+            ),
+            onFollowClicked = {}
         )
     }
 }

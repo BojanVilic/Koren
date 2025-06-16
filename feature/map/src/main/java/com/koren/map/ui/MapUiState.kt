@@ -15,7 +15,8 @@ sealed interface MapUiState : UiState {
         val cameraPosition: CameraPositionState = CameraPositionState(),
         val familyMembers: List<UserData> = emptyList(),
         val savedLocations: List<SavedLocation> = emptyList(),
-        val isMapReady: Boolean = false,
+        val selectedMarkerUserData: UserData? = null,
+        val followedUserId: String? = null,
         override val eventSink: (MapEvent) -> Unit
     ): MapUiState, EventHandler<MapEvent>
 }
@@ -24,6 +25,9 @@ sealed interface MapEvent : UiEvent {
     data class FamilyMemberClicked(val userData: UserData) : MapEvent
     data class PinClicked(val latitude: Double, val longitude: Double) : MapEvent
     data object EditModeClicked : MapEvent
+    data class FollowUser(val userId: String) : MapEvent
+    data object StopFollowing : MapEvent
+    data object DismissMarkerActions : MapEvent
 }
 
 sealed interface MapSideEffect : UiSideEffect {
